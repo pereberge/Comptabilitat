@@ -1,0 +1,15 @@
+export const imp = {
+ processing:'Procesando…',
+ title:'Importar cuentas desde PDF', file:'Archivo PDF', prefix:'Dígitos de la cuenta', preview:'Previsualizar',
+ help:'Listado de subcuentas como Informe.pdf. PDF con texto, máximo 5 MB y 100 páginas. Se importan código y descripción; no NIF, direcciones ni saldos.',
+ split:'Los primeros dígitos forman la cuenta; el resto, la subcuenta. Ejemplo con 4 dígitos: 43000006 → 4300.0006.',
+ source:'Empresa del PDF', destination:'Empresa de destino', pages:'Páginas', records:'Registros',
+ parents:'Cuentas de jerarquía que se crearán', create:'Importar nuevas subcuentas', close:'Cerrar',
+ confirm:'He revisado la empresa de destino y la separación de los códigos.',
+ preserve:'Los códigos existentes se omiten y conservan su descripción y su cuenta padre. La importación es completa o no guarda ningún cambio.',
+ code:'Cuenta', suffix:'Subcuenta', description:'Descripción del PDF', state:'Estado', page:'Página',
+ existingDescription:'Descripción actual', new:'Nueva', existing:'Existente: se omite', duplicate:'Repetida: se omite', invalid:'Revisar',
+ imported:'Subcuentas importadas', skipped:'Registros omitidos', invalidRows:'Hay registros inválidos. Corrige el PDF o la longitud y vuelve a previsualizar.',
+ reasons:{INVALID_ROW:'Código o descripción no válidos para la longitud configurada.',DUPLICATE_PDF:'Código repetido en el PDF.',ALREADY_EXISTS:'El código ya existe.',DIFFERENT_DESCRIPTION:'El código existe con otra descripción.',INVALID_PARENT:'Un código padre ya está utilizado como subcuenta.'},
+ errors:{PDF_INVALID:'No se puede leer este PDF. Comprueba que no esté dañado ni protegido con contraseña.',PDF_UNSUPPORTED_LAYOUT:'Formato no compatible. Usa un listado con texto y las columnas Subcuenta, Concepto y NIF / CIF como Informe.pdf. Los documentos escaneados requieren OCR y no están admitidos.',PDF_TOO_MANY_PAGES:'El PDF supera las 100 páginas.',PDF_TOO_MANY_ROWS:'El listado supera los 5.000 registros.',PDF_MULTIPLE_COMPANIES:'El PDF contiene varias empresas. Importa un listado de una sola empresa.',PDF_NO_ACCOUNTS:'No se encontraron subcuentas en el PDF.',PDF_TIMEOUT:'Se ha agotado el tiempo de lectura del PDF.',PDF_INVALID_PREFIX:'La longitud de la cuenta debe ser de al menos 3 dígitos e inferior a la longitud total del subcuenta.',PDF_BUSY:'Hay demasiadas previsualizaciones abiertas. Inténtalo más tarde.',PDF_PREVIEW_EXPIRED:'La previsualización ha caducado o pertenece a otra empresa. Vuelve a previsualizar.',PDF_SETTINGS_CHANGED:'Ha cambiado la configuración de subcuentas. Vuelve a previsualizar.',PDF_INVALID_ROWS:'Existen registros inválidos. Revisa la previsualización.',TOO_LARGE:'El PDF supera el límite de 5 MB.'},
+};

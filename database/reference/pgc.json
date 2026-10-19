@@ -1,0 +1,3651 @@
+{
+  "source": "https://www.boe.es/buscar/act.php?id=BOE-A-2007-19884",
+  "retrieved": "2026-10-16",
+  "scope": "Cuarta parte: cuadro de cuentas del PGC general, grupos 1 a 9",
+  "accounts": [
+    {
+      "code": "1",
+      "description": "Financiación básica"
+    },
+    {
+      "code": "10",
+      "description": "CAPITAL"
+    },
+    {
+      "code": "100",
+      "description": "Capital social"
+    },
+    {
+      "code": "101",
+      "description": "Fondo social"
+    },
+    {
+      "code": "102",
+      "description": "Capital"
+    },
+    {
+      "code": "103",
+      "description": "Socios por desembolsos no exigidos"
+    },
+    {
+      "code": "1030",
+      "description": "Socios por desembolsos no exigidos, capital social"
+    },
+    {
+      "code": "1034",
+      "description": "Socios por desembolsos no exigidos, capital pendiente de inscripción"
+    },
+    {
+      "code": "104",
+      "description": "Socios por aportaciones no dinerarias pendientes"
+    },
+    {
+      "code": "1040",
+      "description": "Socios por aportaciones no dinerarias pendientes, capital social"
+    },
+    {
+      "code": "1044",
+      "description": "Socios por aportaciones no dinerarias pendientes, capital pendiente de inscripción"
+    },
+    {
+      "code": "108",
+      "description": "Acciones o participaciones propias en situaciones especiales"
+    },
+    {
+      "code": "109",
+      "description": "Acciones o participaciones propias para reducción de capital"
+    },
+    {
+      "code": "11",
+      "description": "RESERVAS Y OTROS INSTRUMENTOS DE PATRIMONIO"
+    },
+    {
+      "code": "110",
+      "description": "Prima de emisión o asunción"
+    },
+    {
+      "code": "111",
+      "description": "Otros instrumentos de patrimonio neto"
+    },
+    {
+      "code": "1110",
+      "description": "Patrimonio neto por emisión de instrumentos financieros compuestos"
+    },
+    {
+      "code": "1111",
+      "description": "Resto de instrumentos de patrimonio neto"
+    },
+    {
+      "code": "112",
+      "description": "Reserva legal"
+    },
+    {
+      "code": "113",
+      "description": "Reservas voluntarias"
+    },
+    {
+      "code": "114",
+      "description": "Reservas especiales"
+    },
+    {
+      "code": "1140",
+      "description": "Reservas para acciones o participaciones de la sociedad dominante"
+    },
+    {
+      "code": "1142",
+      "description": "Reserva por capital amortizado"
+    },
+    {
+      "code": "1143",
+      "description": "Reserva por fondo de comercio"
+    },
+    {
+      "code": "1144",
+      "description": "Reservas por acciones propias aceptadas en garantía"
+    },
+    {
+      "code": "115",
+      "description": "Reservas por pérdidas y ganancias actuariales y otros ajustes"
+    },
+    {
+      "code": "118",
+      "description": "Aportaciones de socios o propietarios"
+    },
+    {
+      "code": "119",
+      "description": "Diferencias por ajuste del capital a euros"
+    },
+    {
+      "code": "12",
+      "description": "RESULTADOS PENDIENTES DE APLICACIÓN"
+    },
+    {
+      "code": "120",
+      "description": "Remanente"
+    },
+    {
+      "code": "121",
+      "description": "Resultados negativos de ejercicios anteriores"
+    },
+    {
+      "code": "129",
+      "description": "Resultado del ejercicio"
+    },
+    {
+      "code": "13",
+      "description": "SUBVENCIONES, DONACIONES Y AJUSTES POR CAMBIOS DE VALOR"
+    },
+    {
+      "code": "130",
+      "description": "Subvenciones oficiales de capital"
+    },
+    {
+      "code": "131",
+      "description": "Donaciones y legados de capital"
+    },
+    {
+      "code": "132",
+      "description": "Otras subvenciones, donaciones y legados"
+    },
+    {
+      "code": "133",
+      "description": "Ajustes por valoración en activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "134",
+      "description": "Operaciones de cobertura"
+    },
+    {
+      "code": "1340",
+      "description": "Cobertura de flujos de efectivo"
+    },
+    {
+      "code": "1341",
+      "description": "Cobertura de una inversión neta en un negocio en el extranjero"
+    },
+    {
+      "code": "135",
+      "description": "Diferencias de conversión"
+    },
+    {
+      "code": "136",
+      "description": "Ajustes por valoración en activos no corrientes y grupos enajenables de elementos, mantenidos para la venta"
+    },
+    {
+      "code": "137",
+      "description": "Ingresos fiscales a distribuir en varios ejercicios"
+    },
+    {
+      "code": "1370",
+      "description": "Ingresos fiscales por diferencias permanentes a distribuir en varios ejercicios"
+    },
+    {
+      "code": "1371",
+      "description": "Ingresos fiscales por deducciones y bonificaciones a distribuir en varios ejercicios"
+    },
+    {
+      "code": "14",
+      "description": "PROVISIONES"
+    },
+    {
+      "code": "140",
+      "description": "Provisión por retribuciones a largo plazo al personal"
+    },
+    {
+      "code": "141",
+      "description": "Provisión para impuestos"
+    },
+    {
+      "code": "142",
+      "description": "Provisión para otras responsabilidades"
+    },
+    {
+      "code": "143",
+      "description": "Provisión por desmantelamiento, retiro o rehabilitación del inmovilizado"
+    },
+    {
+      "code": "145",
+      "description": "Provisión para actuaciones medioambientales"
+    },
+    {
+      "code": "146",
+      "description": "Provisión para reestructuraciones"
+    },
+    {
+      "code": "147",
+      "description": "Provisión por transacciones con pagos basados en instrumentos de patrimonio"
+    },
+    {
+      "code": "15",
+      "description": "DEUDAS A LARGO PLAZO CON CARACTERÍSTICAS ESPECIALES"
+    },
+    {
+      "code": "150",
+      "description": "Acciones o participaciones a largo plazo consideradas como pasivos financieros"
+    },
+    {
+      "code": "153",
+      "description": "Desembolsos no exigidos por acciones o participaciones consideradas como pasivos financieros"
+    },
+    {
+      "code": "1533",
+      "description": "Desembolsos no exigidos, empresas del grupo"
+    },
+    {
+      "code": "1534",
+      "description": "Desembolsos no exigidos, empresas asociadas"
+    },
+    {
+      "code": "1535",
+      "description": "Desembolsos no exigidos, otras partes vinculadas"
+    },
+    {
+      "code": "1536",
+      "description": "Otros desembolsos no exigidos"
+    },
+    {
+      "code": "154",
+      "description": "Aportaciones no dinerarias pendientes por acciones o participaciones consideradas como pasivos financieros"
+    },
+    {
+      "code": "1543",
+      "description": "Aportaciones no dinerarias pendientes, empresas del grupo"
+    },
+    {
+      "code": "1544",
+      "description": "Aportaciones no dinerarias pendientes, empresas asociadas"
+    },
+    {
+      "code": "1545",
+      "description": "Aportaciones no dinerarias pendientes, otras partes vinculadas"
+    },
+    {
+      "code": "1546",
+      "description": "Otras aportaciones no dinerarias pendientes"
+    },
+    {
+      "code": "16",
+      "description": "DEUDAS A LARGO PLAZO CON PARTES VINCULADAS"
+    },
+    {
+      "code": "160",
+      "description": "Deudas a largo plazo con entidades de crédito vinculadas"
+    },
+    {
+      "code": "1603",
+      "description": "Deudas a largo plazo con entidades de crédito, empresas del grupo"
+    },
+    {
+      "code": "1604",
+      "description": "Deudas a largo plazo con entidades de crédito, empresas asociadas"
+    },
+    {
+      "code": "1605",
+      "description": "Deudas a largo plazo con otras entidades de crédito vinculadas"
+    },
+    {
+      "code": "161",
+      "description": "Proveedores de inmovilizado a largo plazo, partes vinculadas"
+    },
+    {
+      "code": "1613",
+      "description": "Proveedores de inmovilizado a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "1614",
+      "description": "Proveedores de inmovilizado a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "1615",
+      "description": "Proveedores de inmovilizado a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "162",
+      "description": "Acreedores por arrendamiento financiero a largo plazo, partes vinculadas"
+    },
+    {
+      "code": "1623",
+      "description": "Acreedores por arrendamiento financiero a largo plazo, empresas de grupo"
+    },
+    {
+      "code": "1624",
+      "description": "Acreedores por arrendamiento financiero a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "1625",
+      "description": "Acreedores por arrendamiento financiero a largo plazo, otras partes vinculadas."
+    },
+    {
+      "code": "163",
+      "description": "Otras deudas a largo plazo con partes vinculadas"
+    },
+    {
+      "code": "1633",
+      "description": "Otras deudas a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "1634",
+      "description": "Otras deudas a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "1635",
+      "description": "Otras deudas a largo plazo, con otras partes vinculadas"
+    },
+    {
+      "code": "17",
+      "description": "DEUDAS A LARGO PLAZO POR PRÉSTAMOS RECIBIDOS, EMPRÉSTITOS Y OTROS CONCEPTOS"
+    },
+    {
+      "code": "170",
+      "description": "Deudas a largo plazo con entidades de crédito"
+    },
+    {
+      "code": "171",
+      "description": "Deudas a largo plazo"
+    },
+    {
+      "code": "172",
+      "description": "Deudas a largo plazo transformables en subvenciones, donaciones y legados"
+    },
+    {
+      "code": "173",
+      "description": "Proveedores de inmovilizado a largo plazo"
+    },
+    {
+      "code": "174",
+      "description": "Acreedores por arrendamiento financiero a largo plazo"
+    },
+    {
+      "code": "175",
+      "description": "Efectos a pagar a largo plazo"
+    },
+    {
+      "code": "176",
+      "description": "Pasivos por derivados financieros a largo plazo"
+    },
+    {
+      "code": "1765",
+      "description": "Pasivos por derivados financieros a largo plazo, cartera de negociación"
+    },
+    {
+      "code": "1768",
+      "description": "Pasivos por derivados financieros a largo plazo, instrumentos de cobertura"
+    },
+    {
+      "code": "177",
+      "description": "Obligaciones y bonos"
+    },
+    {
+      "code": "178",
+      "description": "Obligaciones y bonos convertibles"
+    },
+    {
+      "code": "179",
+      "description": "Deudas representadas en otros valores negociables"
+    },
+    {
+      "code": "18",
+      "description": "PASIVOS POR FIANZAS, GARANTÍAS Y OTROS CONCEPTOS A LARGO PLAZO"
+    },
+    {
+      "code": "180",
+      "description": "Fianzas recibidas a largo plazo"
+    },
+    {
+      "code": "181",
+      "description": "Anticipos recibidos por ventas o prestaciones de servicios a largo plazo"
+    },
+    {
+      "code": "185",
+      "description": "Depósitos recibidos a largo plazo"
+    },
+    {
+      "code": "189",
+      "description": "Garantías financieras a largo plazo"
+    },
+    {
+      "code": "19",
+      "description": "SITUACIONES TRANSITORIAS DE FINANCIACIÓN"
+    },
+    {
+      "code": "190",
+      "description": "Acciones o participaciones emitidas"
+    },
+    {
+      "code": "192",
+      "description": "Suscriptores de acciones"
+    },
+    {
+      "code": "194",
+      "description": "Capital emitido pendiente de inscripción"
+    },
+    {
+      "code": "195",
+      "description": "Acciones o participaciones emitidas consideradas como pasivos financieros"
+    },
+    {
+      "code": "197",
+      "description": "Suscriptores de acciones consideradas como pasivos financieros"
+    },
+    {
+      "code": "199",
+      "description": "Acciones o participaciones emitidas consideradas como pasivos financieros pendientes de inscripción."
+    },
+    {
+      "code": "2",
+      "description": "Activo no corriente"
+    },
+    {
+      "code": "20",
+      "description": "INMOVILIZACIONES INTANGIBLES"
+    },
+    {
+      "code": "200",
+      "description": "Investigación"
+    },
+    {
+      "code": "201",
+      "description": "Desarrollo"
+    },
+    {
+      "code": "202",
+      "description": "Concesiones administrativas"
+    },
+    {
+      "code": "203",
+      "description": "Propiedad industrial"
+    },
+    {
+      "code": "204",
+      "description": "Fondo de comercio"
+    },
+    {
+      "code": "205",
+      "description": "Derechos de traspaso"
+    },
+    {
+      "code": "206",
+      "description": "Aplicaciones informáticas"
+    },
+    {
+      "code": "209",
+      "description": "Anticipos para inmovilizaciones intangibles"
+    },
+    {
+      "code": "21",
+      "description": "INMOVILIZACIONES MATERIALES"
+    },
+    {
+      "code": "210",
+      "description": "Terrenos y bienes naturales"
+    },
+    {
+      "code": "211",
+      "description": "Construcciones"
+    },
+    {
+      "code": "212",
+      "description": "Instalaciones técnicas"
+    },
+    {
+      "code": "213",
+      "description": "Maquinaria"
+    },
+    {
+      "code": "214",
+      "description": "Utillaje"
+    },
+    {
+      "code": "215",
+      "description": "Otras instalaciones"
+    },
+    {
+      "code": "216",
+      "description": "Mobiliario"
+    },
+    {
+      "code": "217",
+      "description": "Equipos para procesos de información"
+    },
+    {
+      "code": "218",
+      "description": "Elementos de transporte"
+    },
+    {
+      "code": "219",
+      "description": "Otro inmovilizado material"
+    },
+    {
+      "code": "22",
+      "description": "INVERSIONES INMOBILIARIAS"
+    },
+    {
+      "code": "220",
+      "description": "Inversiones en terrenos y bienes naturales"
+    },
+    {
+      "code": "221",
+      "description": "Inversiones en construcciones"
+    },
+    {
+      "code": "23",
+      "description": "INMOVILIZACIONES MATERIALES EN CURSO"
+    },
+    {
+      "code": "230",
+      "description": "Adaptación de terrenos y bienes naturales"
+    },
+    {
+      "code": "231",
+      "description": "Construcciones en curso"
+    },
+    {
+      "code": "232",
+      "description": "Instalaciones técnicas en montaje"
+    },
+    {
+      "code": "233",
+      "description": "Maquinaria en montaje"
+    },
+    {
+      "code": "237",
+      "description": "Equipos para procesos de información en montaje"
+    },
+    {
+      "code": "239",
+      "description": "Anticipos para inmovilizaciones materiales"
+    },
+    {
+      "code": "24",
+      "description": "INVERSIONES FINANCIERAS A LARGO PLAZO EN PARTES VINCULADAS"
+    },
+    {
+      "code": "240",
+      "description": "Participaciones a largo plazo en partes vinculadas"
+    },
+    {
+      "code": "2403",
+      "description": "Participaciones a largo plazo en empresas del grupo"
+    },
+    {
+      "code": "2404",
+      "description": "Participaciones a largo plazo en empresas asociadas"
+    },
+    {
+      "code": "2405",
+      "description": "Participaciones a largo plazo en otras partes vinculadas"
+    },
+    {
+      "code": "241",
+      "description": "Valores representativos de deuda a largo plazo de partes vinculadas"
+    },
+    {
+      "code": "2413",
+      "description": "Valores representativos de deuda a largo plazo de empresas del grupo"
+    },
+    {
+      "code": "2414",
+      "description": "Valores representativos de deuda a largo plazo de empresas asociadas"
+    },
+    {
+      "code": "2415",
+      "description": "Valores representativos de deuda a largo plazo de otras partes vinculadas"
+    },
+    {
+      "code": "242",
+      "description": "Créditos a largo plazo a partes vinculadas"
+    },
+    {
+      "code": "2423",
+      "description": "Créditos a largo plazo a empresas del grupo"
+    },
+    {
+      "code": "2424",
+      "description": "Créditos a largo plazo a empresas asociadas"
+    },
+    {
+      "code": "2425",
+      "description": "Créditos a largo plazo a otras partes vinculadas"
+    },
+    {
+      "code": "249",
+      "description": "Desembolsos pendientes sobre participaciones a largo plazo en partes vinculadas"
+    },
+    {
+      "code": "2493",
+      "description": "Desembolsos pendientes sobre participaciones a largo plazo en empresas del grupo."
+    },
+    {
+      "code": "2494",
+      "description": "Desembolsos pendientes sobre participaciones a largo plazo en empresas asociadas."
+    },
+    {
+      "code": "2495",
+      "description": "Desembolsos pendientes sobre participaciones a largo plazo en otras partes vinculadas"
+    },
+    {
+      "code": "25",
+      "description": "OTRAS INVERSIONES FINANCIERAS A LARGO PLAZO"
+    },
+    {
+      "code": "250",
+      "description": "Inversiones financieras a largo plazo en instrumentos de patrimonio"
+    },
+    {
+      "code": "251",
+      "description": "Valores representativos de deuda a largo plazo"
+    },
+    {
+      "code": "252",
+      "description": "Créditos a largo plazo"
+    },
+    {
+      "code": "253",
+      "description": "Créditos a largo plazo por enajenación de inmovilizado"
+    },
+    {
+      "code": "254",
+      "description": "Créditos a largo plazo al personal"
+    },
+    {
+      "code": "255",
+      "description": "Activos por derivados financieros a largo plazo"
+    },
+    {
+      "code": "2550",
+      "description": "Activos por derivados financieros a largo plazo, cartera de negociación"
+    },
+    {
+      "code": "2553",
+      "description": "Activos por derivados financieros a largo plazo, instrumentos de cobertura"
+    },
+    {
+      "code": "257",
+      "description": "Derechos de reembolso derivados de contratos de seguro relativos a retribuciones a largo plazo al personal"
+    },
+    {
+      "code": "258",
+      "description": "Imposiciones a largo plazo"
+    },
+    {
+      "code": "259",
+      "description": "Desembolsos pendientes sobre participaciones en el patrimonio neto a largo plazo"
+    },
+    {
+      "code": "26",
+      "description": "FIANZAS Y DEPÓSITOS CONSTITUIDOS A LARGO PLAZO"
+    },
+    {
+      "code": "260",
+      "description": "Fianzas constituidas a largo plazo"
+    },
+    {
+      "code": "265",
+      "description": "Depósitos constituidos a largo plazo"
+    },
+    {
+      "code": "28",
+      "description": "AMORTIZACIÓN ACUMULADA DEL INMOVILIZADO"
+    },
+    {
+      "code": "280",
+      "description": "Amortización acumulada del inmovilizado intangible"
+    },
+    {
+      "code": "2800",
+      "description": "Amortización acumulada de investigación"
+    },
+    {
+      "code": "2801",
+      "description": "Amortización acumulada de desarrollo"
+    },
+    {
+      "code": "2802",
+      "description": "Amortización acumulada de concesiones administrativas"
+    },
+    {
+      "code": "2803",
+      "description": "Amortización acumulada de propiedad industrial"
+    },
+    {
+      "code": "2804",
+      "description": "Amortización acumulada de fondo de comercio"
+    },
+    {
+      "code": "2805",
+      "description": "Amortización acumulada de derechos de traspaso"
+    },
+    {
+      "code": "2806",
+      "description": "Amortización acumulada de aplicaciones informáticas"
+    },
+    {
+      "code": "281",
+      "description": "Amortización acumulada del inmovilizado material"
+    },
+    {
+      "code": "2811",
+      "description": "Amortización acumulada de construcciones"
+    },
+    {
+      "code": "2812",
+      "description": "Amortización acumulada de instalaciones técnicas"
+    },
+    {
+      "code": "2813",
+      "description": "Amortización acumulada de maquinaria"
+    },
+    {
+      "code": "2814",
+      "description": "Amortización acumulada de utillaje"
+    },
+    {
+      "code": "2815",
+      "description": "Amortización acumulada de otras instalaciones"
+    },
+    {
+      "code": "2816",
+      "description": "Amortización acumulada de mobiliario"
+    },
+    {
+      "code": "2817",
+      "description": "Amortización acumulada de equipos para procesos de información"
+    },
+    {
+      "code": "2818",
+      "description": "Amortización acumulada de elementos de transporte"
+    },
+    {
+      "code": "2819",
+      "description": "Amortización acumulada de otro inmovilizado material"
+    },
+    {
+      "code": "282",
+      "description": "Amortización acumulada de las inversiones inmobiliarias"
+    },
+    {
+      "code": "29",
+      "description": "DETERIORO DE VALOR DE ACTIVOS NO CORRIENTES"
+    },
+    {
+      "code": "290",
+      "description": "Deterioro de valor del inmovilizado intangible"
+    },
+    {
+      "code": "2900",
+      "description": "Deterioro de valor de investigación"
+    },
+    {
+      "code": "2901",
+      "description": "Deterioro del valor de desarrollo"
+    },
+    {
+      "code": "2902",
+      "description": "Deterioro de valor de concesiones administrativas"
+    },
+    {
+      "code": "2903",
+      "description": "Deterioro de valor de propiedad industrial"
+    },
+    {
+      "code": "2905",
+      "description": "Deterioro de valor de derechos de traspaso"
+    },
+    {
+      "code": "2906",
+      "description": "Deterioro de valor de aplicaciones informáticas"
+    },
+    {
+      "code": "291",
+      "description": "Deterioro de valor del inmovilizado material"
+    },
+    {
+      "code": "2910",
+      "description": "Deterioro de valor de terrenos y bienes naturales"
+    },
+    {
+      "code": "2911",
+      "description": "Deterioro de valor de construcciones"
+    },
+    {
+      "code": "2912",
+      "description": "Deterioro de valor de instalaciones técnicas"
+    },
+    {
+      "code": "2913",
+      "description": "Deterioro de valor de maquinaria"
+    },
+    {
+      "code": "2914",
+      "description": "Deterioro de valor de utillaje"
+    },
+    {
+      "code": "2915",
+      "description": "Deterioro de valor de otras instalaciones"
+    },
+    {
+      "code": "2916",
+      "description": "Deterioro de valor de mobiliario"
+    },
+    {
+      "code": "2917",
+      "description": "Deterioro de valor de equipos para procesos de información"
+    },
+    {
+      "code": "2918",
+      "description": "Deterioro de valor de elementos de transporte"
+    },
+    {
+      "code": "2919",
+      "description": "Deterioro de valor de otro inmovilizado material"
+    },
+    {
+      "code": "292",
+      "description": "Deterioro de valor de las inversiones inmobiliarias"
+    },
+    {
+      "code": "2920",
+      "description": "Deterioro de valor de los terrenos y bienes naturales"
+    },
+    {
+      "code": "2921",
+      "description": "Deterioro de valor de construcciones"
+    },
+    {
+      "code": "293",
+      "description": "Deterioro de valor de participaciones a largo plazo"
+    },
+    {
+      "code": "2933",
+      "description": "Deterioro de valor de participaciones a largo plazo en empresas del grupo"
+    },
+    {
+      "code": "2934",
+      "description": "Deterioro de valor de participaciones a largo plazo en empresas asociadas"
+    },
+    {
+      "code": "2935",
+      "description": "Deterioro de valor de participaciones a largo plazo en otras partes vinculadas"
+    },
+    {
+      "code": "2936",
+      "description": "Deterioro de valor de participaciones a largo plazo en otras empresas"
+    },
+    {
+      "code": "294",
+      "description": "Deterioro de valor de valores representativos de deuda a largo plazo de partes vinculadas"
+    },
+    {
+      "code": "2943",
+      "description": "Deterioro de valor de valores representativos de deuda a largo plazo de empresas del grupo"
+    },
+    {
+      "code": "2944",
+      "description": "Deterioro de valor de valores representativos de deuda a largo plazo de empresas asociadas"
+    },
+    {
+      "code": "2945",
+      "description": "Deterioro de valor de valores representativos de deuda a largo plazo de otras partes vinculadas"
+    },
+    {
+      "code": "295",
+      "description": "Deterioro de valor de créditos a largo plazo a partes vinculadas"
+    },
+    {
+      "code": "2953",
+      "description": "Deterioro de valor de créditos a largo plazo a empresas del grupo"
+    },
+    {
+      "code": "2954",
+      "description": "Deterioro de valor de créditos a largo plazo a empresas asociadas"
+    },
+    {
+      "code": "2955",
+      "description": "Deterioro de valor de créditos a largo plazo a otras partes vinculadas"
+    },
+    {
+      "code": "297",
+      "description": "Deterioro de valor de valores representativos de deuda a largo plazo"
+    },
+    {
+      "code": "298",
+      "description": "Deterioro de valor de créditos a largo plazo"
+    },
+    {
+      "code": "3",
+      "description": "Existencias"
+    },
+    {
+      "code": "30",
+      "description": "COMERCIALES"
+    },
+    {
+      "code": "300",
+      "description": "Mercaderías A"
+    },
+    {
+      "code": "301",
+      "description": "Mercaderías B"
+    },
+    {
+      "code": "31",
+      "description": "MATERIAS PRIMAS"
+    },
+    {
+      "code": "310",
+      "description": "Materias primas A"
+    },
+    {
+      "code": "311",
+      "description": "Materias primas B"
+    },
+    {
+      "code": "32",
+      "description": "OTROS APROVISIONAMIENTOS"
+    },
+    {
+      "code": "320",
+      "description": "Elementos y conjuntos incorporables"
+    },
+    {
+      "code": "321",
+      "description": "Combustibles"
+    },
+    {
+      "code": "322",
+      "description": "Repuestos"
+    },
+    {
+      "code": "325",
+      "description": "Materiales diversos"
+    },
+    {
+      "code": "326",
+      "description": "Embalajes"
+    },
+    {
+      "code": "327",
+      "description": "Envases"
+    },
+    {
+      "code": "328",
+      "description": "Material de oficina"
+    },
+    {
+      "code": "33",
+      "description": "PRODUCTOS EN CURSO"
+    },
+    {
+      "code": "330",
+      "description": "Productos en curso A"
+    },
+    {
+      "code": "331",
+      "description": "Productos en curso B"
+    },
+    {
+      "code": "34",
+      "description": "PRODUCTOS SEMITERMINADOS"
+    },
+    {
+      "code": "340",
+      "description": "Productos semiterminados A"
+    },
+    {
+      "code": "341",
+      "description": "Productos semiterminados B"
+    },
+    {
+      "code": "35",
+      "description": "PRODUCTOS TERMINADOS"
+    },
+    {
+      "code": "350",
+      "description": "Productos terminados A"
+    },
+    {
+      "code": "351",
+      "description": "Productos terminados B"
+    },
+    {
+      "code": "36",
+      "description": "SUBPRODUCTOS, RESIDUOS Y MATERIALES RECUPERADOS"
+    },
+    {
+      "code": "360",
+      "description": "Subproductos A"
+    },
+    {
+      "code": "361",
+      "description": "Subproductos B"
+    },
+    {
+      "code": "365",
+      "description": "Residuos A"
+    },
+    {
+      "code": "366",
+      "description": "Residuos B"
+    },
+    {
+      "code": "368",
+      "description": "Materiales recuperados A"
+    },
+    {
+      "code": "369",
+      "description": "Materiales recuperados B"
+    },
+    {
+      "code": "39",
+      "description": "DETERIORO DE VALOR DE LAS EXISTENCIAS"
+    },
+    {
+      "code": "390",
+      "description": "Deterioro de valor de las mercaderías"
+    },
+    {
+      "code": "391",
+      "description": "Deterioro de valor de las materias primas"
+    },
+    {
+      "code": "392",
+      "description": "Deterioro de valor de otros aprovisionamientos"
+    },
+    {
+      "code": "393",
+      "description": "Deterioro de valor de los productos en curso"
+    },
+    {
+      "code": "394",
+      "description": "Deterioro de valor de los productos semiterminados"
+    },
+    {
+      "code": "395",
+      "description": "Deterioro de valor de los productos terminados"
+    },
+    {
+      "code": "396",
+      "description": "Deterioro de valor de los subproductos, residuos y materiales recuperados"
+    },
+    {
+      "code": "4",
+      "description": "Acreedores y deudores por operaciones comerciales"
+    },
+    {
+      "code": "40",
+      "description": "PROVEEDORES"
+    },
+    {
+      "code": "400",
+      "description": "Proveedores"
+    },
+    {
+      "code": "4000",
+      "description": "Proveedores (euros)"
+    },
+    {
+      "code": "4004",
+      "description": "Proveedores (moneda extranjera)"
+    },
+    {
+      "code": "4009",
+      "description": "Proveedores, facturas pendientes de recibir o de formalizar"
+    },
+    {
+      "code": "401",
+      "description": "Proveedores, efectos comerciales a pagar"
+    },
+    {
+      "code": "403",
+      "description": "Proveedores, empresas del grupo"
+    },
+    {
+      "code": "4030",
+      "description": "Proveedores, empresas del grupo (euros)"
+    },
+    {
+      "code": "4031",
+      "description": "Efectos comerciales a pagar, empresas del grupo"
+    },
+    {
+      "code": "4034",
+      "description": "Proveedores, empresas del grupo (moneda extranjera)"
+    },
+    {
+      "code": "4036",
+      "description": "Envases y embalajes a devolver a proveedores, empresas del grupo"
+    },
+    {
+      "code": "4039",
+      "description": "Proveedores, empresas del grupo, facturas pendientes de recibir o de formalizar"
+    },
+    {
+      "code": "404",
+      "description": "Proveedores, empresas asociadas"
+    },
+    {
+      "code": "405",
+      "description": "Proveedores, otras partes vinculadas"
+    },
+    {
+      "code": "406",
+      "description": "Envases y embalajes a devolver a proveedores"
+    },
+    {
+      "code": "407",
+      "description": "Anticipos a proveedores"
+    },
+    {
+      "code": "41",
+      "description": "ACREEDORES VARIOS"
+    },
+    {
+      "code": "410",
+      "description": "Acreedores por prestaciones de servicios"
+    },
+    {
+      "code": "4100",
+      "description": "Acreedores por prestaciones de servicios (euros)"
+    },
+    {
+      "code": "4104",
+      "description": "Acreedores por prestaciones de servicios, (moneda extranjera)"
+    },
+    {
+      "code": "4109",
+      "description": "Acreedores por prestaciones de servicios, facturas pendientes de recibir o de formalizar"
+    },
+    {
+      "code": "411",
+      "description": "Acreedores, efectos comerciales a pagar"
+    },
+    {
+      "code": "419",
+      "description": "Acreedores por operaciones en común"
+    },
+    {
+      "code": "43",
+      "description": "CLIENTES"
+    },
+    {
+      "code": "430",
+      "description": "Clientes"
+    },
+    {
+      "code": "4300",
+      "description": "Clientes (euros)"
+    },
+    {
+      "code": "4304",
+      "description": "Clientes (moneda extranjera)"
+    },
+    {
+      "code": "4309",
+      "description": "Clientes, facturas pendientes de formalizar"
+    },
+    {
+      "code": "431",
+      "description": "Clientes, efectos comerciales a cobrar"
+    },
+    {
+      "code": "4310",
+      "description": "Efectos comerciales en cartera"
+    },
+    {
+      "code": "4311",
+      "description": "Efectos comerciales descontados"
+    },
+    {
+      "code": "4312",
+      "description": "Efectos comerciales en gestión de cobro"
+    },
+    {
+      "code": "4315",
+      "description": "Efectos comerciales impagados"
+    },
+    {
+      "code": "432",
+      "description": "Clientes, operaciones de «factoring»"
+    },
+    {
+      "code": "433",
+      "description": "Clientes, empresas del grupo"
+    },
+    {
+      "code": "4330",
+      "description": "Clientes empresas del grupo (euros)"
+    },
+    {
+      "code": "4331",
+      "description": "Efectos comerciales a cobrar, empresas del grupo"
+    },
+    {
+      "code": "4332",
+      "description": "Clientes empresas del grupo, operaciones de «factoring»"
+    },
+    {
+      "code": "4334",
+      "description": "Clientes empresas del grupo (moneda extranjera)"
+    },
+    {
+      "code": "4336",
+      "description": "Clientes empresas del grupo de dudoso cobro"
+    },
+    {
+      "code": "4337",
+      "description": "Envases y embalajes a devolver a clientes, empresas del grupo"
+    },
+    {
+      "code": "4339",
+      "description": "Clientes empresas del grupo, facturas pendientes de formalizar"
+    },
+    {
+      "code": "434",
+      "description": "Clientes, empresas asociadas"
+    },
+    {
+      "code": "435",
+      "description": "Clientes, otras partes vinculadas"
+    },
+    {
+      "code": "436",
+      "description": "Clientes de dudoso cobro"
+    },
+    {
+      "code": "437",
+      "description": "Envases y embalajes a devolver por clientes"
+    },
+    {
+      "code": "438",
+      "description": "Anticipos de clientes"
+    },
+    {
+      "code": "44",
+      "description": "DEUDORES VARIOS"
+    },
+    {
+      "code": "440",
+      "description": "Deudores"
+    },
+    {
+      "code": "4400",
+      "description": "Deudores (euros)"
+    },
+    {
+      "code": "4404",
+      "description": "Deudores (moneda extranjera)"
+    },
+    {
+      "code": "4409",
+      "description": "Deudores, facturas pendientes de formalizar"
+    },
+    {
+      "code": "441",
+      "description": "Deudores, efectos comerciales a cobrar"
+    },
+    {
+      "code": "4410",
+      "description": "Deudores, efectos comerciales en cartera"
+    },
+    {
+      "code": "4411",
+      "description": "Deudores, efectos comerciales descontados"
+    },
+    {
+      "code": "4412",
+      "description": "Deudores, efectos comerciales en gestión de cobro"
+    },
+    {
+      "code": "4415",
+      "description": "Deudores, efectos comerciales impagados"
+    },
+    {
+      "code": "446",
+      "description": "Deudores de dudoso cobro"
+    },
+    {
+      "code": "449",
+      "description": "Deudores por operaciones en común"
+    },
+    {
+      "code": "46",
+      "description": "PERSONAL"
+    },
+    {
+      "code": "460",
+      "description": "Anticipos de remuneraciones"
+    },
+    {
+      "code": "465",
+      "description": "Remuneraciones pendientes de pago"
+    },
+    {
+      "code": "466",
+      "description": "Remuneraciones mediante sistemas de aportación definida pendientes de pago"
+    },
+    {
+      "code": "47",
+      "description": "ADMINISTRACIONES PÚBLICAS"
+    },
+    {
+      "code": "470",
+      "description": "Hacienda Pública, deudora por diversos conceptos"
+    },
+    {
+      "code": "4700",
+      "description": "Hacienda Pública, deudora por IVA"
+    },
+    {
+      "code": "4708",
+      "description": "Hacienda Pública, deudora por subvenciones concedidas"
+    },
+    {
+      "code": "4709",
+      "description": "Hacienda Pública, deudora por devolución de impuestos"
+    },
+    {
+      "code": "471",
+      "description": "Organismos de la Seguridad Social, deudores"
+    },
+    {
+      "code": "472",
+      "description": "Hacienda Pública, IVA soportado"
+    },
+    {
+      "code": "473",
+      "description": "Hacienda Pública, retenciones y pagos a cuenta"
+    },
+    {
+      "code": "474",
+      "description": "Activos por impuesto diferido"
+    },
+    {
+      "code": "4740",
+      "description": "Activos por diferencias temporarias deducibles"
+    },
+    {
+      "code": "4742",
+      "description": "Derechos por deducciones y bonificaciones pendientes de aplicar"
+    },
+    {
+      "code": "4745",
+      "description": "Crédito por pérdidas a compensar del ejercicio"
+    },
+    {
+      "code": "475",
+      "description": "Hacienda Pública, acreedora por conceptos fiscales"
+    },
+    {
+      "code": "4750",
+      "description": "Hacienda Pública, acreedora por IVA"
+    },
+    {
+      "code": "4751",
+      "description": "Hacienda Pública, acreedora por retenciones practicadas"
+    },
+    {
+      "code": "4752",
+      "description": "Hacienda Pública, acreedora por impuesto sobre sociedades"
+    },
+    {
+      "code": "4758",
+      "description": "Hacienda Pública, acreedora por subvenciones a reintegrar"
+    },
+    {
+      "code": "476",
+      "description": "Organismos de la Seguridad Social, acreedores"
+    },
+    {
+      "code": "477",
+      "description": "Hacienda Pública, IVA repercutido"
+    },
+    {
+      "code": "479",
+      "description": "Pasivos por diferencias temporarias imponibles"
+    },
+    {
+      "code": "48",
+      "description": "AJUSTES POR PERIODIFICACIÓN"
+    },
+    {
+      "code": "480",
+      "description": "Gastos anticipados"
+    },
+    {
+      "code": "485",
+      "description": "Ingresos anticipados"
+    },
+    {
+      "code": "49",
+      "description": "DETERIORO DE VALOR DE CRÉDITOS COMERCIALES Y PROVISIONES A CORTO PLAZO"
+    },
+    {
+      "code": "490",
+      "description": "Deterioro de valor de créditos por operaciones comerciales"
+    },
+    {
+      "code": "493",
+      "description": "Deterioro de valor de créditos por operaciones comerciales con partes vinculadas"
+    },
+    {
+      "code": "4933",
+      "description": "Deterioro de valor de créditos por operaciones comerciales con empresas del grupo"
+    },
+    {
+      "code": "4934",
+      "description": "Deterioro de valor de créditos por operaciones comerciales con empresas asociadas"
+    },
+    {
+      "code": "4935",
+      "description": "Deterioro de valor de créditos por operaciones comerciales con otras partes vinculadas"
+    },
+    {
+      "code": "499",
+      "description": "Provisiones por operaciones comerciales"
+    },
+    {
+      "code": "4994",
+      "description": "Provisión por contratos onerosos"
+    },
+    {
+      "code": "4999",
+      "description": "Provisión para otras operaciones comerciales"
+    },
+    {
+      "code": "5",
+      "description": "Cuentas financieras"
+    },
+    {
+      "code": "50",
+      "description": "EMPRÉSTITOS, DEUDAS CON CARÁCTERÍSTICAS ESPECIALES Y OTRAS EMISIONES ANÁLOGAS A CORTO PLAZO"
+    },
+    {
+      "code": "500",
+      "description": "Obligaciones y bonos a corto plazo Obligaciones y bonos convertibles a corto plazo"
+    },
+    {
+      "code": "501",
+      "description": "Acciones o participaciones a corto plazo consideradas como pasivos financieros"
+    },
+    {
+      "code": "505",
+      "description": "Deudas representadas en otros valores negociables a corto plazo"
+    },
+    {
+      "code": "506",
+      "description": "Intereses a corto plazo de empréstitos y otras emisiones análogas"
+    },
+    {
+      "code": "507",
+      "description": "Dividendos de acciones o participaciones consideradas como pasivos financieros"
+    },
+    {
+      "code": "509",
+      "description": "Valores negociables amortizados"
+    },
+    {
+      "code": "5090",
+      "description": "Obligaciones y bonos amortizados"
+    },
+    {
+      "code": "5091",
+      "description": "Obligaciones y bonos convertibles amortizados"
+    },
+    {
+      "code": "5095",
+      "description": "Otros valores negociables amortizados"
+    },
+    {
+      "code": "51",
+      "description": "DEUDAS A CORTO PLAZO CON PARTES VINCULADAS"
+    },
+    {
+      "code": "510",
+      "description": "Deudas a corto plazo con entidades de crédito vinculadas"
+    },
+    {
+      "code": "5103",
+      "description": "Deudas a corto plazo con entidades de crédito, empresas del grupo"
+    },
+    {
+      "code": "5104",
+      "description": "Deudas a corto plazo con entidades de crédito, empresas asociadas"
+    },
+    {
+      "code": "5105",
+      "description": "Deudas a corto plazo con otras entidades de crédito vinculadas"
+    },
+    {
+      "code": "511",
+      "description": "Proveedores de inmovilizado a corto plazo, partes vinculadas"
+    },
+    {
+      "code": "5113",
+      "description": "Proveedores de inmovilizado a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "5114",
+      "description": "Proveedores de inmovilizado a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "5115",
+      "description": "Proveedores de inmovilizado a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "512",
+      "description": "Acreedores por arrendamiento financiero a corto plazo, partes vinculadas."
+    },
+    {
+      "code": "5123",
+      "description": "Acreedores por arrendamiento financiero a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "5124",
+      "description": "Acreedores por arrendamiento financiero a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "5125",
+      "description": "Acreedores por arrendamiento financiero a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "513",
+      "description": "Otras deudas a corto plazo con partes vinculadas"
+    },
+    {
+      "code": "5133",
+      "description": "Otras deudas a corto plazo con empresas del grupo"
+    },
+    {
+      "code": "5134",
+      "description": "Otras deudas a corto plazo con empresas asociadas"
+    },
+    {
+      "code": "5135",
+      "description": "Otras deudas a corto plazo con otras partes vinculadas"
+    },
+    {
+      "code": "514",
+      "description": "Intereses a corto plazo de deudas con partes vinculadas"
+    },
+    {
+      "code": "5143",
+      "description": "Intereses a corto plazo de deudas, empresas del grupo"
+    },
+    {
+      "code": "5144",
+      "description": "Intereses a corto plazo de deudas, empresas asociadas"
+    },
+    {
+      "code": "5145",
+      "description": "Intereses a corto plazo de deudas, otras partes vinculadas"
+    },
+    {
+      "code": "52",
+      "description": "DEUDAS A CORTO PLAZO POR PRÉSTAMOS RECIBIDOS Y OTROS CONCEPTOS"
+    },
+    {
+      "code": "520",
+      "description": "Deudas a corto plazo con entidades de crédito"
+    },
+    {
+      "code": "5200",
+      "description": "Préstamos a corto plazo de entidades de crédito"
+    },
+    {
+      "code": "5201",
+      "description": "Deudas a corto plazo por crédito dispuesto"
+    },
+    {
+      "code": "5208",
+      "description": "Deudas por efectos descontados"
+    },
+    {
+      "code": "5209",
+      "description": "Deudas por operaciones de «factoring»"
+    },
+    {
+      "code": "521",
+      "description": "Deudas a corto plazo"
+    },
+    {
+      "code": "522",
+      "description": "Deudas a corto plazo transformables en subvenciones, donaciones y legados"
+    },
+    {
+      "code": "523",
+      "description": "Proveedores de inmovilizado a corto plazo"
+    },
+    {
+      "code": "524",
+      "description": "Acreedores por arrendamiento financiero a corto plazo"
+    },
+    {
+      "code": "525",
+      "description": "Efectos a pagar a corto plazo"
+    },
+    {
+      "code": "526",
+      "description": "Dividendo activo a pagar"
+    },
+    {
+      "code": "527",
+      "description": "Intereses a corto plazo de deudas con entidades de crédito"
+    },
+    {
+      "code": "528",
+      "description": "Intereses a corto plazo de deudas"
+    },
+    {
+      "code": "529",
+      "description": "Provisiones a corto plazo"
+    },
+    {
+      "code": "5290",
+      "description": "Provisión a corto plazo por retribuciones al personal"
+    },
+    {
+      "code": "5291",
+      "description": "Provisión a corto plazo para impuestos"
+    },
+    {
+      "code": "5292",
+      "description": "Provisión a corto plazo para otras responsabilidades"
+    },
+    {
+      "code": "5293",
+      "description": "Provisión a corto plazo por desmantelamiento, retiro o rehabilitación del inmovilizado"
+    },
+    {
+      "code": "5295",
+      "description": "Provisión a corto plazo para actuaciones medioambientales"
+    },
+    {
+      "code": "5296",
+      "description": "Provisión a corto plazo para reestructuraciones"
+    },
+    {
+      "code": "5297",
+      "description": "Provisión a corto plazo por transacciones con pagos basados en instrumentos de patrimonio"
+    },
+    {
+      "code": "53",
+      "description": "INVERSIONES FINANCIERAS A CORTO PLAZO EN PARTES VINCULADAS"
+    },
+    {
+      "code": "530",
+      "description": "Participaciones a corto plazo en partes vinculadas"
+    },
+    {
+      "code": "5303",
+      "description": "Participaciones a corto plazo, en empresas del grupo"
+    },
+    {
+      "code": "5304",
+      "description": "Participaciones a corto plazo, en empresas asociadas"
+    },
+    {
+      "code": "5305",
+      "description": "Participaciones a corto plazo, en otras partes vinculadas"
+    },
+    {
+      "code": "531",
+      "description": "Valores representativos de deuda a corto plazo de partes vinculadas"
+    },
+    {
+      "code": "5313",
+      "description": "Valores representativos de deuda a corto plazo de empresas del grupo"
+    },
+    {
+      "code": "5314",
+      "description": "Valores representativos de deuda a corto plazo de empresas asociadas"
+    },
+    {
+      "code": "5315",
+      "description": "Valores representativos de deuda a corto plazo de otras partes vinculadas"
+    },
+    {
+      "code": "532",
+      "description": "Créditos a corto plazo a partes vinculadas"
+    },
+    {
+      "code": "5323",
+      "description": "Créditos a corto plazo a empresas del grupo"
+    },
+    {
+      "code": "5324",
+      "description": "Créditos a corto plazo a empresas asociadas"
+    },
+    {
+      "code": "5325",
+      "description": "Créditos a corto plazo a otras partes vinculadas"
+    },
+    {
+      "code": "533",
+      "description": "Intereses a corto plazo de valores representativos de deuda de partes vinculadas"
+    },
+    {
+      "code": "5333",
+      "description": "Intereses a corto plazo de valores representativos de deuda de empresas del grupo"
+    },
+    {
+      "code": "5334",
+      "description": "Intereses a corto plazo de valores representativos de deuda de empresas asociadas"
+    },
+    {
+      "code": "5335",
+      "description": "Intereses a corto plazo de valores representativos de deuda de otras partes vinculadas"
+    },
+    {
+      "code": "534",
+      "description": "Intereses a corto plazo de créditos a partes vinculadas"
+    },
+    {
+      "code": "5343",
+      "description": "Intereses a corto plazo de créditos a empresas del grupo"
+    },
+    {
+      "code": "5344",
+      "description": "Intereses a corto plazo de créditos a empresas asociadas"
+    },
+    {
+      "code": "5345",
+      "description": "Intereses a corto plazo de créditos a otras partes vinculadas"
+    },
+    {
+      "code": "535",
+      "description": "Dividendo a cobrar de inversiones financieras en partes vinculadas"
+    },
+    {
+      "code": "5353",
+      "description": "Dividendo a cobrar de empresas del grupo"
+    },
+    {
+      "code": "5354",
+      "description": "Dividendo a cobrar de empresas asociadas"
+    },
+    {
+      "code": "5355",
+      "description": "Dividendo a cobrar de otras partes vinculadas"
+    },
+    {
+      "code": "539",
+      "description": "Desembolsos pendientes sobre participaciones a corto plazo en partes vinculadas"
+    },
+    {
+      "code": "5393",
+      "description": "Desembolsos pendientes sobre participaciones a corto plazo en empresas del grupo."
+    },
+    {
+      "code": "5394",
+      "description": "Desembolsos pendientes sobre participaciones a corto plazo en empresas asociadas."
+    },
+    {
+      "code": "5395",
+      "description": "Desembolsos pendientes sobre participaciones a corto plazo en otras partes vinculadas"
+    },
+    {
+      "code": "54",
+      "description": "OTRAS INVERSIONES FINANCIERAS A CORTO PLAZO"
+    },
+    {
+      "code": "540",
+      "description": "Inversiones financieras a corto plazo en instrumentos de patrimonio"
+    },
+    {
+      "code": "541",
+      "description": "Valores representativos de deuda a corto plazo"
+    },
+    {
+      "code": "542",
+      "description": "Créditos a corto plazo"
+    },
+    {
+      "code": "543",
+      "description": "Créditos a corto plazo por enajenación de inmovilizado"
+    },
+    {
+      "code": "544",
+      "description": "Créditos a corto plazo al personal"
+    },
+    {
+      "code": "545",
+      "description": "Dividendo a cobrar"
+    },
+    {
+      "code": "546",
+      "description": "Intereses a corto plazo de valores representativos de deudas"
+    },
+    {
+      "code": "547",
+      "description": "Intereses a corto plazo de créditos"
+    },
+    {
+      "code": "548",
+      "description": "Imposiciones a corto plazo"
+    },
+    {
+      "code": "549",
+      "description": "Desembolsos pendientes sobre participaciones en el patrimonio neto a corto plazo"
+    },
+    {
+      "code": "55",
+      "description": "OTRAS CUENTAS NO BANCARIAS"
+    },
+    {
+      "code": "550",
+      "description": "Titular de la explotación"
+    },
+    {
+      "code": "551",
+      "description": "Cuenta corriente con socios y administradores"
+    },
+    {
+      "code": "552",
+      "description": "Cuenta corriente con otras personas y entidades vinculadas"
+    },
+    {
+      "code": "5523",
+      "description": "Cuenta corriente con empresas del grupo"
+    },
+    {
+      "code": "5524",
+      "description": "Cuenta corriente con empresas asociadas"
+    },
+    {
+      "code": "5525",
+      "description": "Cuenta corriente con otras partes vinculadas"
+    },
+    {
+      "code": "553",
+      "description": "Cuentas corrientes en fusiones y escisiones"
+    },
+    {
+      "code": "5530",
+      "description": "Socios de sociedad disuelta"
+    },
+    {
+      "code": "5531",
+      "description": "Socios, cuenta de fusión"
+    },
+    {
+      "code": "5532",
+      "description": "Socios de sociedad escindida"
+    },
+    {
+      "code": "5533",
+      "description": "Socios, cuenta de escisión"
+    },
+    {
+      "code": "554",
+      "description": "Cuenta corriente con uniones temporales de empresas y comunidades de bienes"
+    },
+    {
+      "code": "555",
+      "description": "Partidas pendientes de aplicación"
+    },
+    {
+      "code": "556",
+      "description": "Desembolsos exigidos sobre participaciones en el patrimonio neto"
+    },
+    {
+      "code": "5563",
+      "description": "Desembolsos exigidos sobre participaciones, empresas del grupo"
+    },
+    {
+      "code": "5564",
+      "description": "Desembolsos exigidos sobre participaciones, empresas asociadas"
+    },
+    {
+      "code": "5565",
+      "description": "Desembolsos exigidos sobre participaciones, otras partes vinculadas"
+    },
+    {
+      "code": "5566",
+      "description": "Desembolsos exigidos sobre participaciones de otras empresas"
+    },
+    {
+      "code": "557",
+      "description": "Dividendo activo a cuenta"
+    },
+    {
+      "code": "558",
+      "description": "Socios por desembolsos exigidos"
+    },
+    {
+      "code": "5580",
+      "description": "Socios por desembolsos exigidos sobre acciones o participaciones ordinarias"
+    },
+    {
+      "code": "5585",
+      "description": "Socios por desembolsos exigidos sobre acciones o participaciones consideradas como pasivos financieros"
+    },
+    {
+      "code": "559",
+      "description": "Derivados financieros a corto plazo"
+    },
+    {
+      "code": "5590",
+      "description": "Activos por derivados financieros a corto plazo, cartera de negociación"
+    },
+    {
+      "code": "5593",
+      "description": "Activos por derivados financieros a corto plazo, instrumentos de cobertura"
+    },
+    {
+      "code": "5595",
+      "description": "Pasivos por derivados financieros a corto plazo, cartera de negociación"
+    },
+    {
+      "code": "5598",
+      "description": "Pasivos por derivados financieros a corto plazo, instrumentos de cobertura"
+    },
+    {
+      "code": "56",
+      "description": "FIANZAS Y DEPÓSITOS RECIBIDOS Y CONSTITUIDOS A CORTO PLAZO Y AJUSTES POR PERIODIFICACIÓN"
+    },
+    {
+      "code": "560",
+      "description": "Fianzas recibidas a corto plazo"
+    },
+    {
+      "code": "561",
+      "description": "Depósitos recibidos a corto plazo"
+    },
+    {
+      "code": "565",
+      "description": "Fianzas constituidas a corto plazo"
+    },
+    {
+      "code": "566",
+      "description": "Depósitos constituidos a corto plazo"
+    },
+    {
+      "code": "567",
+      "description": "Intereses pagados por anticipado"
+    },
+    {
+      "code": "568",
+      "description": "Intereses cobrados por anticipado"
+    },
+    {
+      "code": "569",
+      "description": "Garantías financieras a corto plazo"
+    },
+    {
+      "code": "57",
+      "description": "TESORERÍA"
+    },
+    {
+      "code": "570",
+      "description": "Caja, euros"
+    },
+    {
+      "code": "571",
+      "description": "Caja, moneda extranjera"
+    },
+    {
+      "code": "572",
+      "description": "Bancos e instituciones de crédito c/c vista, euros"
+    },
+    {
+      "code": "573",
+      "description": "Bancos e instituciones de crédito c/c vista, moneda extranjera"
+    },
+    {
+      "code": "574",
+      "description": "Bancos e instituciones de crédito, cuentas de ahorro, euros"
+    },
+    {
+      "code": "575",
+      "description": "Bancos e instituciones de crédito, cuentas de ahorro, moneda extranjera"
+    },
+    {
+      "code": "576",
+      "description": "Inversiones a corto plazo de gran liquidez"
+    },
+    {
+      "code": "58",
+      "description": "ACTIVOS NO CORRIENTES MANTENIDOS PARA LA VENTA Y ACTIVOS Y PASIVOS ASOCIADOS"
+    },
+    {
+      "code": "580",
+      "description": "Inmovilizado"
+    },
+    {
+      "code": "581",
+      "description": "Inversiones con personas y entidades vinculadas"
+    },
+    {
+      "code": "582",
+      "description": "Inversiones financieras"
+    },
+    {
+      "code": "583",
+      "description": "Existencias, deudores comerciales y otras cuentas a cobrar"
+    },
+    {
+      "code": "584",
+      "description": "Otros activos"
+    },
+    {
+      "code": "585",
+      "description": "Provisiones"
+    },
+    {
+      "code": "586",
+      "description": "Deudas con características especiales"
+    },
+    {
+      "code": "587",
+      "description": "Deudas con personas y entidades vinculadas"
+    },
+    {
+      "code": "588",
+      "description": "Acreedores comerciales y otras cuentas a pagar"
+    },
+    {
+      "code": "589",
+      "description": "Otros pasivos"
+    },
+    {
+      "code": "59",
+      "description": "DETERIORO DEL VALOR DE INVERSIONES FINANCIERAS A CORTO PLAZO Y DE ACTIVOS NO CORRIENTES MANTENIDOS PARA LA VENTA"
+    },
+    {
+      "code": "593",
+      "description": "Deterioro de valor de participaciones a corto plazo"
+    },
+    {
+      "code": "5933",
+      "description": "Deterioro de valor de participaciones a corto plazo en empresas del grupo"
+    },
+    {
+      "code": "5934",
+      "description": "Deterioro de valor de participaciones a corto plazo en empresas asociadas"
+    },
+    {
+      "code": "5935",
+      "description": "Deterioro de valor de participaciones a corto plazo en otras partes vinculadas"
+    },
+    {
+      "code": "5936",
+      "description": "Deterioro de valor de participaciones a corto plazo en otras empresas."
+    },
+    {
+      "code": "594",
+      "description": "Deterioro de valor de valores representativos de deuda a corto plazo de partes vinculadas"
+    },
+    {
+      "code": "5943",
+      "description": "Deterioro de valor de valores representativos de deuda a corto plazo de empresas del grupo"
+    },
+    {
+      "code": "5944",
+      "description": "Deterioro de valor de valores representativos de deuda a corto plazo de empresas asociadas"
+    },
+    {
+      "code": "5945",
+      "description": "Deterioro de valor de valores representativos de deuda a corto plazo de otras partes vinculadas"
+    },
+    {
+      "code": "595",
+      "description": "Deterioro de valor de créditos a corto plazo a partes vinculadas"
+    },
+    {
+      "code": "5953",
+      "description": "Deterioro de valor de créditos a corto plazo a empresas del grupo"
+    },
+    {
+      "code": "5954",
+      "description": "Deterioro de valor de créditos a corto plazo a empresas asociadas"
+    },
+    {
+      "code": "5955",
+      "description": "Deterioro de valor de créditos a corto plazo a otras partes vinculadas"
+    },
+    {
+      "code": "597",
+      "description": "Deterioro de valor de valores representativos de deuda a corto plazo"
+    },
+    {
+      "code": "598",
+      "description": "Deterioro de valor de créditos a corto plazo"
+    },
+    {
+      "code": "599",
+      "description": "Deterioro de valor de activos no corrientes mantenidos para la venta"
+    },
+    {
+      "code": "5990",
+      "description": "Deterioro de valor de inmovilizado no corriente mantenido para la venta"
+    },
+    {
+      "code": "5991",
+      "description": "Deterioro de valor de inversiones con personas y entidades vinculadas no corrientes mantenidas para la venta"
+    },
+    {
+      "code": "5992",
+      "description": "Deterioro de valor de inversiones financieras no corrientes mantenidas para la venta"
+    },
+    {
+      "code": "5993",
+      "description": "Deterioro de valor de existencias, deudores comerciales y otras cuentas a cobrar integrados en un grupo enajenable mantenido para la venta"
+    },
+    {
+      "code": "5994",
+      "description": "Deterioro de valor de otros activos mantenidos para la venta"
+    },
+    {
+      "code": "6",
+      "description": "Compras y gastos"
+    },
+    {
+      "code": "60",
+      "description": "COMPRAS"
+    },
+    {
+      "code": "600",
+      "description": "Compras de mercaderías"
+    },
+    {
+      "code": "601",
+      "description": "Compras de materias primas"
+    },
+    {
+      "code": "602",
+      "description": "Compras de otros aprovisionamientos"
+    },
+    {
+      "code": "606",
+      "description": "Descuentos sobre compras por pronto pago"
+    },
+    {
+      "code": "6060",
+      "description": "Descuentos sobre compras por pronto pago de mercaderías"
+    },
+    {
+      "code": "6061",
+      "description": "Descuentos sobre compras por pronto pago de materias primas"
+    },
+    {
+      "code": "6062",
+      "description": "Descuentos sobre compras por pronto pago de otros aprovisionamientos"
+    },
+    {
+      "code": "607",
+      "description": "Trabajos realizados por otras empresas"
+    },
+    {
+      "code": "608",
+      "description": "Devoluciones de compras y operaciones similares"
+    },
+    {
+      "code": "6080",
+      "description": "Devoluciones de compras de mercaderías"
+    },
+    {
+      "code": "6081",
+      "description": "Devoluciones de compras de materias primas"
+    },
+    {
+      "code": "6082",
+      "description": "Devoluciones de compras de otros aprovisionamientos"
+    },
+    {
+      "code": "609",
+      "description": "«Rappels» por compras"
+    },
+    {
+      "code": "6090",
+      "description": "«Rappels» por compras de mercaderías"
+    },
+    {
+      "code": "6091",
+      "description": "«Rappels» por compras de materias primas"
+    },
+    {
+      "code": "6092",
+      "description": "«Rappels» por compras de otros aprovisionamientos"
+    },
+    {
+      "code": "61",
+      "description": "VARIACIÓN DE EXISTENCIAS"
+    },
+    {
+      "code": "610",
+      "description": "Variación de existencias de mercaderías"
+    },
+    {
+      "code": "611",
+      "description": "Variación de existencias de materias primas"
+    },
+    {
+      "code": "612",
+      "description": "Variación de existencias de otros aprovisionamientos"
+    },
+    {
+      "code": "62",
+      "description": "SERVICIOS EXTERIORES"
+    },
+    {
+      "code": "620",
+      "description": "Gastos en investigación y desarrollo del ejercicio"
+    },
+    {
+      "code": "621",
+      "description": "Arrendamientos y cánones"
+    },
+    {
+      "code": "622",
+      "description": "Reparaciones y conservación"
+    },
+    {
+      "code": "623",
+      "description": "Servicios de profesionales independientes"
+    },
+    {
+      "code": "624",
+      "description": "Transportes"
+    },
+    {
+      "code": "625",
+      "description": "Primas de seguros"
+    },
+    {
+      "code": "626",
+      "description": "Servicios bancarios y similares"
+    },
+    {
+      "code": "627",
+      "description": "Publicidad, propaganda y relaciones públicas"
+    },
+    {
+      "code": "628",
+      "description": "Suministros"
+    },
+    {
+      "code": "629",
+      "description": "Otros servicios"
+    },
+    {
+      "code": "63",
+      "description": "TRIBUTOS"
+    },
+    {
+      "code": "630",
+      "description": "Impuesto sobre beneficios"
+    },
+    {
+      "code": "6300",
+      "description": "Impuesto corriente"
+    },
+    {
+      "code": "6301",
+      "description": "Impuesto diferido"
+    },
+    {
+      "code": "631",
+      "description": "Otros tributos"
+    },
+    {
+      "code": "633",
+      "description": "Ajustes negativos en la imposición sobre beneficios"
+    },
+    {
+      "code": "634",
+      "description": "Ajustes negativos en la imposición indirecta"
+    },
+    {
+      "code": "6341",
+      "description": "Ajustes negativos en IVA de activo corriente"
+    },
+    {
+      "code": "6342",
+      "description": "Ajustes negativos en IVA de inversiones"
+    },
+    {
+      "code": "636",
+      "description": "Devolución de impuestos"
+    },
+    {
+      "code": "638",
+      "description": "Ajustes positivos en la imposición sobre beneficios"
+    },
+    {
+      "code": "639",
+      "description": "Ajustes positivos en la imposición indirecta"
+    },
+    {
+      "code": "6391",
+      "description": "Ajustes positivos en IVA de activo corriente"
+    },
+    {
+      "code": "6392",
+      "description": "Ajustes positivos en IVA de inversiones"
+    },
+    {
+      "code": "64",
+      "description": "GASTOS DE PERSONAL"
+    },
+    {
+      "code": "640",
+      "description": "Sueldos y salarios"
+    },
+    {
+      "code": "641",
+      "description": "Indemnizaciones"
+    },
+    {
+      "code": "642",
+      "description": "Seguridad Social a cargo de la empresa"
+    },
+    {
+      "code": "643",
+      "description": "Retribuciones a largo plazo mediante sistemas de aportación definida"
+    },
+    {
+      "code": "644",
+      "description": "Retribuciones a largo plazo mediante sistemas de prestación definida"
+    },
+    {
+      "code": "6440",
+      "description": "Contribuciones anuales"
+    },
+    {
+      "code": "6442",
+      "description": "Otros costes"
+    },
+    {
+      "code": "645",
+      "description": "Retribuciones al personal mediante instrumentos de patrimonio"
+    },
+    {
+      "code": "6450",
+      "description": "Retribuciones al personal liquidados con instrumentos de patrimonio"
+    },
+    {
+      "code": "6457",
+      "description": "Retribuciones al personal liquidados en efectivo basado en instrumentos de patrimonio"
+    },
+    {
+      "code": "649",
+      "description": "Otros gastos sociales"
+    },
+    {
+      "code": "65",
+      "description": "OTROS GASTOS DE GESTIÓN"
+    },
+    {
+      "code": "650",
+      "description": "Pérdidas de créditos comerciales incobrables"
+    },
+    {
+      "code": "651",
+      "description": "Resultados de operaciones en común"
+    },
+    {
+      "code": "6510",
+      "description": "Beneficio transferido (gestor)"
+    },
+    {
+      "code": "6511",
+      "description": "Pérdida soportada (partícipe o asociado no gestor)"
+    },
+    {
+      "code": "659",
+      "description": "Otras pérdidas en gestión corriente"
+    },
+    {
+      "code": "66",
+      "description": "GASTOS FINANCIEROS"
+    },
+    {
+      "code": "660",
+      "description": "Gastos financieros por actualización de provisiones"
+    },
+    {
+      "code": "661",
+      "description": "Intereses de obligaciones y bonos"
+    },
+    {
+      "code": "6610",
+      "description": "Intereses de obligaciones y bonos a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6611",
+      "description": "Intereses de obligaciones y bonos a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6612",
+      "description": "Intereses de obligaciones y bonos a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6613",
+      "description": "Intereses de obligaciones y bonos a largo plazo, otras empresas"
+    },
+    {
+      "code": "6615",
+      "description": "Intereses de obligaciones y bonos a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "6616",
+      "description": "Intereses de obligaciones y bonos a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "6617",
+      "description": "Intereses de obligaciones y bonos a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6618",
+      "description": "Intereses de obligaciones y bonos a corto plazo, otras empresas"
+    },
+    {
+      "code": "662",
+      "description": "Intereses de deudas"
+    },
+    {
+      "code": "6620",
+      "description": "Intereses de deudas, empresas del grupo"
+    },
+    {
+      "code": "6621",
+      "description": "Intereses de deudas, empresas asociadas"
+    },
+    {
+      "code": "6622",
+      "description": "Intereses de deudas, otras partes vinculadas"
+    },
+    {
+      "code": "6623",
+      "description": "Intereses de deudas con entidades de crédito"
+    },
+    {
+      "code": "6624",
+      "description": "Intereses de deudas, otras empresas"
+    },
+    {
+      "code": "663",
+      "description": "Pérdidas por valoración de instrumentos financieros por su valor razonable"
+    },
+    {
+      "code": "6630",
+      "description": "Pérdidas de cartera de negociación"
+    },
+    {
+      "code": "6631",
+      "description": "Pérdidas de designados por la empresa"
+    },
+    {
+      "code": "6632",
+      "description": "Pérdidas de activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "6633",
+      "description": "Pérdidas de instrumentos de cobertura"
+    },
+    {
+      "code": "6634",
+      "description": "Pérdidas de otros instrumentos financieros"
+    },
+    {
+      "code": "664",
+      "description": "Gastos por dividendos de acciones o participaciones consideradas como pasivos financieros"
+    },
+    {
+      "code": "6640",
+      "description": "Dividendos de pasivos, empresas del grupo"
+    },
+    {
+      "code": "6641",
+      "description": "Dividendos de pasivos, empresas asociadas"
+    },
+    {
+      "code": "6642",
+      "description": "Dividendos de pasivos, otras partes vinculadas"
+    },
+    {
+      "code": "6643",
+      "description": "Dividendos de pasivos, otras empresas"
+    },
+    {
+      "code": "665",
+      "description": "Intereses por descuento de efectos y operaciones de «factoring»"
+    },
+    {
+      "code": "6650",
+      "description": "Intereses por descuento de efectos en entidades de crédito del grupo"
+    },
+    {
+      "code": "6651",
+      "description": "Intereses por descuento de efectos en entidades de crédito asociadas"
+    },
+    {
+      "code": "6652",
+      "description": "Intereses por descuento de efectos en otras entidades de crédito vinculadas"
+    },
+    {
+      "code": "6653",
+      "description": "Intereses por descuento de efectos en otras entidades de crédito"
+    },
+    {
+      "code": "6654",
+      "description": "Intereses por operaciones de «factoring» con entidades de crédito del grupo"
+    },
+    {
+      "code": "6657",
+      "description": "Intereses por operaciones de «factoring» con otras entidades de crédito"
+    },
+    {
+      "code": "666",
+      "description": "Pérdidas en participaciones y valores representativos de deuda"
+    },
+    {
+      "code": "6660",
+      "description": "Pérdidas en valores representativos de deuda a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6661",
+      "description": "Pérdidas en valores representativos de deuda a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6662",
+      "description": "Pérdidas en valores representativos de deuda a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6663",
+      "description": "Pérdidas en participaciones y valores representativos de deuda a largo plazo, otras empresas"
+    },
+    {
+      "code": "6665",
+      "description": "Pérdidas en participaciones y valores representativos de deuda a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "6666",
+      "description": "Pérdidas en participaciones y valores representativos de deuda a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "6667",
+      "description": "Pérdidas en valores representativos de deuda a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6668",
+      "description": "Pérdidas en valores representativos de deuda a corto plazo, otras empresas"
+    },
+    {
+      "code": "667",
+      "description": "Pérdidas de créditos no comerciales"
+    },
+    {
+      "code": "6670",
+      "description": "Pérdidas de créditos a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6671",
+      "description": "Pérdidas de créditos a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6672",
+      "description": "Pérdidas de créditos a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6673",
+      "description": "Pérdidas de créditos a largo plazo, otras empresas"
+    },
+    {
+      "code": "6675",
+      "description": "Pérdidas de créditos a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "6676",
+      "description": "Pérdidas de créditos a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "6677",
+      "description": "Pérdidas de créditos a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6678",
+      "description": "Pérdidas de créditos a corto plazo, otras empresas"
+    },
+    {
+      "code": "668",
+      "description": "Diferencias negativas de cambio"
+    },
+    {
+      "code": "669",
+      "description": "Otros gastos financieros"
+    },
+    {
+      "code": "67",
+      "description": "PÉRDIDAS PROCEDENTES DE ACTIVOS NO CORRIENTES Y GASTOS EXCEPCIONALES"
+    },
+    {
+      "code": "670",
+      "description": "Pérdidas procedentes del inmovilizado intangible"
+    },
+    {
+      "code": "671",
+      "description": "Pérdidas procedentes del inmovilizado material"
+    },
+    {
+      "code": "672",
+      "description": "Pérdidas procedentes de las inversiones inmobiliarias"
+    },
+    {
+      "code": "673",
+      "description": "Pérdidas procedentes de participaciones a largo plazo en partes vinculadas"
+    },
+    {
+      "code": "6733",
+      "description": "Pérdidas procedentes de participaciones a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6734",
+      "description": "Pérdidas procedentes de participaciones a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6735",
+      "description": "Pérdidas procedentes de participaciones a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "675",
+      "description": "Pérdidas por operaciones con obligaciones propias"
+    },
+    {
+      "code": "678",
+      "description": "Gastos excepcionales"
+    },
+    {
+      "code": "68",
+      "description": "DOTACIONES PARA AMORTIZACIONES"
+    },
+    {
+      "code": "680",
+      "description": "Amortización del inmovilizado intangible"
+    },
+    {
+      "code": "681",
+      "description": "Amortización del inmovilizado material"
+    },
+    {
+      "code": "682",
+      "description": "Amortización de las inversiones inmobiliarias"
+    },
+    {
+      "code": "69",
+      "description": "PÉRDIDAS POR DETERIOROY OTRAS DOTACIONES"
+    },
+    {
+      "code": "690",
+      "description": "Pérdidas por deterioro del inmovilizado intangible"
+    },
+    {
+      "code": "691",
+      "description": "Pérdidas por deterioro del inmovilizado material"
+    },
+    {
+      "code": "692",
+      "description": "Pérdidas por deterioro de las inversiones inmobiliarias"
+    },
+    {
+      "code": "693",
+      "description": "Pérdidas por deterioro de existencias"
+    },
+    {
+      "code": "6930",
+      "description": "Pérdidas por deterioro de productos terminados y en curso de fabricación"
+    },
+    {
+      "code": "6931",
+      "description": "Pérdidas por deterioro de mercaderías"
+    },
+    {
+      "code": "6932",
+      "description": "Pérdidas por deterioro de materias primas"
+    },
+    {
+      "code": "6933",
+      "description": "Pérdidas por deterioro de otros aprovisionamientos"
+    },
+    {
+      "code": "694",
+      "description": "Pérdidas por deterioro de créditos por operaciones comerciales"
+    },
+    {
+      "code": "695",
+      "description": "Dotación a la provisión por operaciones comerciales"
+    },
+    {
+      "code": "6954",
+      "description": "Dotación a la provisión por contratos onerosos"
+    },
+    {
+      "code": "6959",
+      "description": "Dotación a la provisión para otras operaciones comerciales"
+    },
+    {
+      "code": "696",
+      "description": "Pérdidas por deterioro de participaciones y valores representativos de deuda a largo plazo"
+    },
+    {
+      "code": "6960",
+      "description": "Pérdidas por deterioro de participaciones en instrumentos de patrimonio neto a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6961",
+      "description": "Pérdidas por deterioro de participaciones en instrumentos de patrimonio neto a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6962",
+      "description": "Pérdidas por deterioro de participaciones en instrumentos de patrimonio neto a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6963",
+      "description": "Pérdidas por deterioro de participaciones en instrumentos de patrimonio neto a largo plazo, otras empresas"
+    },
+    {
+      "code": "6965",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6966",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6967",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6968",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a largo plazo, de otras empresas"
+    },
+    {
+      "code": "697",
+      "description": "Pérdidas por deterioro de créditos a largo plazo"
+    },
+    {
+      "code": "6970",
+      "description": "Pérdidas por deterioro de créditos a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "6971",
+      "description": "Pérdidas por deterioro de créditos a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "6972",
+      "description": "Pérdidas por deterioro de créditos a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6973",
+      "description": "Pérdidas por deterioro de créditos a largo plazo, otras empresas"
+    },
+    {
+      "code": "698",
+      "description": "Pérdidas por deterioro de participaciones y valores representativos de deuda a corto plazo"
+    },
+    {
+      "code": "6980",
+      "description": "Pérdidas por deterioro de participaciones en instrumentos de patrimonio neto a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "6981",
+      "description": "Pérdidas por deterioro de participaciones en instrumentos de patrimonio neto a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "6985",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "6986",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "6987",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6988",
+      "description": "Pérdidas por deterioro en valores representativos de deuda a corto plazo, de otras empresas"
+    },
+    {
+      "code": "699",
+      "description": "Pérdidas por deterioro de créditos a corto plazo"
+    },
+    {
+      "code": "6990",
+      "description": "Pérdidas por deterioro de créditos a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "6991",
+      "description": "Pérdidas por deterioro de créditos a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "6992",
+      "description": "Pérdidas por deterioro de créditos a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "6993",
+      "description": "Pérdidas por deterioro de créditos a corto plazo, otras empresas"
+    },
+    {
+      "code": "7",
+      "description": "Ventas e ingresos"
+    },
+    {
+      "code": "70",
+      "description": "VENTAS DE MERCADERÍAS, DE PRODUCCIÓN PROPIA, DE SERVICIOS, ETC"
+    },
+    {
+      "code": "700",
+      "description": "Ventas de mercaderías"
+    },
+    {
+      "code": "701",
+      "description": "Ventas de productos terminados"
+    },
+    {
+      "code": "702",
+      "description": "Ventas de productos semiterminados"
+    },
+    {
+      "code": "703",
+      "description": "Ventas de subproductos y residuos"
+    },
+    {
+      "code": "704",
+      "description": "Ventas de envases y embalajes"
+    },
+    {
+      "code": "705",
+      "description": "Prestaciones de servicios"
+    },
+    {
+      "code": "706",
+      "description": "Descuentos sobre ventas por pronto pago"
+    },
+    {
+      "code": "7060",
+      "description": "Descuentos sobre ventas por pronto pago de mercaderías"
+    },
+    {
+      "code": "7061",
+      "description": "Descuentos sobre ventas por pronto pago de productos terminados"
+    },
+    {
+      "code": "7062",
+      "description": "Descuentos sobre ventas por pronto pago de productos semiterminados"
+    },
+    {
+      "code": "7063",
+      "description": "Descuentos sobre ventas por pronto pago de subproductos y residuos"
+    },
+    {
+      "code": "708",
+      "description": "Devoluciones de ventas y operaciones similares"
+    },
+    {
+      "code": "7080",
+      "description": "Devoluciones de ventas de mercaderías"
+    },
+    {
+      "code": "7081",
+      "description": "Devoluciones de ventas de productos terminados"
+    },
+    {
+      "code": "7082",
+      "description": "Devoluciones de ventas de productos semiterminados"
+    },
+    {
+      "code": "7083",
+      "description": "Devoluciones de ventas de subproductos y residuos"
+    },
+    {
+      "code": "7084",
+      "description": "Devoluciones de ventas de envases y embalajes"
+    },
+    {
+      "code": "709",
+      "description": "«Rappels» sobre ventas"
+    },
+    {
+      "code": "7090",
+      "description": "«Rappels» sobre ventas de mercaderías"
+    },
+    {
+      "code": "7091",
+      "description": "«Rappels» sobre ventas de productos terminados"
+    },
+    {
+      "code": "7092",
+      "description": "«Rappels» sobre ventas de productos semiterminados"
+    },
+    {
+      "code": "7093",
+      "description": "«Rappels» sobre ventas de subproductos y residuos"
+    },
+    {
+      "code": "7094",
+      "description": "«Rappels» sobre ventas de envases y embalajes"
+    },
+    {
+      "code": "71",
+      "description": "VARIACIÓN DE EXISTENCIAS"
+    },
+    {
+      "code": "710",
+      "description": "Variación de existencias de productos en curso"
+    },
+    {
+      "code": "711",
+      "description": "Variación de existencias de productos semiterminados"
+    },
+    {
+      "code": "712",
+      "description": "Variación de existencias de productos terminados"
+    },
+    {
+      "code": "713",
+      "description": "Variación de existencias de subproductos, residuos y materiales recuperados"
+    },
+    {
+      "code": "73",
+      "description": "TRABAJOS REALIZADOS PARA LA EMPRESA"
+    },
+    {
+      "code": "730",
+      "description": "Trabajos realizados para el inmovilizado intangible"
+    },
+    {
+      "code": "731",
+      "description": "Trabajos realizados para el inmovilizado material"
+    },
+    {
+      "code": "732",
+      "description": "Trabajos realizados en inversiones inmobiliarias"
+    },
+    {
+      "code": "733",
+      "description": "Trabajos realizados para el inmovilizado material en curso"
+    },
+    {
+      "code": "74",
+      "description": "SUBVENCIONES, DONACIONESY LEGADOS"
+    },
+    {
+      "code": "740",
+      "description": "Subvenciones, donaciones y legados a la explotación"
+    },
+    {
+      "code": "746",
+      "description": "Subvenciones, donaciones y legados de capital transferidos al resultado del ejercicio"
+    },
+    {
+      "code": "747",
+      "description": "Otras subvenciones, donaciones y legados transferidos al resultado del ejercicio"
+    },
+    {
+      "code": "75",
+      "description": "OTROS INGRESOS DE GESTIÓN"
+    },
+    {
+      "code": "751",
+      "description": "Resultados de operaciones en común"
+    },
+    {
+      "code": "7510",
+      "description": "Pérdida transferida (gestor)"
+    },
+    {
+      "code": "7511",
+      "description": "Beneficio atribuido (partícipe o asociado no gestor)"
+    },
+    {
+      "code": "752",
+      "description": "Ingresos por arrendamientos"
+    },
+    {
+      "code": "753",
+      "description": "Ingresos de propiedad industrial cedida en explotación"
+    },
+    {
+      "code": "754",
+      "description": "Ingresos por comisiones"
+    },
+    {
+      "code": "755",
+      "description": "Ingresos por servicios al personal"
+    },
+    {
+      "code": "759",
+      "description": "Ingresos por servicios diversos"
+    },
+    {
+      "code": "76",
+      "description": "INGRESOS FINANCIEROS"
+    },
+    {
+      "code": "760",
+      "description": "Ingresos de participaciones en instrumentos de patrimonio"
+    },
+    {
+      "code": "7600",
+      "description": "Ingresos de participaciones en instrumentos de patrimonio, empresas del grupo"
+    },
+    {
+      "code": "7601",
+      "description": "Ingresos de participaciones en instrumentos de patrimonio, empresas asociadas"
+    },
+    {
+      "code": "7602",
+      "description": "Ingresos de participaciones en instrumentos de patrimonio, otras partes vinculadas"
+    },
+    {
+      "code": "7603",
+      "description": "Ingresos de participaciones en instrumentos de patrimonio, otras empresas"
+    },
+    {
+      "code": "761",
+      "description": "Ingresos de valores representativos de deuda"
+    },
+    {
+      "code": "7610",
+      "description": "Ingresos de valores representativos de deuda, empresas del grupo"
+    },
+    {
+      "code": "7611",
+      "description": "Ingresos de valores representativos de deuda, empresas asociadas"
+    },
+    {
+      "code": "7612",
+      "description": "Ingresos de valores representativos de deuda, otras partes vinculadas"
+    },
+    {
+      "code": "7613",
+      "description": "Ingresos de valores representativos de deuda, otras empresas"
+    },
+    {
+      "code": "762",
+      "description": "Ingresos de créditos"
+    },
+    {
+      "code": "7620",
+      "description": "Ingresos de créditos a largo plazo"
+    },
+    {
+      "code": "76200",
+      "description": "Ingresos de créditos a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "76201",
+      "description": "Ingresos de créditos a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "76202",
+      "description": "Ingresos de créditos a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "76203",
+      "description": "Ingresos de créditos a largo plazo, otras empresas"
+    },
+    {
+      "code": "7621",
+      "description": "Ingresos de créditos a corto plazo"
+    },
+    {
+      "code": "76210",
+      "description": "Ingresos de créditos a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "76211",
+      "description": "Ingresos de créditos a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "76212",
+      "description": "Ingresos de créditos a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "76213",
+      "description": "Ingresos de créditos a corto plazo, otras empresas"
+    },
+    {
+      "code": "763",
+      "description": "Beneficios por valoración de instrumentos financieros por su valor razonable"
+    },
+    {
+      "code": "7630",
+      "description": "Beneficios de cartera de negociación"
+    },
+    {
+      "code": "7631",
+      "description": "Beneficios de designados por la empresa"
+    },
+    {
+      "code": "7632",
+      "description": "Beneficios de activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "7633",
+      "description": "Beneficios de instrumentos de cobertura"
+    },
+    {
+      "code": "7634",
+      "description": "Beneficios de otros instrumentos financieros"
+    },
+    {
+      "code": "766",
+      "description": "Beneficios en participaciones y valores representativos de deuda"
+    },
+    {
+      "code": "7660",
+      "description": "Beneficios en valores representativos de deuda a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "7661",
+      "description": "Beneficios en valores representativos de deuda a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "7662",
+      "description": "Beneficios en valores representativos de deuda a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "7663",
+      "description": "Beneficios en participaciones y valores representativos de deuda a largo plazo, otras empresas"
+    },
+    {
+      "code": "7665",
+      "description": "Beneficios en participaciones y valores representativos de deuda a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "7666",
+      "description": "Beneficios en participaciones y valores representativos de deuda a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "7667",
+      "description": "Beneficios en valores representativos de deuda a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "7668",
+      "description": "Beneficios en valores representativos de deuda a corto plazo, otras empresas"
+    },
+    {
+      "code": "767",
+      "description": "Ingresos de activos afectos y de derechos de reembolso relativos a retribuciones a largo plazo"
+    },
+    {
+      "code": "768",
+      "description": "Diferencias positivas de cambio"
+    },
+    {
+      "code": "769",
+      "description": "Otros ingresos financieros"
+    },
+    {
+      "code": "77",
+      "description": "BENEFICIOS PROCEDENTES DE ACTIVOS NO CORRIENTES E INGRESOS EXCEPCIONALES"
+    },
+    {
+      "code": "770",
+      "description": "Beneficios procedentes del inmovilizado intangible"
+    },
+    {
+      "code": "771",
+      "description": "Beneficios procedentes del inmovilizado material"
+    },
+    {
+      "code": "772",
+      "description": "Beneficios procedentes de las inversiones inmobiliarias"
+    },
+    {
+      "code": "773",
+      "description": "Beneficios procedentes de participaciones a largo plazo en partes vinculadas"
+    },
+    {
+      "code": "7733",
+      "description": "Beneficios procedentes de participaciones a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "7734",
+      "description": "Beneficios procedentes de participaciones a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "7735",
+      "description": "Beneficios procedentes de participaciones a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "774",
+      "description": "Diferencia negativa en combinaciones de negocios"
+    },
+    {
+      "code": "775",
+      "description": "Beneficios por operaciones con obligaciones propias"
+    },
+    {
+      "code": "778",
+      "description": "Ingresos excepcionales"
+    },
+    {
+      "code": "79",
+      "description": "EXCESOS Y APLICACIONES DE PROVISIONES Y DE PÉRDIDAS POR DETERIORO"
+    },
+    {
+      "code": "790",
+      "description": "Reversión del deterioro del inmovilizado intangible"
+    },
+    {
+      "code": "791",
+      "description": "Reversión del deterioro del inmovilizado material"
+    },
+    {
+      "code": "792",
+      "description": "Reversión del deterioro de las inversiones inmobiliarias"
+    },
+    {
+      "code": "793",
+      "description": "Reversión del deterioro de existencias"
+    },
+    {
+      "code": "7930",
+      "description": "Reversión del deterioro de productos terminados y en curso de fabricación"
+    },
+    {
+      "code": "7931",
+      "description": "Reversión del deterioro de mercaderías"
+    },
+    {
+      "code": "7932",
+      "description": "Reversión del deterioro de materias primas"
+    },
+    {
+      "code": "7933",
+      "description": "Reversión del deterioro de otros aprovisionamientos"
+    },
+    {
+      "code": "794",
+      "description": "Reversión del deterioro de créditos por operaciones comerciales"
+    },
+    {
+      "code": "795",
+      "description": "Exceso de provisiones"
+    },
+    {
+      "code": "7950",
+      "description": "Exceso de provisión por retribuciones al personal"
+    },
+    {
+      "code": "7951",
+      "description": "Exceso de provisión para impuestos"
+    },
+    {
+      "code": "7952",
+      "description": "Exceso de provisión para otras responsabilidades"
+    },
+    {
+      "code": "7954",
+      "description": "Exceso de provisión por operaciones comerciales"
+    },
+    {
+      "code": "79544",
+      "description": "Exceso de provisión por contratos onerosos"
+    },
+    {
+      "code": "79549",
+      "description": "Exceso de provisión para otras operaciones comerciales"
+    },
+    {
+      "code": "7955",
+      "description": "Exceso de provisión para actuaciones medioambientales"
+    },
+    {
+      "code": "7956",
+      "description": "Exceso de provisión para reestructuraciones"
+    },
+    {
+      "code": "7957",
+      "description": "Exceso de provisión por transacciones con pagos basados en instrumentos de patrimonio"
+    },
+    {
+      "code": "796",
+      "description": "Reversión del deterioro de participaciones y valores representativos de deuda a largo plazo"
+    },
+    {
+      "code": "7960",
+      "description": "Reversión del deterioro de participaciones en instrumentos de patrimonio neto a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "7961",
+      "description": "Reversión del deterioro de participaciones en instrumentos de patrimonio neto a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "7965",
+      "description": "Reversión del deterioro de valores representativos de deuda a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "7966",
+      "description": "Reversión del deterioro de valores representativos de deuda a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "7967",
+      "description": "Reversión del deterioro de valores representativos de deuda a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "7968",
+      "description": "Reversión del deterioro de valores representativos de deuda a largo plazo, otras empresas"
+    },
+    {
+      "code": "797",
+      "description": "Reversión del deterioro de créditos a largo plazo"
+    },
+    {
+      "code": "7970",
+      "description": "Reversión del deterioro de créditos a largo plazo, empresas del grupo"
+    },
+    {
+      "code": "7971",
+      "description": "Reversión del deterioro de créditos a largo plazo, empresas asociadas"
+    },
+    {
+      "code": "7972",
+      "description": "Reversión del deterioro de créditos a largo plazo, otras partes vinculadas"
+    },
+    {
+      "code": "7973",
+      "description": "Reversión del deterioro de créditos a largo plazo, otras empresas"
+    },
+    {
+      "code": "798",
+      "description": "Reversión del deterioro de participaciones y valores representativos de deuda a corto plazo"
+    },
+    {
+      "code": "7980",
+      "description": "Reversión del deterioro de participaciones en instrumentos de patrimonio neto a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "7981",
+      "description": "Reversión del deterioro de participaciones en instrumentos de patrimonio neto a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "7985",
+      "description": "Reversión del deterioro en valores representativos de deuda a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "7986",
+      "description": "Reversión del deterioro en valores representativos de deuda a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "7987",
+      "description": "Reversión del deterioro en valores representativos de deuda a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "7988",
+      "description": "Reversión del deterioro en valores representativos de deuda a corto plazo, otras empresas"
+    },
+    {
+      "code": "799",
+      "description": "Reversión del deterioro de créditos a corto plazo"
+    },
+    {
+      "code": "7990",
+      "description": "Reversión del deterioro de créditos a corto plazo, empresas del grupo"
+    },
+    {
+      "code": "7991",
+      "description": "Reversión del deterioro de créditos a corto plazo, empresas asociadas"
+    },
+    {
+      "code": "7992",
+      "description": "Reversión del deterioro de créditos a corto plazo, otras partes vinculadas"
+    },
+    {
+      "code": "7993",
+      "description": "Reversión del deterioro de créditos a corto plazo, otras empresas"
+    },
+    {
+      "code": "8",
+      "description": "Gastos imputados al patrimonio neto"
+    },
+    {
+      "code": "80",
+      "description": "GASTOS FINANCIEROS POR VALORACIÓN DE ACTIVOS Y PASIVOS"
+    },
+    {
+      "code": "800",
+      "description": "Pérdidas de activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "802",
+      "description": "Transferencia de beneficios en activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "81",
+      "description": "GASTOS EN OPERACIONES DE COBERTURA"
+    },
+    {
+      "code": "810",
+      "description": "Pérdidas por coberturas de flujos de efectivo"
+    },
+    {
+      "code": "811",
+      "description": "Pérdidas por coberturas de inversiones netas en un negocio en el extranjero"
+    },
+    {
+      "code": "812",
+      "description": "Transferencia de beneficios por coberturas de flujos de efectivo"
+    },
+    {
+      "code": "813",
+      "description": "Transferencia de beneficios por coberturas de inversiones netas en un negocio en el extranjero"
+    },
+    {
+      "code": "82",
+      "description": "GASTOS POR DIFERENCIAS DE CONVERSIÓN"
+    },
+    {
+      "code": "820",
+      "description": "Diferencias de conversión negativas"
+    },
+    {
+      "code": "821",
+      "description": "Transferencia de diferencias de conversión positivas"
+    },
+    {
+      "code": "83",
+      "description": "IMPUESTO SOBRE BENEFICIOS"
+    },
+    {
+      "code": "830",
+      "description": "Impuesto sobre beneficios"
+    },
+    {
+      "code": "8300",
+      "description": "Impuesto corriente"
+    },
+    {
+      "code": "8301",
+      "description": "Impuesto diferido"
+    },
+    {
+      "code": "833",
+      "description": "Ajustes negativos en la imposición sobre beneficios"
+    },
+    {
+      "code": "834",
+      "description": "Ingresos fiscales por diferencias permanentes"
+    },
+    {
+      "code": "835",
+      "description": "Ingresos fiscales por deducciones y bonificaciones"
+    },
+    {
+      "code": "836",
+      "description": "Transferencia de diferencias permanentes"
+    },
+    {
+      "code": "837",
+      "description": "Transferencia de deducciones y bonificaciones"
+    },
+    {
+      "code": "838",
+      "description": "Ajustes positivos en la imposición sobre beneficios"
+    },
+    {
+      "code": "84",
+      "description": "TRANSFERENCIAS DE SUBVENCIONES, DONACIONESY LEGADOS"
+    },
+    {
+      "code": "840",
+      "description": "Transferencia de subvenciones oficiales de capital"
+    },
+    {
+      "code": "841",
+      "description": "Transferencia de donaciones y legados de capital"
+    },
+    {
+      "code": "842",
+      "description": "Transferencia de otras subvenciones, donaciones y legados"
+    },
+    {
+      "code": "85",
+      "description": "GASTOS POR PÉRDIDAS ACTUARIALES Y AJUSTES EN LOS ACTIVOS POR RETRIBUCIONES A LARGO PLAZO DE PRESTACIÓN DEFINIDA"
+    },
+    {
+      "code": "850",
+      "description": "Pérdidas actuariales"
+    },
+    {
+      "code": "851",
+      "description": "Ajustes negativos en activos por retribuciones a largo plazo de prestación definida"
+    },
+    {
+      "code": "86",
+      "description": "GASTOS POR ACTIVOS NO CORRIENTES EN VENTA"
+    },
+    {
+      "code": "860",
+      "description": "Pérdidas en activos no corrientes y grupos enajenables de elementos mantenidos para la venta"
+    },
+    {
+      "code": "862",
+      "description": "Transferencia de beneficios en activos no corrientes y grupos enajenables de elementos mantenidos para la venta"
+    },
+    {
+      "code": "89",
+      "description": "GASTOS DE PARTICIPACIONES EN EMPRESAS DEL GRUPO O ASOCIADAS CON AJUSTES VALORATIVOS POSITIVOS PREVIOS"
+    },
+    {
+      "code": "891",
+      "description": "Deterioro de participaciones en el patrimonio, empresas del grupo"
+    },
+    {
+      "code": "892",
+      "description": "Deterioro de participaciones en el patrimonio, empresas asociadas"
+    },
+    {
+      "code": "9",
+      "description": "Ingresos imputados al patrimonio neto"
+    },
+    {
+      "code": "90",
+      "description": "INGRESOS FINANCIEROS POR VALORACIÓN DE ACTIVOSY PASIVOS"
+    },
+    {
+      "code": "900",
+      "description": "Beneficios en activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "902",
+      "description": "Transferencia de pérdidas de activos financieros a valor razonable con cambios en el patrimonio neto"
+    },
+    {
+      "code": "91",
+      "description": "INGRESOS EN OPERACIONES DE COBERTURA"
+    },
+    {
+      "code": "910",
+      "description": "Beneficios por coberturas de flujos de efectivo"
+    },
+    {
+      "code": "911",
+      "description": "Beneficios por coberturas de una inversión neta en un negocio en el extranjero"
+    },
+    {
+      "code": "912",
+      "description": "Transferencia de pérdidas por coberturas de flujos de efectivo"
+    },
+    {
+      "code": "913",
+      "description": "Transferencia de pérdidas por coberturas de una inversión neta en un negocio en el extranjero"
+    },
+    {
+      "code": "92",
+      "description": "INGRESOS POR DIFERENCIAS DE CONVERSIÓN"
+    },
+    {
+      "code": "920",
+      "description": "Diferencias de conversión positivas"
+    },
+    {
+      "code": "921",
+      "description": "Transferencia de diferencias de conversión negativas"
+    },
+    {
+      "code": "94",
+      "description": "INGRESOS POR SUBVENCIONES, DONACIONES Y LEGADOS"
+    },
+    {
+      "code": "940",
+      "description": "Ingresos de subvenciones oficiales de capital"
+    },
+    {
+      "code": "941",
+      "description": "Ingresos de donaciones y legados de capital"
+    },
+    {
+      "code": "942",
+      "description": "Ingresos de otras subvenciones, donaciones y legados"
+    },
+    {
+      "code": "95",
+      "description": "INGRESOS POR GANANCIAS ACTUARIALES Y AJUSTES EN LOS ACTIVOS POR RETRIBUCIONES A LARGO PLAZO DE PRESTACIÓN DEFINIDA"
+    },
+    {
+      "code": "950",
+      "description": "Ganancias actuariales"
+    },
+    {
+      "code": "951",
+      "description": "Ajustes positivos en activos por retribuciones a largo plazo de prestación definida"
+    },
+    {
+      "code": "96",
+      "description": "INGRESOS POR ACTIVOS NO CORRIENTES EN VENTA"
+    },
+    {
+      "code": "960",
+      "description": "Beneficios en activos no corrientes y grupos enajenables de elementos mantenidos para la venta"
+    },
+    {
+      "code": "962",
+      "description": "Transferencia de pérdidas en activos no corrientes y grupos enajenables de elementos mantenidos para la venta"
+    },
+    {
+      "code": "99",
+      "description": "INGRESOS DE PARTICIPACIONES EN EMPRESAS DEL GRUPO O ASOCIADAS CON AJUSTES VALORATIVOS NEGATIVOS PREVIOS"
+    },
+    {
+      "code": "991",
+      "description": "Recuperación de ajustes valorativos negativos previos, empresas del grupo"
+    },
+    {
+      "code": "992",
+      "description": "Recuperación de ajustes valorativos negativos previos, empresas asociadas"
+    },
+    {
+      "code": "993",
+      "description": "Transferencia por deterioro de ajustes valorativos negativos previos, empresas del grupo"
+    },
+    {
+      "code": "994",
+      "description": "Transferencia por deterioro de ajustes valorativos negativos previos, empresas asociadas"
+    }
+  ]
+}

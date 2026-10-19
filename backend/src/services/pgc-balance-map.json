@@ -1,0 +1,3796 @@
+{
+  "version": "PGC-1514-2007-consolidated-2026-10-16-v1",
+  "source": "https://www.boe.es/buscar/act.php?id=BOE-A-2007-19884",
+  "models": {
+    "normal": [
+      {
+        "id": "asset-1",
+        "parent_id": null,
+        "side": "asset",
+        "depth": 0,
+        "label": "A) ACTIVO NO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "asset-2",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "I. Inmovilizado intangible.",
+        "rules": []
+      },
+      {
+        "id": "asset-research",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "Investigación",
+        "rules": [
+          {
+            "prefix": "200",
+            "corrector": false
+          },
+          {
+            "prefix": "2800",
+            "corrector": true
+          },
+          {
+            "prefix": "2900",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-3",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Desarrollo.",
+        "rules": [
+          {
+            "prefix": "201",
+            "corrector": false
+          },
+          {
+            "prefix": "2801",
+            "corrector": true
+          },
+          {
+            "prefix": "2901",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-4",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Concesiones.",
+        "rules": [
+          {
+            "prefix": "202",
+            "corrector": false
+          },
+          {
+            "prefix": "2802",
+            "corrector": true
+          },
+          {
+            "prefix": "2902",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-5",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Patentes, licencias, marcas y similares.",
+        "rules": [
+          {
+            "prefix": "203",
+            "corrector": false
+          },
+          {
+            "prefix": "2803",
+            "corrector": true
+          },
+          {
+            "prefix": "2903",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-6",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Fondo de comercio.",
+        "rules": [
+          {
+            "prefix": "204",
+            "corrector": false
+          },
+          {
+            "prefix": "2804",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-7",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Aplicaciones informáticas.",
+        "rules": [
+          {
+            "prefix": "206",
+            "corrector": false
+          },
+          {
+            "prefix": "2806",
+            "corrector": true
+          },
+          {
+            "prefix": "2906",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-8",
+        "parent_id": "asset-2",
+        "side": "asset",
+        "depth": 2,
+        "label": "6. Otro inmovilizado intangible.",
+        "rules": [
+          {
+            "prefix": "205",
+            "corrector": false
+          },
+          {
+            "prefix": "209",
+            "corrector": false
+          },
+          {
+            "prefix": "2805",
+            "corrector": true
+          },
+          {
+            "prefix": "2905",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-9",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "II. Inmovilizado material.",
+        "rules": []
+      },
+      {
+        "id": "asset-10",
+        "parent_id": "asset-9",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Terrenos y construcciones.",
+        "rules": [
+          {
+            "prefix": "210",
+            "corrector": false
+          },
+          {
+            "prefix": "211",
+            "corrector": false
+          },
+          {
+            "prefix": "2811",
+            "corrector": true
+          },
+          {
+            "prefix": "2910",
+            "corrector": true
+          },
+          {
+            "prefix": "2911",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-11",
+        "parent_id": "asset-9",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Instalaciones técnicas, y otro inmovilizado material.",
+        "rules": [
+          {
+            "prefix": "212",
+            "corrector": false
+          },
+          {
+            "prefix": "213",
+            "corrector": false
+          },
+          {
+            "prefix": "214",
+            "corrector": false
+          },
+          {
+            "prefix": "215",
+            "corrector": false
+          },
+          {
+            "prefix": "216",
+            "corrector": false
+          },
+          {
+            "prefix": "217",
+            "corrector": false
+          },
+          {
+            "prefix": "218",
+            "corrector": false
+          },
+          {
+            "prefix": "219",
+            "corrector": false
+          },
+          {
+            "prefix": "2812",
+            "corrector": true
+          },
+          {
+            "prefix": "2813",
+            "corrector": true
+          },
+          {
+            "prefix": "2814",
+            "corrector": true
+          },
+          {
+            "prefix": "2815",
+            "corrector": true
+          },
+          {
+            "prefix": "2816",
+            "corrector": true
+          },
+          {
+            "prefix": "2817",
+            "corrector": true
+          },
+          {
+            "prefix": "2818",
+            "corrector": true
+          },
+          {
+            "prefix": "2819",
+            "corrector": true
+          },
+          {
+            "prefix": "2912",
+            "corrector": true
+          },
+          {
+            "prefix": "2913",
+            "corrector": true
+          },
+          {
+            "prefix": "2914",
+            "corrector": true
+          },
+          {
+            "prefix": "2915",
+            "corrector": true
+          },
+          {
+            "prefix": "2916",
+            "corrector": true
+          },
+          {
+            "prefix": "2917",
+            "corrector": true
+          },
+          {
+            "prefix": "2918",
+            "corrector": true
+          },
+          {
+            "prefix": "2919",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-12",
+        "parent_id": "asset-9",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Inmovilizado en curso y anticipos.",
+        "rules": [
+          {
+            "prefix": "23",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-13",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "III. Inversiones inmobiliarias.",
+        "rules": []
+      },
+      {
+        "id": "asset-14",
+        "parent_id": "asset-13",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Terrenos.",
+        "rules": [
+          {
+            "prefix": "220",
+            "corrector": false
+          },
+          {
+            "prefix": "2920",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-15",
+        "parent_id": "asset-13",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Construcciones.",
+        "rules": [
+          {
+            "prefix": "221",
+            "corrector": false
+          },
+          {
+            "prefix": "282",
+            "corrector": true
+          },
+          {
+            "prefix": "2921",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-16",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "IV. Inversiones en empresas del grupo y asociadas a largo plazo.",
+        "rules": []
+      },
+      {
+        "id": "asset-17",
+        "parent_id": "asset-16",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Instrumentos de patrimonio.",
+        "rules": [
+          {
+            "prefix": "2403",
+            "corrector": false
+          },
+          {
+            "prefix": "2404",
+            "corrector": false
+          },
+          {
+            "prefix": "2493",
+            "corrector": true
+          },
+          {
+            "prefix": "2494",
+            "corrector": true
+          },
+          {
+            "prefix": "293",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-18",
+        "parent_id": "asset-16",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Créditos a empresas.",
+        "rules": [
+          {
+            "prefix": "2423",
+            "corrector": false
+          },
+          {
+            "prefix": "2424",
+            "corrector": false
+          },
+          {
+            "prefix": "2953",
+            "corrector": true
+          },
+          {
+            "prefix": "2954",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-19",
+        "parent_id": "asset-16",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Valores representativos de deuda.",
+        "rules": [
+          {
+            "prefix": "2413",
+            "corrector": false
+          },
+          {
+            "prefix": "2414",
+            "corrector": false
+          },
+          {
+            "prefix": "2943",
+            "corrector": true
+          },
+          {
+            "prefix": "2944",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-20",
+        "parent_id": "asset-16",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Derivados.",
+        "rules": []
+      },
+      {
+        "id": "asset-21",
+        "parent_id": "asset-16",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Otros activos financieros.",
+        "rules": []
+      },
+      {
+        "id": "asset-22",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "V. Inversiones financieras a largo plazo.",
+        "rules": []
+      },
+      {
+        "id": "asset-23",
+        "parent_id": "asset-22",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Instrumentos de patrimonio.",
+        "rules": [
+          {
+            "prefix": "2405",
+            "corrector": false
+          },
+          {
+            "prefix": "2495",
+            "corrector": true
+          },
+          {
+            "prefix": "250",
+            "corrector": false
+          },
+          {
+            "prefix": "259",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-24",
+        "parent_id": "asset-22",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Créditos a terceros",
+        "rules": [
+          {
+            "prefix": "2425",
+            "corrector": false
+          },
+          {
+            "prefix": "252",
+            "corrector": false
+          },
+          {
+            "prefix": "253",
+            "corrector": false
+          },
+          {
+            "prefix": "254",
+            "corrector": false
+          },
+          {
+            "prefix": "2955",
+            "corrector": true
+          },
+          {
+            "prefix": "298",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-25",
+        "parent_id": "asset-22",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Valores representativos de deuda",
+        "rules": [
+          {
+            "prefix": "2415",
+            "corrector": false
+          },
+          {
+            "prefix": "251",
+            "corrector": false
+          },
+          {
+            "prefix": "2945",
+            "corrector": true
+          },
+          {
+            "prefix": "297",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-26",
+        "parent_id": "asset-22",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Derivados.",
+        "rules": [
+          {
+            "prefix": "255",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-27",
+        "parent_id": "asset-22",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Otros activos financieros.",
+        "rules": [
+          {
+            "prefix": "258",
+            "corrector": false
+          },
+          {
+            "prefix": "26",
+            "corrector": false
+          },
+          {
+            "prefix": "257",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-28",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "VI. Activos por impuesto diferido.",
+        "rules": [
+          {
+            "prefix": "474",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-29",
+        "parent_id": null,
+        "side": "asset",
+        "depth": 0,
+        "label": "B) ACTIVO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "asset-30",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "I. Activos no corrientes mantenidos para la venta.",
+        "rules": [
+          {
+            "prefix": "580",
+            "corrector": false
+          },
+          {
+            "prefix": "581",
+            "corrector": false
+          },
+          {
+            "prefix": "582",
+            "corrector": false
+          },
+          {
+            "prefix": "583",
+            "corrector": false
+          },
+          {
+            "prefix": "584",
+            "corrector": false
+          },
+          {
+            "prefix": "599",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-31",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "II. Existencias.",
+        "rules": []
+      },
+      {
+        "id": "asset-32",
+        "parent_id": "asset-31",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Comerciales.",
+        "rules": [
+          {
+            "prefix": "30",
+            "corrector": false
+          },
+          {
+            "prefix": "390",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-33",
+        "parent_id": "asset-31",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Materias primas y otros aprovisionamientos.",
+        "rules": [
+          {
+            "prefix": "31",
+            "corrector": false
+          },
+          {
+            "prefix": "32",
+            "corrector": false
+          },
+          {
+            "prefix": "391",
+            "corrector": true
+          },
+          {
+            "prefix": "392",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-34",
+        "parent_id": "asset-31",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Productos en curso.",
+        "rules": [
+          {
+            "prefix": "33",
+            "corrector": false
+          },
+          {
+            "prefix": "34",
+            "corrector": false
+          },
+          {
+            "prefix": "393",
+            "corrector": true
+          },
+          {
+            "prefix": "394",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-35",
+        "parent_id": "asset-31",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Productos terminados.",
+        "rules": [
+          {
+            "prefix": "35",
+            "corrector": false
+          },
+          {
+            "prefix": "395",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-36",
+        "parent_id": "asset-31",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Subproductos, residuos y materiales recuperados.",
+        "rules": [
+          {
+            "prefix": "36",
+            "corrector": false
+          },
+          {
+            "prefix": "396",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-37",
+        "parent_id": "asset-31",
+        "side": "asset",
+        "depth": 2,
+        "label": "6. Anticipos a proveedores",
+        "rules": [
+          {
+            "prefix": "407",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-38",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "III. Deudores comerciales y otras cuentas a cobrar.",
+        "rules": []
+      },
+      {
+        "id": "asset-39",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Clientes por ventas y prestaciones de servicios.",
+        "rules": [
+          {
+            "prefix": "430",
+            "corrector": false
+          },
+          {
+            "prefix": "431",
+            "corrector": false
+          },
+          {
+            "prefix": "432",
+            "corrector": false
+          },
+          {
+            "prefix": "435",
+            "corrector": false
+          },
+          {
+            "prefix": "436",
+            "corrector": false
+          },
+          {
+            "prefix": "437",
+            "corrector": true
+          },
+          {
+            "prefix": "490",
+            "corrector": true
+          },
+          {
+            "prefix": "4935",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-40",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Clientes, empresas del grupo y asociadas.",
+        "rules": [
+          {
+            "prefix": "433",
+            "corrector": false
+          },
+          {
+            "prefix": "434",
+            "corrector": false
+          },
+          {
+            "prefix": "4933",
+            "corrector": true
+          },
+          {
+            "prefix": "4934",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-41",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Deudores varios.",
+        "rules": [
+          {
+            "prefix": "44",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-42",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Personal.",
+        "rules": [
+          {
+            "prefix": "460",
+            "corrector": false
+          },
+          {
+            "prefix": "544",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-43",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Activos por impuesto corriente.",
+        "rules": [
+          {
+            "prefix": "4709",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-44",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "6. Otros créditos con las Administraciones Públicas.",
+        "rules": [
+          {
+            "prefix": "4700",
+            "corrector": false
+          },
+          {
+            "prefix": "4708",
+            "corrector": false
+          },
+          {
+            "prefix": "471",
+            "corrector": false
+          },
+          {
+            "prefix": "472",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-45",
+        "parent_id": "asset-38",
+        "side": "asset",
+        "depth": 2,
+        "label": "7. Accionistas (socios) por desembolsos exigidos",
+        "rules": [
+          {
+            "prefix": "5580",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-46",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "IV. Inversiones en empresas del grupo y asociadas a corto plazo.",
+        "rules": []
+      },
+      {
+        "id": "asset-47",
+        "parent_id": "asset-46",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Instrumentos de patrimonio.",
+        "rules": [
+          {
+            "prefix": "5303",
+            "corrector": false
+          },
+          {
+            "prefix": "5304",
+            "corrector": false
+          },
+          {
+            "prefix": "5393",
+            "corrector": true
+          },
+          {
+            "prefix": "5394",
+            "corrector": true
+          },
+          {
+            "prefix": "593",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-48",
+        "parent_id": "asset-46",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Créditos a empresas.",
+        "rules": [
+          {
+            "prefix": "5323",
+            "corrector": false
+          },
+          {
+            "prefix": "5324",
+            "corrector": false
+          },
+          {
+            "prefix": "5343",
+            "corrector": false
+          },
+          {
+            "prefix": "5344",
+            "corrector": false
+          },
+          {
+            "prefix": "5953",
+            "corrector": true
+          },
+          {
+            "prefix": "5954",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-49",
+        "parent_id": "asset-46",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Valores representativos de deuda.",
+        "rules": [
+          {
+            "prefix": "5313",
+            "corrector": false
+          },
+          {
+            "prefix": "5314",
+            "corrector": false
+          },
+          {
+            "prefix": "5333",
+            "corrector": false
+          },
+          {
+            "prefix": "5334",
+            "corrector": false
+          },
+          {
+            "prefix": "5943",
+            "corrector": true
+          },
+          {
+            "prefix": "5944",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-50",
+        "parent_id": "asset-46",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Derivados.",
+        "rules": []
+      },
+      {
+        "id": "asset-51",
+        "parent_id": "asset-46",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Otros activos financieros.",
+        "rules": [
+          {
+            "prefix": "5353",
+            "corrector": false
+          },
+          {
+            "prefix": "5354",
+            "corrector": false
+          },
+          {
+            "prefix": "5523",
+            "corrector": false
+          },
+          {
+            "prefix": "5524",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-52",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "V. Inversiones financieras a corto plazo.",
+        "rules": []
+      },
+      {
+        "id": "asset-53",
+        "parent_id": "asset-52",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Instrumentos de patrimonio.",
+        "rules": [
+          {
+            "prefix": "5305",
+            "corrector": false
+          },
+          {
+            "prefix": "540",
+            "corrector": false
+          },
+          {
+            "prefix": "5395",
+            "corrector": true
+          },
+          {
+            "prefix": "549",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-54",
+        "parent_id": "asset-52",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Créditos a empresas",
+        "rules": [
+          {
+            "prefix": "5325",
+            "corrector": false
+          },
+          {
+            "prefix": "5345",
+            "corrector": false
+          },
+          {
+            "prefix": "542",
+            "corrector": false
+          },
+          {
+            "prefix": "543",
+            "corrector": false
+          },
+          {
+            "prefix": "547",
+            "corrector": false
+          },
+          {
+            "prefix": "5955",
+            "corrector": true
+          },
+          {
+            "prefix": "598",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-55",
+        "parent_id": "asset-52",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Valores representativos de deuda.",
+        "rules": [
+          {
+            "prefix": "5315",
+            "corrector": false
+          },
+          {
+            "prefix": "5335",
+            "corrector": false
+          },
+          {
+            "prefix": "541",
+            "corrector": false
+          },
+          {
+            "prefix": "546",
+            "corrector": false
+          },
+          {
+            "prefix": "5945",
+            "corrector": true
+          },
+          {
+            "prefix": "597",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-56",
+        "parent_id": "asset-52",
+        "side": "asset",
+        "depth": 2,
+        "label": "4. Derivados.",
+        "rules": [
+          {
+            "prefix": "5590",
+            "corrector": false
+          },
+          {
+            "prefix": "5593",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-57",
+        "parent_id": "asset-52",
+        "side": "asset",
+        "depth": 2,
+        "label": "5. Otros activos financieros.",
+        "rules": [
+          {
+            "prefix": "5355",
+            "corrector": false
+          },
+          {
+            "prefix": "545",
+            "corrector": false
+          },
+          {
+            "prefix": "548",
+            "corrector": false
+          },
+          {
+            "prefix": "551",
+            "corrector": false
+          },
+          {
+            "prefix": "5525",
+            "corrector": false
+          },
+          {
+            "prefix": "565",
+            "corrector": false
+          },
+          {
+            "prefix": "566",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-58",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "VI. Periodificaciones a corto plazo.",
+        "rules": [
+          {
+            "prefix": "480",
+            "corrector": false
+          },
+          {
+            "prefix": "567",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-59",
+        "parent_id": "asset-29",
+        "side": "asset",
+        "depth": 1,
+        "label": "VII. Efectivo y otros activos líquidos equivalentes.",
+        "rules": []
+      },
+      {
+        "id": "asset-60",
+        "parent_id": "asset-59",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Tesorería.",
+        "rules": [
+          {
+            "prefix": "570",
+            "corrector": false
+          },
+          {
+            "prefix": "571",
+            "corrector": false
+          },
+          {
+            "prefix": "572",
+            "corrector": false
+          },
+          {
+            "prefix": "573",
+            "corrector": false
+          },
+          {
+            "prefix": "574",
+            "corrector": false
+          },
+          {
+            "prefix": "575",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-61",
+        "parent_id": "asset-59",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Otros activos líquidos equivalentes.",
+        "rules": [
+          {
+            "prefix": "576",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-62",
+        "parent_id": null,
+        "side": "equity_liabilities",
+        "depth": 0,
+        "label": "A) PATRIMONIO NETO",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-63",
+        "parent_id": "equity_liabilities-62",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "A-1) Fondos propios.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-64",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "I. Capital.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-65",
+        "parent_id": "equity_liabilities-64",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "1. Capital escriturado.",
+        "rules": [
+          {
+            "prefix": "100",
+            "corrector": false
+          },
+          {
+            "prefix": "101",
+            "corrector": false
+          },
+          {
+            "prefix": "102",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-66",
+        "parent_id": "equity_liabilities-64",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "2. (Capital no exigido).",
+        "rules": [
+          {
+            "prefix": "1030",
+            "corrector": true
+          },
+          {
+            "prefix": "1040",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-67",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "II. Prima de emisión.",
+        "rules": [
+          {
+            "prefix": "110",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-68",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "III. Reservas.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-69",
+        "parent_id": "equity_liabilities-68",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "1. Legal y estatutarias.",
+        "rules": [
+          {
+            "prefix": "112",
+            "corrector": false
+          },
+          {
+            "prefix": "1141",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-70",
+        "parent_id": "equity_liabilities-68",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "2. Otras reservas.",
+        "rules": [
+          {
+            "prefix": "113",
+            "corrector": false
+          },
+          {
+            "prefix": "1140",
+            "corrector": false
+          },
+          {
+            "prefix": "1142",
+            "corrector": false
+          },
+          {
+            "prefix": "1143",
+            "corrector": false
+          },
+          {
+            "prefix": "1144",
+            "corrector": false
+          },
+          {
+            "prefix": "115",
+            "corrector": false
+          },
+          {
+            "prefix": "119",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-71",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "IV. (Acciones y participaciones en patrimonio propias).",
+        "rules": [
+          {
+            "prefix": "108",
+            "corrector": true
+          },
+          {
+            "prefix": "109",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-72",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "V. Resultados de ejercicios anteriores.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-73",
+        "parent_id": "equity_liabilities-72",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "1. Remanente.",
+        "rules": [
+          {
+            "prefix": "120",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-74",
+        "parent_id": "equity_liabilities-72",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "2. (Resultados negativos de ejercicios anteriores).",
+        "rules": [
+          {
+            "prefix": "121",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-75",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "VI. Otras aportaciones de socios.",
+        "rules": [
+          {
+            "prefix": "118",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-76",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "VII. Resultado del ejercicio.",
+        "rules": [
+          {
+            "prefix": "129",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-77",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "VIII. (Dividendo a cuenta).",
+        "rules": [
+          {
+            "prefix": "557",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-78",
+        "parent_id": "equity_liabilities-63",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "IX. Otros instrumentos de patrimonio neto.",
+        "rules": [
+          {
+            "prefix": "111",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-79",
+        "parent_id": "equity_liabilities-62",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "A-2) Ajustes por cambios de valor.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-80",
+        "parent_id": "equity_liabilities-79",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "I. Activos financieros a valor razonable con cambios en el patrimonio neto.",
+        "rules": [
+          {
+            "prefix": "133",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-81",
+        "parent_id": "equity_liabilities-79",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "II. Operaciones de cobertura.",
+        "rules": [
+          {
+            "prefix": "1340",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-82",
+        "parent_id": "equity_liabilities-79",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "III. Otros.",
+        "rules": [
+          {
+            "prefix": "137",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-83",
+        "parent_id": "equity_liabilities-62",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "A-3) Subvenciones, donaciones y legados recibidos.",
+        "rules": [
+          {
+            "prefix": "130",
+            "corrector": false
+          },
+          {
+            "prefix": "131",
+            "corrector": false
+          },
+          {
+            "prefix": "132",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-84",
+        "parent_id": null,
+        "side": "equity_liabilities",
+        "depth": 0,
+        "label": "B) PASIVO NO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-85",
+        "parent_id": "equity_liabilities-84",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "I. Provisiones a largo plazo.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-86",
+        "parent_id": "equity_liabilities-85",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Obligaciones por prestaciones a largo plazo al personal.",
+        "rules": [
+          {
+            "prefix": "140",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-87",
+        "parent_id": "equity_liabilities-85",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Actuaciones medioambientales.",
+        "rules": [
+          {
+            "prefix": "145",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-88",
+        "parent_id": "equity_liabilities-85",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "3. Provisiones por reestructuración.",
+        "rules": [
+          {
+            "prefix": "146",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-89",
+        "parent_id": "equity_liabilities-85",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "4. Otras provisiones.",
+        "rules": [
+          {
+            "prefix": "141",
+            "corrector": false
+          },
+          {
+            "prefix": "142",
+            "corrector": false
+          },
+          {
+            "prefix": "143",
+            "corrector": false
+          },
+          {
+            "prefix": "147",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-90",
+        "parent_id": "equity_liabilities-84",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "II. Deudas a largo plazo.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-91",
+        "parent_id": "equity_liabilities-90",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Obligaciones y otros valores negociables.",
+        "rules": [
+          {
+            "prefix": "177",
+            "corrector": false
+          },
+          {
+            "prefix": "178",
+            "corrector": false
+          },
+          {
+            "prefix": "179",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-92",
+        "parent_id": "equity_liabilities-90",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Deudas con entidades de crédito.",
+        "rules": [
+          {
+            "prefix": "1605",
+            "corrector": false
+          },
+          {
+            "prefix": "170",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-93",
+        "parent_id": "equity_liabilities-90",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "3. Acreedores por arrendamiento financiero.",
+        "rules": [
+          {
+            "prefix": "1625",
+            "corrector": false
+          },
+          {
+            "prefix": "174",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-94",
+        "parent_id": "equity_liabilities-90",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "4. Derivados.",
+        "rules": [
+          {
+            "prefix": "176",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-95",
+        "parent_id": "equity_liabilities-90",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "5. Otros pasivos financieros.",
+        "rules": [
+          {
+            "prefix": "1615",
+            "corrector": false
+          },
+          {
+            "prefix": "1635",
+            "corrector": false
+          },
+          {
+            "prefix": "171",
+            "corrector": false
+          },
+          {
+            "prefix": "172",
+            "corrector": false
+          },
+          {
+            "prefix": "173",
+            "corrector": false
+          },
+          {
+            "prefix": "175",
+            "corrector": false
+          },
+          {
+            "prefix": "180",
+            "corrector": false
+          },
+          {
+            "prefix": "185",
+            "corrector": false
+          },
+          {
+            "prefix": "189",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-96",
+        "parent_id": "equity_liabilities-84",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "III. Deudas con empresas del grupo y asociadas a largo plazo.",
+        "rules": [
+          {
+            "prefix": "1603",
+            "corrector": false
+          },
+          {
+            "prefix": "1604",
+            "corrector": false
+          },
+          {
+            "prefix": "1613",
+            "corrector": false
+          },
+          {
+            "prefix": "1614",
+            "corrector": false
+          },
+          {
+            "prefix": "1623",
+            "corrector": false
+          },
+          {
+            "prefix": "1624",
+            "corrector": false
+          },
+          {
+            "prefix": "1633",
+            "corrector": false
+          },
+          {
+            "prefix": "1634",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-97",
+        "parent_id": "equity_liabilities-84",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "IV. Pasivos por impuesto diferido.",
+        "rules": [
+          {
+            "prefix": "479",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-98",
+        "parent_id": "equity_liabilities-84",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "V. Periodificaciones a largo plazo.",
+        "rules": [
+          {
+            "prefix": "181",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-99",
+        "parent_id": null,
+        "side": "equity_liabilities",
+        "depth": 0,
+        "label": "C) PASIVO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-100",
+        "parent_id": "equity_liabilities-99",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "I. Pasivos vinculados con activos no corrientes mantenidos para la venta.",
+        "rules": [
+          {
+            "prefix": "585",
+            "corrector": false
+          },
+          {
+            "prefix": "586",
+            "corrector": false
+          },
+          {
+            "prefix": "587",
+            "corrector": false
+          },
+          {
+            "prefix": "588",
+            "corrector": false
+          },
+          {
+            "prefix": "589",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-101",
+        "parent_id": "equity_liabilities-99",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "II. Provisiones a corto plazo.",
+        "rules": [
+          {
+            "prefix": "499",
+            "corrector": false
+          },
+          {
+            "prefix": "529",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-102",
+        "parent_id": "equity_liabilities-99",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "III. Deudas a corto plazo.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-103",
+        "parent_id": "equity_liabilities-102",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Obligaciones y otros valores negociables.",
+        "rules": [
+          {
+            "prefix": "500",
+            "corrector": false
+          },
+          {
+            "prefix": "501",
+            "corrector": false
+          },
+          {
+            "prefix": "505",
+            "corrector": false
+          },
+          {
+            "prefix": "506",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-104",
+        "parent_id": "equity_liabilities-102",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Deudas con entidades de crédito.",
+        "rules": [
+          {
+            "prefix": "5105",
+            "corrector": false
+          },
+          {
+            "prefix": "520",
+            "corrector": false
+          },
+          {
+            "prefix": "527",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-105",
+        "parent_id": "equity_liabilities-102",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "3. Acreedores por arrendamiento financiero.",
+        "rules": [
+          {
+            "prefix": "5125",
+            "corrector": false
+          },
+          {
+            "prefix": "524",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-106",
+        "parent_id": "equity_liabilities-102",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "4. Derivados.",
+        "rules": [
+          {
+            "prefix": "5595",
+            "corrector": false
+          },
+          {
+            "prefix": "5598",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-107",
+        "parent_id": "equity_liabilities-102",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "5. Otros pasivos financieros.",
+        "rules": [
+          {
+            "prefix": "1034",
+            "corrector": true
+          },
+          {
+            "prefix": "1044",
+            "corrector": true
+          },
+          {
+            "prefix": "190",
+            "corrector": true
+          },
+          {
+            "prefix": "192",
+            "corrector": true
+          },
+          {
+            "prefix": "194",
+            "corrector": false
+          },
+          {
+            "prefix": "509",
+            "corrector": false
+          },
+          {
+            "prefix": "5115",
+            "corrector": false
+          },
+          {
+            "prefix": "5135",
+            "corrector": false
+          },
+          {
+            "prefix": "5145",
+            "corrector": false
+          },
+          {
+            "prefix": "521",
+            "corrector": false
+          },
+          {
+            "prefix": "522",
+            "corrector": false
+          },
+          {
+            "prefix": "523",
+            "corrector": false
+          },
+          {
+            "prefix": "525",
+            "corrector": false
+          },
+          {
+            "prefix": "526",
+            "corrector": false
+          },
+          {
+            "prefix": "528",
+            "corrector": false
+          },
+          {
+            "prefix": "551",
+            "corrector": false
+          },
+          {
+            "prefix": "5525",
+            "corrector": false
+          },
+          {
+            "prefix": "555",
+            "corrector": false
+          },
+          {
+            "prefix": "5565",
+            "corrector": false
+          },
+          {
+            "prefix": "5566",
+            "corrector": false
+          },
+          {
+            "prefix": "560",
+            "corrector": false
+          },
+          {
+            "prefix": "561",
+            "corrector": false
+          },
+          {
+            "prefix": "569",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-108",
+        "parent_id": "equity_liabilities-99",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "IV. Deudas con empresas del grupo y asociadas a corto plazo.",
+        "rules": [
+          {
+            "prefix": "5103",
+            "corrector": false
+          },
+          {
+            "prefix": "5104",
+            "corrector": false
+          },
+          {
+            "prefix": "5113",
+            "corrector": false
+          },
+          {
+            "prefix": "5114",
+            "corrector": false
+          },
+          {
+            "prefix": "5123",
+            "corrector": false
+          },
+          {
+            "prefix": "5124",
+            "corrector": false
+          },
+          {
+            "prefix": "5133",
+            "corrector": false
+          },
+          {
+            "prefix": "5134",
+            "corrector": false
+          },
+          {
+            "prefix": "5143",
+            "corrector": false
+          },
+          {
+            "prefix": "5144",
+            "corrector": false
+          },
+          {
+            "prefix": "5523",
+            "corrector": false
+          },
+          {
+            "prefix": "5524",
+            "corrector": false
+          },
+          {
+            "prefix": "5563",
+            "corrector": false
+          },
+          {
+            "prefix": "5564",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-109",
+        "parent_id": "equity_liabilities-99",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "V. Acreedores comerciales y otras cuentas a pagar.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-110",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Proveedores",
+        "rules": [
+          {
+            "prefix": "400",
+            "corrector": false
+          },
+          {
+            "prefix": "401",
+            "corrector": false
+          },
+          {
+            "prefix": "405",
+            "corrector": false
+          },
+          {
+            "prefix": "406",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-111",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Proveedores, empresas del grupo y asociadas.",
+        "rules": [
+          {
+            "prefix": "403",
+            "corrector": false
+          },
+          {
+            "prefix": "404",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-112",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "3. Acreedores varios.",
+        "rules": [
+          {
+            "prefix": "41",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-113",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "4. Personal (remuneraciones pendientes de pago).",
+        "rules": [
+          {
+            "prefix": "465",
+            "corrector": false
+          },
+          {
+            "prefix": "466",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-114",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "5. Pasivos por impuesto corriente.",
+        "rules": [
+          {
+            "prefix": "4752",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-115",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "6. Otras deudas con las Administraciones Públicas.",
+        "rules": [
+          {
+            "prefix": "4750",
+            "corrector": false
+          },
+          {
+            "prefix": "4751",
+            "corrector": false
+          },
+          {
+            "prefix": "4758",
+            "corrector": false
+          },
+          {
+            "prefix": "476",
+            "corrector": false
+          },
+          {
+            "prefix": "477",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-116",
+        "parent_id": "equity_liabilities-109",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "7. Anticipos de clientes.",
+        "rules": [
+          {
+            "prefix": "438",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-117",
+        "parent_id": "equity_liabilities-99",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "VI. Periodificaciones a corto plazo.",
+        "rules": [
+          {
+            "prefix": "485",
+            "corrector": false
+          },
+          {
+            "prefix": "568",
+            "corrector": false
+          }
+        ]
+      }
+    ],
+    "abbreviated": [
+      {
+        "id": "asset-1",
+        "parent_id": null,
+        "side": "asset",
+        "depth": 0,
+        "label": "A) ACTIVO NO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "asset-2",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "I. Inmovilizado intangible.",
+        "rules": [
+          {
+            "prefix": "20",
+            "corrector": false
+          },
+          {
+            "prefix": "280",
+            "corrector": true
+          },
+          {
+            "prefix": "290",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-3",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "II. Inmovilizado material.",
+        "rules": [
+          {
+            "prefix": "21",
+            "corrector": false
+          },
+          {
+            "prefix": "281",
+            "corrector": true
+          },
+          {
+            "prefix": "291",
+            "corrector": true
+          },
+          {
+            "prefix": "23",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-4",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "III. Inversiones inmobiliarias.",
+        "rules": [
+          {
+            "prefix": "22",
+            "corrector": false
+          },
+          {
+            "prefix": "282",
+            "corrector": true
+          },
+          {
+            "prefix": "292",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-5",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "IV. Inversiones en empresas del grupo y asociadas a largo plazo.",
+        "rules": [
+          {
+            "prefix": "2403",
+            "corrector": false
+          },
+          {
+            "prefix": "2404",
+            "corrector": false
+          },
+          {
+            "prefix": "2413",
+            "corrector": false
+          },
+          {
+            "prefix": "2414",
+            "corrector": false
+          },
+          {
+            "prefix": "2423",
+            "corrector": false
+          },
+          {
+            "prefix": "2424",
+            "corrector": false
+          },
+          {
+            "prefix": "2493",
+            "corrector": true
+          },
+          {
+            "prefix": "2494",
+            "corrector": true
+          },
+          {
+            "prefix": "293",
+            "corrector": true
+          },
+          {
+            "prefix": "2943",
+            "corrector": true
+          },
+          {
+            "prefix": "2944",
+            "corrector": true
+          },
+          {
+            "prefix": "2953",
+            "corrector": true
+          },
+          {
+            "prefix": "2954",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-6",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "V. Inversiones financieras a largo plazo.",
+        "rules": [
+          {
+            "prefix": "2405",
+            "corrector": false
+          },
+          {
+            "prefix": "2415",
+            "corrector": false
+          },
+          {
+            "prefix": "2425",
+            "corrector": false
+          },
+          {
+            "prefix": "2495",
+            "corrector": true
+          },
+          {
+            "prefix": "250",
+            "corrector": false
+          },
+          {
+            "prefix": "251",
+            "corrector": false
+          },
+          {
+            "prefix": "252",
+            "corrector": false
+          },
+          {
+            "prefix": "253",
+            "corrector": false
+          },
+          {
+            "prefix": "254",
+            "corrector": false
+          },
+          {
+            "prefix": "255",
+            "corrector": false
+          },
+          {
+            "prefix": "257",
+            "corrector": false
+          },
+          {
+            "prefix": "258",
+            "corrector": false
+          },
+          {
+            "prefix": "259",
+            "corrector": true
+          },
+          {
+            "prefix": "26",
+            "corrector": false
+          },
+          {
+            "prefix": "2945",
+            "corrector": true
+          },
+          {
+            "prefix": "2955",
+            "corrector": true
+          },
+          {
+            "prefix": "297",
+            "corrector": true
+          },
+          {
+            "prefix": "298",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-7",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "VI. Activos por Impuesto diferido.",
+        "rules": [
+          {
+            "prefix": "474",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-8",
+        "parent_id": null,
+        "side": "asset",
+        "depth": 0,
+        "label": "B) ACTIVO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "asset-9",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "I. Activos no corrientes mantenidos para la venta.",
+        "rules": [
+          {
+            "prefix": "580",
+            "corrector": false
+          },
+          {
+            "prefix": "581",
+            "corrector": false
+          },
+          {
+            "prefix": "582",
+            "corrector": false
+          },
+          {
+            "prefix": "583",
+            "corrector": false
+          },
+          {
+            "prefix": "584",
+            "corrector": false
+          },
+          {
+            "prefix": "599",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-10",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "II. Existencias.",
+        "rules": [
+          {
+            "prefix": "30",
+            "corrector": false
+          },
+          {
+            "prefix": "31",
+            "corrector": false
+          },
+          {
+            "prefix": "32",
+            "corrector": false
+          },
+          {
+            "prefix": "33",
+            "corrector": false
+          },
+          {
+            "prefix": "34",
+            "corrector": false
+          },
+          {
+            "prefix": "35",
+            "corrector": false
+          },
+          {
+            "prefix": "36",
+            "corrector": false
+          },
+          {
+            "prefix": "39",
+            "corrector": true
+          },
+          {
+            "prefix": "407",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-11",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "III. Deudores comerciales y otras cuentas a cobrar.",
+        "rules": []
+      },
+      {
+        "id": "asset-12",
+        "parent_id": "asset-11",
+        "side": "asset",
+        "depth": 2,
+        "label": "1. Clientes por ventas y prestaciones de servicios.",
+        "rules": [
+          {
+            "prefix": "430",
+            "corrector": false
+          },
+          {
+            "prefix": "431",
+            "corrector": false
+          },
+          {
+            "prefix": "432",
+            "corrector": false
+          },
+          {
+            "prefix": "433",
+            "corrector": false
+          },
+          {
+            "prefix": "434",
+            "corrector": false
+          },
+          {
+            "prefix": "435",
+            "corrector": false
+          },
+          {
+            "prefix": "436",
+            "corrector": false
+          },
+          {
+            "prefix": "437",
+            "corrector": true
+          },
+          {
+            "prefix": "490",
+            "corrector": true
+          },
+          {
+            "prefix": "493",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-13",
+        "parent_id": "asset-11",
+        "side": "asset",
+        "depth": 2,
+        "label": "2. Accionistas (socios) por desembolsos exigidos.",
+        "rules": [
+          {
+            "prefix": "5580",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-14",
+        "parent_id": "asset-11",
+        "side": "asset",
+        "depth": 2,
+        "label": "3. Otros deudores.",
+        "rules": [
+          {
+            "prefix": "44",
+            "corrector": false
+          },
+          {
+            "prefix": "460",
+            "corrector": false
+          },
+          {
+            "prefix": "470",
+            "corrector": false
+          },
+          {
+            "prefix": "471",
+            "corrector": false
+          },
+          {
+            "prefix": "472",
+            "corrector": false
+          },
+          {
+            "prefix": "544",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-15",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "IV. Inversiones en empresas del grupo y asociadas a corto plazo.",
+        "rules": [
+          {
+            "prefix": "5303",
+            "corrector": false
+          },
+          {
+            "prefix": "5304",
+            "corrector": false
+          },
+          {
+            "prefix": "5313",
+            "corrector": false
+          },
+          {
+            "prefix": "5314",
+            "corrector": false
+          },
+          {
+            "prefix": "5323",
+            "corrector": false
+          },
+          {
+            "prefix": "5324",
+            "corrector": false
+          },
+          {
+            "prefix": "5333",
+            "corrector": false
+          },
+          {
+            "prefix": "5334",
+            "corrector": false
+          },
+          {
+            "prefix": "5343",
+            "corrector": false
+          },
+          {
+            "prefix": "5344",
+            "corrector": false
+          },
+          {
+            "prefix": "5353",
+            "corrector": false
+          },
+          {
+            "prefix": "5354",
+            "corrector": false
+          },
+          {
+            "prefix": "5393",
+            "corrector": true
+          },
+          {
+            "prefix": "5394",
+            "corrector": true
+          },
+          {
+            "prefix": "5523",
+            "corrector": false
+          },
+          {
+            "prefix": "5524",
+            "corrector": false
+          },
+          {
+            "prefix": "593",
+            "corrector": true
+          },
+          {
+            "prefix": "5943",
+            "corrector": true
+          },
+          {
+            "prefix": "5944",
+            "corrector": true
+          },
+          {
+            "prefix": "5953",
+            "corrector": true
+          },
+          {
+            "prefix": "5954",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-16",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "V. Inversiones financieras a corto plazo.",
+        "rules": [
+          {
+            "prefix": "5305",
+            "corrector": false
+          },
+          {
+            "prefix": "5315",
+            "corrector": false
+          },
+          {
+            "prefix": "5325",
+            "corrector": false
+          },
+          {
+            "prefix": "5335",
+            "corrector": false
+          },
+          {
+            "prefix": "5345",
+            "corrector": false
+          },
+          {
+            "prefix": "5355",
+            "corrector": false
+          },
+          {
+            "prefix": "5395",
+            "corrector": true
+          },
+          {
+            "prefix": "540",
+            "corrector": false
+          },
+          {
+            "prefix": "541",
+            "corrector": false
+          },
+          {
+            "prefix": "542",
+            "corrector": false
+          },
+          {
+            "prefix": "543",
+            "corrector": false
+          },
+          {
+            "prefix": "545",
+            "corrector": false
+          },
+          {
+            "prefix": "546",
+            "corrector": false
+          },
+          {
+            "prefix": "547",
+            "corrector": false
+          },
+          {
+            "prefix": "548",
+            "corrector": false
+          },
+          {
+            "prefix": "549",
+            "corrector": true
+          },
+          {
+            "prefix": "551",
+            "corrector": false
+          },
+          {
+            "prefix": "5525",
+            "corrector": false
+          },
+          {
+            "prefix": "5590",
+            "corrector": false
+          },
+          {
+            "prefix": "5593",
+            "corrector": false
+          },
+          {
+            "prefix": "565",
+            "corrector": false
+          },
+          {
+            "prefix": "566",
+            "corrector": false
+          },
+          {
+            "prefix": "5945",
+            "corrector": true
+          },
+          {
+            "prefix": "5955",
+            "corrector": true
+          },
+          {
+            "prefix": "597",
+            "corrector": true
+          },
+          {
+            "prefix": "598",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "asset-17",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "VI. Periodificaciones a corto plazo.",
+        "rules": [
+          {
+            "prefix": "480",
+            "corrector": false
+          },
+          {
+            "prefix": "567",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "asset-18",
+        "parent_id": "asset-8",
+        "side": "asset",
+        "depth": 1,
+        "label": "VII. Efectivo y otros activos líquidos equivalentes.",
+        "rules": [
+          {
+            "prefix": "57",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-19",
+        "parent_id": null,
+        "side": "equity_liabilities",
+        "depth": 0,
+        "label": "A) PATRIMONIO NETO",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-20",
+        "parent_id": "equity_liabilities-19",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "A-1) Fondos propios.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-21",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "I. Capital.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-22",
+        "parent_id": "equity_liabilities-21",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "1. Capital escriturado.",
+        "rules": [
+          {
+            "prefix": "100",
+            "corrector": false
+          },
+          {
+            "prefix": "101",
+            "corrector": false
+          },
+          {
+            "prefix": "102",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-23",
+        "parent_id": "equity_liabilities-21",
+        "side": "equity_liabilities",
+        "depth": 3,
+        "label": "2. (Capital no exigido).",
+        "rules": [
+          {
+            "prefix": "1030",
+            "corrector": true
+          },
+          {
+            "prefix": "1040",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-24",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "II. Prima de emisión.",
+        "rules": [
+          {
+            "prefix": "110",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-25",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "III. Reservas.",
+        "rules": [
+          {
+            "prefix": "112",
+            "corrector": false
+          },
+          {
+            "prefix": "113",
+            "corrector": false
+          },
+          {
+            "prefix": "114",
+            "corrector": false
+          },
+          {
+            "prefix": "115",
+            "corrector": false
+          },
+          {
+            "prefix": "119",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-26",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "IV. (Acciones y participaciones en patrimonio propias).",
+        "rules": [
+          {
+            "prefix": "108",
+            "corrector": true
+          },
+          {
+            "prefix": "109",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-27",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "V. Resultados de ejercicios anteriores.",
+        "rules": [
+          {
+            "prefix": "120",
+            "corrector": false
+          },
+          {
+            "prefix": "121",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-28",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "VI. Otras aportaciones de socios.",
+        "rules": [
+          {
+            "prefix": "118",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-29",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "VII. Resultado del ejercicio.",
+        "rules": [
+          {
+            "prefix": "129",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-30",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "VIII. (Dividendo a cuenta).",
+        "rules": [
+          {
+            "prefix": "557",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-31",
+        "parent_id": "equity_liabilities-20",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "IX. Otros instrumentos de patrimonio neto.",
+        "rules": [
+          {
+            "prefix": "111",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-32",
+        "parent_id": "equity_liabilities-19",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "A-2) Ajustes por cambios de valor.",
+        "rules": [
+          {
+            "prefix": "133",
+            "corrector": false
+          },
+          {
+            "prefix": "1340",
+            "corrector": false
+          },
+          {
+            "prefix": "137",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-33",
+        "parent_id": "equity_liabilities-19",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "A-3) Subvenciones, donaciones y legados recibidos.",
+        "rules": [
+          {
+            "prefix": "130",
+            "corrector": false
+          },
+          {
+            "prefix": "131",
+            "corrector": false
+          },
+          {
+            "prefix": "132",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-34",
+        "parent_id": null,
+        "side": "equity_liabilities",
+        "depth": 0,
+        "label": "B) PASIVO NO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-35",
+        "parent_id": "equity_liabilities-34",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "I. Provisiones a largo plazo.",
+        "rules": [
+          {
+            "prefix": "14",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-36",
+        "parent_id": "equity_liabilities-34",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "II. Deudas a largo plazo.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-37",
+        "parent_id": "equity_liabilities-36",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Deudas con entidades de crédito.",
+        "rules": [
+          {
+            "prefix": "1605",
+            "corrector": false
+          },
+          {
+            "prefix": "170",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-38",
+        "parent_id": "equity_liabilities-36",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Acreedores por arrendamiento financiero",
+        "rules": [
+          {
+            "prefix": "1625",
+            "corrector": false
+          },
+          {
+            "prefix": "174",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-39",
+        "parent_id": "equity_liabilities-36",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "3. Otras deudas a largo plazo.",
+        "rules": [
+          {
+            "prefix": "1615",
+            "corrector": false
+          },
+          {
+            "prefix": "1635",
+            "corrector": false
+          },
+          {
+            "prefix": "171",
+            "corrector": false
+          },
+          {
+            "prefix": "172",
+            "corrector": false
+          },
+          {
+            "prefix": "173",
+            "corrector": false
+          },
+          {
+            "prefix": "175",
+            "corrector": false
+          },
+          {
+            "prefix": "176",
+            "corrector": false
+          },
+          {
+            "prefix": "177",
+            "corrector": false
+          },
+          {
+            "prefix": "178",
+            "corrector": false
+          },
+          {
+            "prefix": "179",
+            "corrector": false
+          },
+          {
+            "prefix": "180",
+            "corrector": false
+          },
+          {
+            "prefix": "185",
+            "corrector": false
+          },
+          {
+            "prefix": "189",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-40",
+        "parent_id": "equity_liabilities-34",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "III. Deudas con empresas del grupo y asociadas a largo plazo.",
+        "rules": [
+          {
+            "prefix": "1603",
+            "corrector": false
+          },
+          {
+            "prefix": "1604",
+            "corrector": false
+          },
+          {
+            "prefix": "1613",
+            "corrector": false
+          },
+          {
+            "prefix": "1614",
+            "corrector": false
+          },
+          {
+            "prefix": "1623",
+            "corrector": false
+          },
+          {
+            "prefix": "1624",
+            "corrector": false
+          },
+          {
+            "prefix": "1633",
+            "corrector": false
+          },
+          {
+            "prefix": "1634",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-41",
+        "parent_id": "equity_liabilities-34",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "IV. Pasivos por impuesto diferido.",
+        "rules": [
+          {
+            "prefix": "479",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-42",
+        "parent_id": "equity_liabilities-34",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "V. Periodificaciones a largo plazo",
+        "rules": [
+          {
+            "prefix": "181",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-43",
+        "parent_id": null,
+        "side": "equity_liabilities",
+        "depth": 0,
+        "label": "C) PASIVO CORRIENTE",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-44",
+        "parent_id": "equity_liabilities-43",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "I. Pasivos vinculados con activos no corrientes mantenidos para la venta.",
+        "rules": [
+          {
+            "prefix": "585",
+            "corrector": false
+          },
+          {
+            "prefix": "586",
+            "corrector": false
+          },
+          {
+            "prefix": "587",
+            "corrector": false
+          },
+          {
+            "prefix": "588",
+            "corrector": false
+          },
+          {
+            "prefix": "589",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-45",
+        "parent_id": "equity_liabilities-43",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "II. Provisiones a corto plazo.",
+        "rules": [
+          {
+            "prefix": "499",
+            "corrector": false
+          },
+          {
+            "prefix": "529",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-46",
+        "parent_id": "equity_liabilities-43",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "III. Deudas a corto plazo.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-47",
+        "parent_id": "equity_liabilities-46",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Deudas con entidades de crédito.",
+        "rules": [
+          {
+            "prefix": "5105",
+            "corrector": false
+          },
+          {
+            "prefix": "520",
+            "corrector": false
+          },
+          {
+            "prefix": "527",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-48",
+        "parent_id": "equity_liabilities-46",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Acreedores por arrendamiento financiero.",
+        "rules": [
+          {
+            "prefix": "5125",
+            "corrector": false
+          },
+          {
+            "prefix": "524",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-49",
+        "parent_id": "equity_liabilities-46",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "3. Otras deudas a corto plazo.",
+        "rules": [
+          {
+            "prefix": "1034",
+            "corrector": true
+          },
+          {
+            "prefix": "1044",
+            "corrector": true
+          },
+          {
+            "prefix": "190",
+            "corrector": true
+          },
+          {
+            "prefix": "192",
+            "corrector": true
+          },
+          {
+            "prefix": "194",
+            "corrector": false
+          },
+          {
+            "prefix": "500",
+            "corrector": false
+          },
+          {
+            "prefix": "501",
+            "corrector": false
+          },
+          {
+            "prefix": "505",
+            "corrector": false
+          },
+          {
+            "prefix": "506",
+            "corrector": false
+          },
+          {
+            "prefix": "509",
+            "corrector": false
+          },
+          {
+            "prefix": "5115",
+            "corrector": false
+          },
+          {
+            "prefix": "5135",
+            "corrector": false
+          },
+          {
+            "prefix": "5145",
+            "corrector": false
+          },
+          {
+            "prefix": "521",
+            "corrector": false
+          },
+          {
+            "prefix": "522",
+            "corrector": false
+          },
+          {
+            "prefix": "523",
+            "corrector": false
+          },
+          {
+            "prefix": "525",
+            "corrector": false
+          },
+          {
+            "prefix": "526",
+            "corrector": false
+          },
+          {
+            "prefix": "528",
+            "corrector": false
+          },
+          {
+            "prefix": "551",
+            "corrector": false
+          },
+          {
+            "prefix": "5525",
+            "corrector": false
+          },
+          {
+            "prefix": "555",
+            "corrector": false
+          },
+          {
+            "prefix": "5565",
+            "corrector": false
+          },
+          {
+            "prefix": "5566",
+            "corrector": false
+          },
+          {
+            "prefix": "5595",
+            "corrector": false
+          },
+          {
+            "prefix": "5598",
+            "corrector": false
+          },
+          {
+            "prefix": "560",
+            "corrector": false
+          },
+          {
+            "prefix": "561",
+            "corrector": false
+          },
+          {
+            "prefix": "569",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-50",
+        "parent_id": "equity_liabilities-43",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "IV. Deudas con empresas del grupo y asociadas a corto plazo.",
+        "rules": [
+          {
+            "prefix": "5103",
+            "corrector": false
+          },
+          {
+            "prefix": "5104",
+            "corrector": false
+          },
+          {
+            "prefix": "5113",
+            "corrector": false
+          },
+          {
+            "prefix": "5114",
+            "corrector": false
+          },
+          {
+            "prefix": "5123",
+            "corrector": false
+          },
+          {
+            "prefix": "5124",
+            "corrector": false
+          },
+          {
+            "prefix": "5133",
+            "corrector": false
+          },
+          {
+            "prefix": "5134",
+            "corrector": false
+          },
+          {
+            "prefix": "5143",
+            "corrector": false
+          },
+          {
+            "prefix": "5144",
+            "corrector": false
+          },
+          {
+            "prefix": "5523",
+            "corrector": false
+          },
+          {
+            "prefix": "5524",
+            "corrector": false
+          },
+          {
+            "prefix": "5563",
+            "corrector": false
+          },
+          {
+            "prefix": "5564",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-51",
+        "parent_id": "equity_liabilities-43",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "V. Acreedores comerciales y otras cuentas a pagar.",
+        "rules": []
+      },
+      {
+        "id": "equity_liabilities-52",
+        "parent_id": "equity_liabilities-51",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "1. Proveedores.",
+        "rules": [
+          {
+            "prefix": "400",
+            "corrector": false
+          },
+          {
+            "prefix": "401",
+            "corrector": false
+          },
+          {
+            "prefix": "403",
+            "corrector": false
+          },
+          {
+            "prefix": "404",
+            "corrector": false
+          },
+          {
+            "prefix": "405",
+            "corrector": false
+          },
+          {
+            "prefix": "406",
+            "corrector": true
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-53",
+        "parent_id": "equity_liabilities-51",
+        "side": "equity_liabilities",
+        "depth": 2,
+        "label": "2. Otros acreedores.",
+        "rules": [
+          {
+            "prefix": "41",
+            "corrector": false
+          },
+          {
+            "prefix": "438",
+            "corrector": false
+          },
+          {
+            "prefix": "465",
+            "corrector": false
+          },
+          {
+            "prefix": "466",
+            "corrector": false
+          },
+          {
+            "prefix": "475",
+            "corrector": false
+          },
+          {
+            "prefix": "476",
+            "corrector": false
+          },
+          {
+            "prefix": "477",
+            "corrector": false
+          }
+        ]
+      },
+      {
+        "id": "equity_liabilities-54",
+        "parent_id": "equity_liabilities-43",
+        "side": "equity_liabilities",
+        "depth": 1,
+        "label": "VI. Periodificaciones a corto plazo.",
+        "rules": [
+          {
+            "prefix": "485",
+            "corrector": false
+          },
+          {
+            "prefix": "568",
+            "corrector": false
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,2 @@
+<script setup>import { es } from '../locales/es.js';</script>
+<template><section class="panel empty-page"><h1>{{ es.notFound }}</h1><p>{{ es.notFoundHelp }}</p><RouterLink class="button" to="/">{{ es.backHome }}</RouterLink></section></template>

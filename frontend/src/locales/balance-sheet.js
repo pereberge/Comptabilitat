@@ -1,0 +1,23 @@
+export const b = {
+ title:'Balance de Situación',date:'Fecha del balance',model:'Tipo de balance',normal:'Normal',abbreviated:'Abreviado',
+ consult:'Consultar',export:'Exportar CSV',asset:'ACTIVO',equity:'PATRIMONIO NETO Y PASIVO',
+ totalAsset:'TOTAL ACTIVO',totalEquity:'TOTAL PATRIMONIO NETO Y PASIVO',difference:'DIFERENCIA',
+ balanced:'Balance cuadrado',unbalanced:'Balance descuadrado',review:'Clasificación pendiente de revisión',
+ observations:'Hay observaciones en el diagnóstico.',
+ diagnostic:'Diagnóstico y comprobaciones',unclassified:'Cuentas pendientes de clasificación (no incluidas en los totales)',
+ signed:'Saldo Debe − Haber',contribution:'Importe en balance',result:'Resultado del ejercicio',booked:'Saldo presentado de la cuenta 129',
+ residual:'Resultado provisional residual de los grupos 6 y 7',resultHelp:'El resultado incluye el saldo del 129 y el resultado residual sin generar asientos.',
+ verified:'Conciliado con Sumas y Saldos',notVerified:'Revisar conciliación con Sumas y Saldos',
+ scope:'Saldos acumulados del ejercicio, incluidos los movimientos de apertura registrados. Solo asientos contabilizados.',
+ stale:'Los filtros han cambiado. Pulsa Consultar para actualizar el balance.',back:'Volver al Balance de Situación',
+ invalid:'Revisa el ejercicio, la fecha y el modelo del balance.',empty:'Sin subcuentas con saldo en esta partida.',
+ reason:{
+  UNCLASSIFIED_ACCOUNT:'Correspondencia PGC no inequívoca para la cuenta padre. Requiere revisión de la clasificación.',
+  DIRECT_EQUITY_REQUIRES_ALLOCATION:'Saldo residual del grupo 8 o 9: requiere asignación al patrimonio neto y revisión del efecto impositivo. No se incluye en el resultado del ejercicio.',
+  DUPLICATE_ACCOUNT:'Cuenta duplicada en el origen del informe.',
+  UNUSUAL_SIGN:'Saldo de signo contrario al habitual. Se conserva su signo; no se reclasifica automáticamente.',
+  UNBALANCED_JOURNAL:'Los movimientos contabilizados presentan un descuadre.',
+  OPENING_MAY_BE_MISSING:'Hay movimientos en ejercicios anteriores y no hay movimientos patrimoniales al inicio del ejercicio seleccionado. Comprueba si falta el asiento de apertura. No se han trasladado saldos.',
+  OPENING_NOT_VERIFIABLE:'Hay movimientos de ejercicios anteriores y movimientos patrimoniales el primer día. El sistema no identifica explícitamente los asientos de apertura: verifica que estén completos. No se han sumado saldos de otros ejercicios.',
+ },
+};
