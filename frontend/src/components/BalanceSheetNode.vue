@@ -1,20 +1,23 @@
 <script setup>
 import { b } from '../locales/balance-sheet.js';
 import { reportMoney as money } from '../services/report-format.js';
-defineProps({node:{type:Object,required:true},ledgerLink:{type:Function,required:true}});
+defineProps({node:{type:Object,required:true},ledgerLink:{type:Function,required:true},accountDigits:{type:Number,default:0}});
 </script>
 <template>
- <details class="balance-node" :class="{'balance-section':node.depth===0}" :open="node.depth===0">
+ <details class="balance-node" :class="{'balance-section':node.depth===0}" :open="node.depth===0||accountDigits>0">
   <summary><span>{{ node.label }}</span><strong class="amount">{{ money(node.amount) }} €</strong></summary>
   <div class="balance-children">
-   <BalanceSheetNode v-for="child in node.children" :key="child.id" :node="child" :ledger-link="ledgerLink" />
-   <details v-for="account in node.accounts" :key="account.code" class="balance-account">
-    <summary><span>{{ account.code }} · {{ account.description }}</span><span class="amount">{{ money(account.amount) }} €</span></summary>
+   <BalanceSheetNode v-for="child in node.children" :key="child.id" :node="child" :account-digits="accountDigits" :ledger-link="ledgerLink" />
+   <template v-for="account in node.accounts" :key="account.code">
+   <div v-if="account.detail_is_subaccount" class="balance-subaccount"><RouterLink :to="ledgerLink(account)">{{ account.code }}{{ account.description?' · '+account.description:'' }}</RouterLink><span class="amount" :title="b.signed+': '+money(account.signed_balance)">{{ money(account.amount) }} €</span></div>
+   <details v-else class="balance-account">
+    <summary><span>{{ account.code }}{{ account.description?' · '+account.description:'' }}</span><span class="amount">{{ money(account.amount) }} €</span></summary>
     <div v-for="sub in account.subaccounts" :key="sub.id" class="balance-subaccount">
      <RouterLink :to="ledgerLink(sub)">{{ sub.code }} · {{ sub.description }}</RouterLink>
      <span class="amount" :title="b.signed+': '+money(sub.signed_balance)">{{ money(sub.amount) }} €</span>
     </div>
    </details>
+   </template>
    <p v-if="!node.children.length&&!node.accounts.length" class="muted balance-empty">{{ b.empty }}</p>
   </div>
  </details>

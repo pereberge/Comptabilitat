@@ -1,8 +1,11 @@
 export const r = {
  ledger:'Libro Mayor', trialBalance:'Balance de Sumas y Saldos', consult:'Consultar', export:'Exportar CSV',
+ multiExercise:'Varios ejercicios', exerciseFrom:'Ejercicio inicial', exerciseTo:'Ejercicio final', exercises:'Ejercicios',
+ multiExerciseHint:'El saldo se calcula por ejercicio. Las aperturas y los cierres se incluyen en su ejercicio y no se suman saldos entre años.',
  mode:'Modalidad', accumulated:'Acumulado del ejercicio', period:'Movimientos del período', level:'Agrupación',
  subaccounts:'Subcuentas', accounts:'Cuentas (3 dígitos)', subgroups:'Subgrupos (2 dígitos)', groups:'Grupos (1 dígito)',
  showEmpty:'Mostrar cuentas sin movimientos ni saldos', opening:'Saldo anterior', initial:'Saldo inicial',
+ excludeClosing:'Excluir asiento de cierre',
  closing:'Saldo final', balance:'Saldo', debtor:'Saldo deudor', creditor:'Saldo acreedor', total:'TOTAL',
  balanced:'Comprobaciones correctas', warning:'Descuadre detectado', openingDifference:'Diferencia inicial',
  movementDifference:'Diferencia Debe / Haber', closingDifference:'Diferencia de saldos finales',

@@ -1,5 +1,13 @@
 # Contabilidad — Mantenimiento de subcuentas y asientos
 
+La ficha de empresa incluye **Formato de empresa: General / Producción porcina**. Producción porcina admite también el PDF **DIARI** con diarios y referencias originales. Aplicar la migración 021. Uso, validaciones y archivo facilitado: [docs/produccion-porcina.md](docs/produccion-porcina.md).
+
+**Gestión de granjas**, exclusiva de Producción porcina: lotes con numeración `granja-1`, totales del ciclo seleccionado, detalle al pulsar un tipo de gasto, cuido manual y bajas visibles. Incluye entrada por animal, ventas, traspasos de pienso e informe con selector de granja/lote e índice de conversión. Importa las facturas de Sant Isidre y conserva las asignaciones de gastos. Requiere las migraciones 022 a 026. [Uso y validaciones](docs/gestion-granjas.md).
+
+**Patrimonio y beneficio**, junto al usuario en la barra superior, muestra al máster la evolución anual de las tres empresas. En **Asientos contables** se puede buscar por importe y abrir la edición clicando cualquier punto de una fila. **Copias de seguridad** se encuentra en Inicio. Uso y criterios: [docs/evolucion-empresas.md](docs/evolucion-empresas.md).
+
+En **Copias de seguridad** (`/copias-seguridad`), selecciona la empresa y marca uno, varios o todos sus ejercicios. **Hacer copia de seguridad** descarga sus datos y originales; **Importar datos** revisa el archivo y recupera los movimientos en ejercicios vacíos. Incluye facturas, cartera, PDF, conciliaciones y documentos comunes. También permite programar copias completas diarias, semanales y mensuales en el servidor, descargarlas y borrar las antiguas por fecha y tipo con revisión previa. Aplicar la migración 020. Uso, límites y pruebas: [docs/copias-seguridad.md](docs/copias-seguridad.md).
+
 Aplicación local con Vue 3 (Composition API), Vite, JavaScript, Vue Router, Express y MySQL. Interfaz en español, textos centralizados y datos persistentes reales. No incluye cierres, regularización, apertura automática ni automatización de IVA.
 
 ## Mantenimiento de subcuentas
@@ -156,6 +164,11 @@ Las reglas de dominio se aplican desde el servicio; no escribas asientos mediant
 | --- | --- | --- |
 | GET | /api/health | Disponibilidad MySQL |
 | GET | /api/context | Empresa y ejercicios |
+| GET | /api/companies | Listado de empresas con URL del logotipo |
+| GET | /api/companies/:id | Ficha fiscal, de contacto y de cobros |
+| POST | /api/companies | Crear empresa y primer ejercicio |
+| PATCH | /api/companies/:id | Editar ficha de empresa y logotipo |
+| GET | /api/companies/:id/logo | Imagen del logotipo |
 | GET | /api/accounts?search=&kind= | Listado de cuentas |
 | POST | /api/accounts | Crear cuenta/subcuenta |
 | GET | /api/accounts/:id | Detalle |
@@ -173,7 +186,7 @@ Se ejecutan en orden de nombre y se registran en `schema_migrations`; un bloqueo
 
 El separador `-- statement` permite ejecutar triggers sin `DELIMITER`. MySQL confirma DDL implícitamente: una migración fallida puede quedar parcialmente aplicada. Revisa el fallo y reintenta; las primeras migraciones usan `IF NOT EXISTS`. Las semillas sí se aplican en transacción.
 
-Los triggers de ejercicios impiden solapamientos incluso con concurrencia; el predeterminado es único por empresa y debe estar abierto. No hay interfaz para crear, cerrar o reabrir ejercicios.
+Los triggers de ejercicios impiden solapamientos incluso con concurrencia; el predeterminado es único por empresa y debe estar abierto. El alta de empresas crea su primer ejercicio. La pestaña **Ejercicios** permite añadir otros años. La restauración de un diario con asiento de cierre deja ese ejercicio cerrado; el cierre y la reapertura manuales no están implementados.
 
 ## Pruebas
 
@@ -202,7 +215,7 @@ Las migraciones locales están aplicadas. Ejecuta las semillas si todavía no ha
 
 ## Fuera de alcance
 
-No se han implementado diario exportable, Balance de Situación, Pérdidas y Ganancias, libros fiscales, cálculo de IVA, cierre/reapertura, regularización, asientos automáticos, autenticación ni alta de empresas.
+No se han implementado diario exportable, Pérdidas y Ganancias, libros fiscales, liquidaciones fiscales de IVA, cierre/reapertura manual, regularización automática ni autenticación.
 
 ## Notación cuenta.subcuenta
 
@@ -212,16 +225,71 @@ Para mantener compatibilidad, los códigos completos sin punto siguen admitidos;
 
 Catálogo de referencia: `database/reference/pgc.json`. No se carga automáticamente.
 
-## Selección de empresa
+## Empresas y logotipos
 
-El menú lateral contiene Inicio, Mantenimiento de subcuentas y Asientos contables directamente. La barra superior permite seleccionar empresa y ejercicio reales. La selección se recuerda por pestaña; al cambiar de empresa se recargan las pantallas y se recupera su ejercicio seleccionado o predeterminado. Si solo existe una empresa, el selector muestra esa empresa. El alta de empresas no forma parte de este cambio.
+En **Empresas** (`/empresas`), pulsa **Nueva empresa**, introduce el nombre y las fechas del primer ejercicio y, si lo deseas, selecciona un logotipo. El ejercicio se crea abierto y predeterminado; las subcuentas usan inicialmente 8 dígitos. La nueva empresa queda seleccionada y empieza con su propio plan de cuentas vacío.
+
+Cada empresa permite editar el nombre y añadir, sustituir o quitar su logotipo. Se admiten PNG, JPG y WebP de hasta 2 MB, con vista previa y validación del contenido. El logotipo se guarda en MySQL y se muestra en el selector superior, la ficha de Inicio y el listado de empresas.
+
+El formulario de alta y edición tiene cuatro apartados: **Datos fiscales** (razón social, formato de empresa, nombre comercial, CIF/NIF y domicilio completo), **Contacto** (persona, teléfono, correo, correo de facturación y web), **Cobros** (banco, titular, IBAN, BIC/SWIFT, forma y condiciones de cobro) y **Otros datos** (nombre de empresa en el diario PDF, información registral, texto al pie de las facturas, logotipo y ejercicio inicial). Los datos adicionales se pueden completar progresivamente.
+
+La migración `006_company_details.sql` guarda esta ficha por empresa. En la API, los campos adicionales se envían junto a `name`; los omitidos en una edición se conservan y una cadena vacía borra el campo. El listado incluye CIF/NIF y población, mientras que los datos bancarios se consultan en el detalle o contexto de su empresa. El IBAN se normaliza y se comprueba su estructura y control MOD97-10 según el [registro de Swift](https://www.swift.com/resource/iban-registry-pdf); el BIC se comprueba por su [formato ISO 9362](https://www.swift.com/standards/data-standards/bic-business-identifier-code). Estas comprobaciones validan el formato, no la existencia ni titularidad de la cuenta. Las facturas conservan una copia de esta ficha al registrarse y generan sus recibos en Cartera. El envío de órdenes al banco no está implementado.
+
+Ejecuta `npm run db:migrate` para aplicar `005_company_logos.sql`. La creación de empresa, ejercicio y logotipo se confirma en una única transacción. La API recibe `{ name, exercise: { name, start_date, end_date }, logo? }`; `logo` es una URL de datos base64. En la edición, omitir `logo` lo conserva y enviar `null` lo elimina. Las rutas de empresas usan el ID explícito de su URL; las operaciones contables siguen usando `X-Company-Id`.
+
+Cada empresa tiene un color principal propio y estable, calculado a partir de su identificador. Al cambiar de empresa se actualizan la cabecera, la navegación, los botones y los formularios; las tarjetas y los accesos rápidos muestran también el color de cada empresa.
+
+La barra superior permite seleccionar empresa y ejercicio. La selección se recuerda por pestaña; al cambiar de empresa se recargan las pantallas y se recupera su ejercicio seleccionado o predeterminado. Los ejercicios, cuentas, asientos e informes pertenecen a la empresa seleccionada.
+
+Los botones pequeños junto al título de Inicio permiten cambiar de empresa pulsando su anagrama. Cuando hay logotipos configurados, estos accesos muestran las empresas con logotipo; el selector superior y la pantalla Empresas mantienen el acceso a todas. Las imágenes se muestran completas, sin recortarlas, y el botón de la empresa seleccionada queda marcado.
+
+## Facturas y cartera de cobros y pagos
+
+En **Facturas** (`/facturas`), registra facturas emitidas o recibidas con sus conceptos, IVA, retención y uno o varios recibos con fechas e importes editables. Guardar crea la factura, su asiento y todos los vencimientos en una sola transacción. La migración `008_invoices_portfolio.sql` incorpora los registros y relaciones necesarios.
+
+En **Cartera** (`/cartera`), consulta pendientes y vencidos de todos los ejercicios de la empresa, registra cobros/pagos totales o parciales, modifica vencimientos y revisa el historial. Las liquidaciones crean su asiento de banco/caja y actualizan el pendiente de forma conjunta. Facturas y recibos son imprimibles; la cartera incluye CSV. Las anulaciones se realizan mediante contrasientos, conservando el historial. Uso, API, cálculos, pruebas y alcance: [docs/cartera.md](docs/cartera.md).
 
 ## Informes contables
+
+El botón **Revisar contabilidad**, junto a **Actualizar datos** en Inicio y a **Actualizar conciliación** en Conciliación bancaria, revisa los apuntes y el plan de cuentas de la empresa y el ejercicio seleccionados. Muestra errores comprobables, observaciones a contrastar y propuestas de mejora, con filtros, enlaces al mayor/asientos y CSV. No modifica datos. Incluye revisión de IVA, saldos, apertura/cierre, bancos y cartera. Uso, criterios y pruebas: [docs/revision-contable.md](docs/revision-contable.md).
+
+En **Conciliación bancaria** (`/conciliacion-bancaria`), **Subir extracto** permite cargar PDF con texto o CSV de diferentes bancos, detectar banco e IBAN, vincular su subcuenta y preparar la conciliación desde el último saldo coincidente. Los informes incluyen el documento original, los movimientos pendientes, las coincidencias con el diario y las propuestas de asientos exportables en CSV. Los préstamos sin desglose, las transferencias sin justificar y los saldos anteriores desconocidos quedan pendientes de revisión. No contabiliza las propuestas. Avisa si cambian los apuntes utilizados en el análisis y evita duplicar el mismo extracto. Aplicar las migraciones `010_bank_reconciliations.sql` y `011_bank_statement_import.sql`. Uso, formatos y alcance: [docs/conciliacion-bancaria.md](docs/conciliacion-bancaria.md).
 
 Disponibles Libro Mayor y Balance de Sumas y Saldos, con consultas por empresa y ejercicio, saldos exactos, agrupaciones, navegación y CSV. Aplicar `npm run db:migrate` para incorporar el estado de los asientos. Detalles de cálculo, endpoints, pruebas y límites en [docs/informes.md](docs/informes.md).
 
 También disponible **Balance de Situación** en modelos Normal y Abreviado, con desglose hasta el Mayor, resultado provisional, diagnóstico y CSV. No requiere nuevas migraciones. Cálculo, mapa PGC, archivos, validación y límites: [docs/balance-situacion.md](docs/balance-situacion.md).
 
+En el Balance de Situación, **Comparar con año anterior** muestra los dos ejercicios y su diferencia en euros, con el mismo corte de fecha, desglose y CSV comparativo. Si falta el ejercicio anterior, se indica en pantalla.
+
 ## Importar cuentas desde PDF
 
 Desde Mantenimiento de subcuentas, usa **Importar cuentas desde PDF**. Incluye previsualización, separación configurable de cuenta/subcuenta, control de duplicados e importación transaccional. Compatible con el listado con texto de `Informe.pdf`. No requiere migraciones. Instrucciones y límites: [docs/importacion-pdf.md](docs/importacion-pdf.md).
+
+## Ejercicios e importación de un libro diario
+
+Las pestañas **Empresas** y **Ejercicios** permiten crear empresas y añadir años a la empresa seleccionada. En **Ejercicios** (`/ejercicios`), pulsa **Nuevo ejercicio**, revisa nombre y fechas y guarda. Los períodos de una misma empresa no pueden solaparse. Al crear el ejercicio puedes marcar **Crear también el asiento de apertura** desde el ejercicio anterior cerrado, revisando sus saldos antes de guardar. La ficha permite **Generar cierre**, **Generar apertura**, **Anular cierre**, **Anular apertura** y consultar su historial. Aplicar la migración `009_exercise_operations.sql`. Uso, condiciones, API y pruebas: [docs/ejercicios.md](docs/ejercicios.md).
+
+En un ejercicio vacío, **Importar libro diario PDF** permite revisar un informe compatible `LIBRO DIARIO` y restaurar sus movimientos. Se comprueban las sumas por asiento, los arrastres entre páginas y el total de cada página antes de guardar. Se conservan la numeración original, incluido el número 0, los nombres y conceptos de cada línea, sus signos y las líneas a cero. El informe debe coincidir con el nombre de empresa, las fechas completas del ejercicio y la longitud de sus subcuentas.
+
+La migración `007_journal_import.sql` incorpora el registro de importación y conserva el PDF original y su SHA-256 en MySQL. La creación de subcuentas, asientos, líneas y registro de origen se realiza en una única transacción con comprobación final de cantidades y totales. Repetir la misma importación no duplica movimientos; un diario diferente no sustituye un ejercicio con movimientos. Un PDF con cierre al final del período deja el ejercicio cerrado para consulta.
+
+El Mayor y Sumas y Saldos incluyen el cierre por defecto para poder conciliar con el documento. La casilla **Excluir asiento de cierre** permite ver los saldos previos al cierre. El Balance de Situación siempre usa esos saldos y sus enlaces al Mayor mantienen el mismo criterio. La entrada manual conserva las validaciones originales de importes positivos y partida doble.
+
+API: `GET/POST /api/exercises`, `POST /api/journal-import/preview?exercise_id=…` (cuerpo PDF de hasta 5 MB), y `POST /api/journal-import/commit` con `{token}`. Todas usan el contexto `X-Company-Id`. La revisión caduca a los 15 minutos. Los lectores admiten PDF con texto de hasta 300 páginas, 5.000 asientos, 20.000 líneas y 1.000 líneas por asiento. El formato Producción porcina admite también DIARI; otros formatos o documentos escaneados requieren otro adaptador.
+
+Para comprobar también el informe de Nou Fons sin incluir datos empresariales en las pruebas del repositorio, configura `TEST_JOURNAL_PDF` con su ruta antes de ejecutar `npm test`. La prueba espera 21 páginas, 197 asientos, 639 líneas, 87 subcuentas y 1.644.224,11 EUR en cada lado.
+
+En **Facturas**, **Subir factura PDF** prepara el asiento y los vencimientos a partir del documento y de las cuentas utilizadas en la empresa. **Guardar PDF y propuesta** archiva el original sin crear movimientos. En **Documentos y propuestas** se puede buscar por proveedor, referencia, CIF, importe o archivo, abrir el PDF y editar la propuesta. La confirmación crea factura y recibos o los vincula al asiento existente para evitar duplicarlo. Aplicar `012_invoice_documents.sql`. Formatos, límites, API y validación: [docs/facturas-pdf.md](docs/facturas-pdf.md).
+
+En **Ejercicios**, **Borrar contabilidad del período** aparece junto a la importación del libro. Muestra empresa, fechas y recuentos y exige escribir **96**, también comprobado por el servidor. Guarda una copia descargable y vacía únicamente el período revisado, que queda abierto para reimportar. Conserva el plan de cuentas y comprueba los vínculos con otros años. Aplicar `013_exercise_clears.sql`. Alcance y uso en [docs/ejercicios.md](docs/ejercicios.md#borrar-la-contabilidad-de-un-período).
+
+
+Las nuevas **facturas emitidas** proponen el consecutivo de la última numeración de la empresa y ejercicio, conservando el formato. Puedes editarlo o pulsar **Usar siguiente número**. El servidor asigna el número definitivo al guardar para evitar duplicados simultáneos. En el tercero, **Buscar cliente / proveedor por nombre o código** filtra sus cuentas por nombre, código o CIF conocido. No requiere migraciones. Detalles en [docs/cartera.md](docs/cartera.md#consecutivo-de-facturas-emitidas-y-búsqueda-de-terceros).
+
+En **Facturas**, **Borrar sin contabilizar** elimina propuestas pendientes. **Borrar factura y recibos · 96** exige el código 96, muestra los movimientos afectados y borra sin generar copia de seguridad; los PDF vuelven a propuestas pendientes. El menú **Documentación** permite archivar originales de hasta 10 MB con título, descripción y buscador, separados por empresa y comunes a sus ejercicios. Aplicar las migraciones 014 y 015. Uso y API: [docs/documentacion-y-borrado.md](docs/documentacion-y-borrado.md).
+
+VERI*FACTU: preparación por empresa en el portal de pruebas, con registros, XML, QR y conservación. Consulta [el alcance, el certificado y las tareas previas a producción](docs/verifactu.md).
+
+Las facturas incluyen **Imprimir**, **Descargar PDF** y **Preparar correo** con un borrador .eml y su PDF adjunto. El usuario revisa y envía el borrador desde su programa de correo. Uso y requisitos del generador en [docs/facturas-correo.md](docs/facturas-correo.md).
+
+Dos perfiles intercambiables desde la barra superior: **Máster**, protegido con contraseña, y **Usuario**, con permisos configurables. Solo el máster puede borrar la contabilidad de ejercicios y sustituir datos al restaurar. Aplicar la migración 019. Uso y pruebas: [docs/usuarios-permisos.md](docs/usuarios-permisos.md).

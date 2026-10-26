@@ -1,4 +1,6 @@
 <script setup>
+import {useAccess} from '../composables/access.js';
+const {can}=useAccess();
 import { displayAccountCode } from '../../../shared/account-codes.js';
 import { useContext } from '../composables/context.js';
 import { computed, onMounted, ref } from 'vue';
@@ -38,7 +40,7 @@ async function save(){busy.value=true;formError.value='';try{
 onMounted(load);
 </script>
 <template>
- <div class="page-heading"><div><h1>{{ t.accounts }}</h1><p class="muted">{{ t.accountHelp }}</p></div><div class="actions"><button class="button" @click="importing=true">{{ imp.title }}</button><button class="button primary" @click="open">{{ t.newAccount }}</button></div></div>
+ <div class="page-heading"><div><h1>{{ t.accounts }}</h1><p class="muted">{{ t.accountHelp }}</p></div><div class="actions"><button :disabled="!can('data_import')" class="button" @click="importing=true">{{ imp.title }}</button><button :disabled="!can('accounting_write')" class="button primary" @click="open">{{ t.newAccount }}</button></div></div>
  <p v-if="error" class="notice error-notice" role="alert">{{ error }}</p><p v-if="notice" role="status" class="success-note">{{ notice }}</p>
  <div class="filters"><label>{{ t.search }}<input v-model="search" type="search"></label><label>{{ t.kind }}<select v-model="kind"><option value="">{{ t.all }}</option><option value="account">{{ t.account }}</option><option value="subaccount">{{ t.subaccount }}</option></select></label><button class="button" :disabled="loading" @click="load">{{ t.retry }}</button></div>
  <p v-if="loading" role="status">{{ t.loading }}</p>
@@ -50,6 +52,6 @@ onMounted(load);
  <label>{{ t.code }}<input v-model="form.code" inputmode="decimal" pattern="[1-9][0-9]*(\.[0-9]+)?" maxlength="21" placeholder="4300.0001" required></label><button type="button" class="button" :disabled="busy||!proposedParent||proposedParent.code.length<3" @click="suggest">{{ t.suggestSubaccount }}</button>
  <p v-if="codeParts" class="notice account-code-preview"><strong>{{ t.account }}: {{ codeParts.parent }}</strong><span>{{ t.subaccount }}: {{ codeParts.suffix }}</span></p></template>
  <label>{{ t.description }}<input v-model="form.description" maxlength="200" required></label><div class="actions"><button class="button primary" :disabled="busy">{{ t.save }}</button><button type="button" class="button" :disabled="busy" @click="form=null">{{ t.cancel }}</button></div></form></FormDialog>
- <FormDialog v-if="selected" :title="t.detail" @close="selected=null"><dl><dt>{{ t.code }}</dt><dd>{{ displayAccountCode(selected) }}</dd><dt>{{ t.description }}</dt><dd>{{ selected.description }}</dd><dt>{{ t.kind }}</dt><dd>{{ selected.kind==='account'?t.account:t.subaccount }}</dd><dt>{{ t.parent }}</dt><dd>{{ selected.parent_code || '—' }}</dd></dl><p class="muted">{{ t.immutable }}</p><button class="button" @click="edit">{{ t.edit }}</button></FormDialog>
+ <FormDialog v-if="selected" :title="t.detail" @close="selected=null"><dl><dt>{{ t.code }}</dt><dd>{{ displayAccountCode(selected) }}</dd><dt>{{ t.description }}</dt><dd>{{ selected.description }}</dd><dt>{{ t.kind }}</dt><dd>{{ selected.kind==='account'?t.account:t.subaccount }}</dd><dt>{{ t.parent }}</dt><dd>{{ selected.parent_code || '—' }}</dd></dl><p class="muted">{{ t.immutable }}</p><button :disabled="!can('accounting_write')" class="button" @click="edit">{{ t.edit }}</button></FormDialog>
 <AccountImportDialog v-if="importing" @close="importing=false" @imported="load" />
 </template>

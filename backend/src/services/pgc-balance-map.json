@@ -1,5 +1,5 @@
 {
-  "version": "PGC-1514-2007-consolidated-2026-10-16-v1",
+  "version": "PGC-1514-2007-consolidated-2026-10-23-v3",
   "source": "https://www.boe.es/buscar/act.php?id=BOE-A-2007-19884",
   "models": {
     "normal": [
@@ -172,7 +172,13 @@
         "side": "asset",
         "depth": 1,
         "label": "II. Inmovilizado material.",
-        "rules": []
+        "rules": [
+          {
+            "prefix": "2810",
+            "corrector": true,
+            "review": true
+          }
+        ]
       },
       {
         "id": "asset-10",
@@ -469,6 +475,20 @@
         "depth": 2,
         "label": "5. Otros activos financieros.",
         "rules": []
+      },
+      {
+        "id": "asset-linked-participations",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "Participaciones a largo plazo en partes vinculadas sin desglose",
+        "rules": [
+          {
+            "prefix": "2400",
+            "corrector": false,
+            "review": true
+          }
+        ]
       },
       {
         "id": "asset-22",
@@ -884,6 +904,10 @@
         "rules": [
           {
             "prefix": "4709",
+            "corrector": false
+          },
+          {
+            "prefix": "473",
             "corrector": false
           }
         ]
@@ -2465,6 +2489,20 @@
         ]
       },
       {
+        "id": "asset-linked-participations",
+        "parent_id": "asset-1",
+        "side": "asset",
+        "depth": 1,
+        "label": "Participaciones a largo plazo en partes vinculadas sin desglose",
+        "rules": [
+          {
+            "prefix": "2400",
+            "corrector": false,
+            "review": true
+          }
+        ]
+      },
+      {
         "id": "asset-6",
         "parent_id": "asset-1",
         "side": "asset",
@@ -2743,6 +2781,10 @@
           },
           {
             "prefix": "544",
+            "corrector": false
+          },
+          {
+            "prefix": "473",
             "corrector": false
           }
         ]

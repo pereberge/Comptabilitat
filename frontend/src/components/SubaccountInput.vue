@@ -45,7 +45,7 @@ function choose(account){accountCode.value=account.parent_code;subaccountCode.va
   <Teleport to="body"><FormDialog v-if="searching" class="subaccount-search-dialog" :title="t.searchAccount" @close="closeSearch">
    <div class="subaccount-search-heading"><input ref="searchInput" v-model="search" type="search" :aria-label="t.searchAccountsHint" :placeholder="t.searchAccountsHint" @keydown.enter.prevent></div>
    <div class="subaccount-results"><table><thead><tr><th>{{ t.account }}</th><th>{{ t.subaccount }}</th><th>{{ t.description }}</th><th>{{ t.useAccount }}</th></tr></thead><tbody>
-    <tr v-for="account in results" :key="account.id"><td>{{ account.parent_code }}</td><td>{{ account.code.slice(account.parent_code.length) }}</td><td>{{ account.description }}</td><td><button type="button" class="button" @click="choose(account)">{{ t.useAccount }}</button></td></tr>
+    <tr v-for="account in results" :key="account.id" class="subaccount-result" @click="choose(account)"><td>{{ account.parent_code }}</td><td>{{ account.code.slice(account.parent_code.length) }}</td><td>{{ account.description }}</td><td><button type="button" class="button" @click.stop="choose(account)">{{ t.useAccount }}</button></td></tr>
     <tr v-if="!results.length"><td colspan="4">{{ t.empty }}</td></tr>
    </tbody></table></div>
   </FormDialog></Teleport>

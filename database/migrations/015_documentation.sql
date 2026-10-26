@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS company_documents (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ company_id INT UNSIGNED NOT NULL,
+ title VARCHAR(200) NOT NULL,
+ description TEXT NOT NULL,
+ source_name VARCHAR(255) NOT NULL,
+ source_mime VARCHAR(100) CHARACTER SET ascii NOT NULL,
+ source_sha256 CHAR(64) CHARACTER SET ascii NOT NULL,
+ source_size INT UNSIGNED NOT NULL,
+ content MEDIUMBLOB NOT NULL,
+ request_id CHAR(36) CHARACTER SET ascii NOT NULL,
+ request_hash CHAR(64) CHARACTER SET ascii NOT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+ UNIQUE KEY uq_company_document_request(company_id,request_id),
+ FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+ INDEX idx_company_document_date(company_id,created_at,id),
+ CHECK(source_size>0 AND source_size<=10485760)
+) ENGINE=InnoDB

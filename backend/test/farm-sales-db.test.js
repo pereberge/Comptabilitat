@@ -1,0 +1,60 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import mysql from 'mysql2/promise';
+import {config} from '../src/config.js';
+import {createCompanyService} from '../src/services/companies.js';
+import {createExerciseService} from '../src/services/exercises.js';
+import {createFarmService} from '../src/services/farms.js';
+import {createDataBackupService} from '../src/services/data-backup.js';
+import {createExerciseClearService} from '../src/services/exercise-clear.js';
+import {readBackup,packBackup,sealBackup} from '../src/services/backup-format.js';
+import {farmPdf} from '../test-support/farm-fixture.js';
+const error=code=>cause=>cause.code===code;
+test('MySQL manual sales: exact totals, edits, removals, tenant isolation, retries, cycle results and backup restore',{skip:process.env.TEST_MYSQL!=='1'},async()=>{
+ const pool=mysql.createPool(config.database),ids=[],tokens=[],companies=createCompanyService(pool),name='Farm sales '+randomUUID();
+ const create=async(format='pig_production')=>{const company=await companies.createCompany({name,business_format:format,tax_id:'A25006107',exercise:{name:'2026',start_date:'2026-01-01',end_date:'2026-12-31'}});ids.push(company.id);const [[period]]=await pool.execute('SELECT id FROM accounting_exercises WHERE company_id=?',[company.id]);return {...company,exerciseId:period.id};};
+ try{
+  const source=await create(),target=await create(),general=await create('general'),service=createFarmService(pool,source.id),other=createFarmService(pool,target.id);
+  const preview=await service.preview(farmPdf(),source.exerciseId);await service.commit(preview.token);await service.discard(preview.token);
+  const farm=(await service.list()).farms.find(row=>row.code==='1');
+  const firstLot=await service.saveLot({farm_id:farm.id,code:'CYCLE-1',entry_date:'2025-12-01',exit_date:'2026-06-30'});
+  const nextLot=await service.saveLot({farm_id:farm.id,code:'CYCLE-2',entry_date:'2026-07-01'});
+  const body={lot_id:firstLot.id,sale_date:'2026-01-31',pigs:100,kg_per_pig:'112.35',price_per_kg:'1.65',request_id:randomUUID(),total_amount:'0.01'};
+  const first=await service.saveSale(body);assert.equal((await service.saveSale({...body,kg_per_pig:'112,350'})).id,first.id);
+  await assert.rejects(service.saveSale({...body,price_per_kg:'1.66'}),error('REQUEST_CONFLICT'));
+  await assert.rejects(other.saveSale(body),error('FARM_LOT_NOT_FOUND'));
+  await assert.rejects(createFarmService(pool,general.id).saveSale(body),error('FARM_FORMAT_REQUIRED'));
+  await assert.rejects(other.removeSale(first.id,{version:1}),error('FARM_SALE_NOT_FOUND'));
+  await assert.rejects(service.saveSale({...body,sale_date:'2027-01-01',request_id:randomUUID()}),error('FARM_SALE_EXERCISE_REQUIRED'));
+  let data=await service.list({lot_id:firstLot.id});assert.equal(data.sales[0].total_amount,'18537.75');assert.equal(data.sales[0].total_kg,'11235.000');assert.equal(data.sales_totals.result,'18527.74');
+  const secondBody={...body,sale_date:'2026-02-15',pigs:40,kg_per_pig:'115.2',price_per_kg:'1.6',request_id:randomUUID()},second=await service.saveSale(secondBody);
+  data=await service.list({lot_id:firstLot.id});assert.equal(data.sales_totals.pigs,140);assert.equal(data.sales_totals.revenue,'25910.55');
+  await service.saveSale({...body,pigs:120,version:1},first.id);
+  await assert.rejects(service.saveSale({...body,pigs:130,version:1},first.id),error('FARM_CHANGED'));
+  await service.removeSale(second.id,{version:1});await service.removeSale(second.id,{version:1});
+  await assert.rejects(service.saveSale(secondBody),error('FARM_SALE_VOIDED'));
+  data=await service.list({lot_id:firstLot.id,category:'medicines'});assert.equal(data.totals.base,'0.00');assert.equal(data.sales_totals.cost,'10.01');assert.equal(data.sales_totals.revenue,'22245.30');assert.equal(data.sales_totals.result,'22235.29');
+  assert.equal((await service.list({lot_id:firstLot.id,from:'2026-02-01'})).sales.length,0);
+  const concurrentBody={...body,lot_id:nextLot.id,sale_date:'2026-07-03',pigs:2,kg_per_pig:'100',price_per_kg:'1',request_id:randomUUID()};
+  const concurrent=await Promise.all([service.saveSale(concurrentBody),service.saveSale(concurrentBody)]);assert.equal(concurrent[0].id,concurrent[1].id);
+  await createExerciseService(pool,source.id).create({name:'2025',start_date:'2025-01-01',end_date:'2025-12-31'});
+  await service.saveSale({...body,sale_date:'2025-12-31',pigs:10,kg_per_pig:'100',price_per_kg:'1.5',request_id:randomUUID()});
+  assert.equal((await service.list({lot_id:firstLot.id,exercise_id:'all'})).sales_totals.revenue,'23745.30');
+  assert.equal((await service.list({exercise_id:source.exerciseId})).sales_totals.revenue,'22445.30');
+  const [[journal]]=await pool.execute('SELECT COUNT(*) AS total FROM journal_entries WHERE company_id=?',[source.id]);assert.equal(journal.total,0);
+  const backup=createDataBackupService(pool,source.id),archive=await backup.export(),restore=createDataBackupService(pool,target.id);
+  assert.equal(readBackup(archive.file).tables.farm_sales.length,4);assert.equal(readBackup((await backup.export(source.exerciseId)).file).tables.farm_sales.length,3);
+  const broken=structuredClone(archive.data);delete broken.checksum;broken.tables.farm_sales[0].total_amount='0.01';assert.throws(()=>readBackup(packBackup(sealBackup(broken))),error('BACKUP_INVALID_ACCOUNTING'));
+  const review=await restore.preview(archive.file);tokens.push([restore,review.token]);assert.equal(review.ready,true);await restore.restore({token:review.token,confirm:true,request_id:randomUUID()});
+  data=await other.list();assert.equal(data.sales.length,3);assert.equal(data.sales_totals.revenue,'23945.30');assert.ok(data.sales.every(row=>row.company_id===target.id&&row.lot_id!==firstLot.id));
+  const replacement=await restore.preview(archive.file,'all',true);tokens.push([restore,replacement.token]);assert.equal(replacement.ready,true);await restore.restore({token:replacement.token,confirm:true,confirmation:'96',request_id:randomUUID()});assert.equal((await other.list()).sales_totals.revenue,'23945.30');
+  const clear=createExerciseClearService(pool,target.id),clearReview=await clear.preview(target.exerciseId);assert.equal(clearReview.counts.farm_sales,3);await clear.clear(target.exerciseId,{confirmation:'96',preview_hash:clearReview.preview_hash,request_id:randomUUID()});data=await other.list();assert.equal(data.sales.length,1);assert.equal(data.sales_totals.revenue,'1500.00');assert.equal(data.lots.length,2);
+  const legacy=structuredClone(archive.data);delete legacy.checksum;for(const section of ['schema','tables','references'])delete legacy[section].farm_sales;
+  const legacyCompany=await create(),legacyRestore=createDataBackupService(pool,legacyCompany.id),legacyPreview=await legacyRestore.preview(packBackup(sealBackup(legacy)));tokens.push([legacyRestore,legacyPreview.token]);assert.equal(legacyPreview.ready,true);await legacyRestore.restore({token:legacyPreview.token,confirm:true,request_id:randomUUID()});const restored=await createFarmService(pool,legacyCompany.id).list();assert.equal(restored.sales.length,0);assert.equal(restored.totals.base,'30.01');
+ }finally{
+  for(const [owner,token]of tokens)await owner.discard(token);
+  for(const companyId of ids){for(const table of ['data_restores','exercise_clear_rows','exercise_clears','farm_sales','farm_cost_lines','farm_invoices','farm_lots','farm_documents','pig_farms','company_details','accounting_exercises'])await pool.execute('DELETE FROM '+table+' WHERE company_id=?',[companyId]);await pool.execute('DELETE FROM companies WHERE id=?',[companyId]);}
+  await pool.end();
+ }
+});

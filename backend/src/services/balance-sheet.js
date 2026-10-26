@@ -41,6 +41,7 @@ export function buildBalanceSheet(trial, model = 'abbreviated', opening = {}) {
     let group = node.accounts.find(a => a.code === code);
     if (!group) { group={code,description:row.parent_description || code,value:0n,subaccounts:[]};node.accounts.push(group); }
     group.value += value; group.subaccounts.push(contribution);
+    if (rule.review) diagnostics.push({code:'PGC_DETAIL_REQUIRED',account:contribution});
     if (!incomeExpense && (rule.corrector ? value > 0n : value < 0n)) diagnostics.push({code:'UNUSUAL_SIGN',account:contribution});
   }
   for (const node of [...nodes].sort((a,b)=>b.depth-a.depth)) {
@@ -60,7 +61,7 @@ export function buildBalanceSheet(trial, model = 'abbreviated', opening = {}) {
     return {...rest,amount:decimal(value),children:node.children.map(serialize),accounts:node.accounts.map(({value,...a})=>({...a,amount:decimal(value)}))};
   }
   return {company:trial.company,exercise:trial.exercise,from:trial.from,to:trial.to,date:trial.to,currency:'EUR',model,
-    mapping_version:mapping.version,source:mapping.source,sections:roots.map(serialize),
+    exclude_closing:!!trial.exclude_closing,mapping_version:mapping.version,source:mapping.source,sections:roots.map(serialize),
     totals:{assets:decimal(assets),equity_liabilities:decimal(equityLiabilities),difference:decimal(difference)},
     result:{booked_129:decimal(booked),residual_6_7:decimal(residual),total:decimal(booked+residual)},
     checks:{balanced:difference===0n,complete:unclassified.length===0,valid:difference===0n&&!unclassified.length&&!diagnostics.length&&noDoubleCount&&resultReconciled,

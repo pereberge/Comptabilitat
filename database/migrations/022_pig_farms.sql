@@ -1,0 +1,83 @@
+CREATE TABLE IF NOT EXISTS pig_farms (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ company_id INT UNSIGNED NOT NULL,
+ code VARCHAR(20) NOT NULL,
+ name VARCHAR(160) NOT NULL,
+ notes VARCHAR(2000) NOT NULL DEFAULT '',
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+ UNIQUE KEY uq_farm_code(company_id,code),
+ FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+-- statement
+CREATE TABLE IF NOT EXISTS farm_documents (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ company_id INT UNSIGNED NOT NULL,
+ source_name VARCHAR(255) NOT NULL,
+ source_sha256 CHAR(64) CHARACTER SET ascii NOT NULL,
+ source_size INT UNSIGNED NOT NULL,
+ source_pdf MEDIUMBLOB NOT NULL,
+ page_count SMALLINT UNSIGNED NOT NULL,
+ parser_summary JSON NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY uq_farm_document(company_id,source_sha256),
+ FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+ CHECK(source_size>0 AND source_size<=15728640)
+) ENGINE=InnoDB;
+-- statement
+CREATE TABLE IF NOT EXISTS farm_invoices (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ company_id INT UNSIGNED NOT NULL,
+ exercise_id INT UNSIGNED NOT NULL,
+ document_id INT UNSIGNED NOT NULL,
+ reference VARCHAR(80) NOT NULL,
+ invoice_date DATE NOT NULL,
+ supplier_tax_id VARCHAR(20) NOT NULL,
+ supplier_name VARCHAR(160) NOT NULL,
+ base_total DECIMAL(15,2) NOT NULL,
+ vat_total DECIMAL(15,2) NOT NULL,
+ total_amount DECIMAL(15,2) NOT NULL,
+ content_hash CHAR(64) CHARACTER SET ascii NOT NULL,
+ source_pages JSON NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY uq_farm_invoice(company_id,supplier_tax_id,reference),
+ INDEX idx_farm_invoice_date(company_id,exercise_id,invoice_date),
+ FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+ FOREIGN KEY(exercise_id) REFERENCES accounting_exercises(id) ON DELETE RESTRICT,
+ FOREIGN KEY(document_id) REFERENCES farm_documents(id) ON DELETE RESTRICT,
+ CHECK(base_total+vat_total=total_amount)
+) ENGINE=InnoDB;
+-- statement
+CREATE TABLE IF NOT EXISTS farm_cost_lines (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ company_id INT UNSIGNED NOT NULL,
+ invoice_id INT UNSIGNED NOT NULL,
+ farm_id INT UNSIGNED NULL,
+ position SMALLINT UNSIGNED NOT NULL,
+ product_code VARCHAR(30) NOT NULL,
+ description VARCHAR(300) NOT NULL,
+ notes VARCHAR(1000) NOT NULL DEFAULT '',
+ category VARCHAR(24) NOT NULL,
+ quantity DECIMAL(18,2) NULL,
+ unit_price DECIMAL(18,5) NULL,
+ source_amount DECIMAL(18,3) NOT NULL,
+ base_amount DECIMAL(15,2) NOT NULL,
+ vat_amount DECIMAL(15,2) NOT NULL,
+ total_amount DECIMAL(15,2) NOT NULL,
+ vat_rate DECIMAL(5,2) NOT NULL,
+ delivery_reference VARCHAR(80) NOT NULL,
+ delivery_date VARCHAR(10) NOT NULL,
+ source_page SMALLINT UNSIGNED NOT NULL,
+ source_farm_code VARCHAR(20) NULL,
+ informational TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+ UNIQUE KEY uq_farm_cost_position(company_id,invoice_id,position),
+ INDEX idx_farm_cost(company_id,farm_id),
+ FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+ FOREIGN KEY(invoice_id) REFERENCES farm_invoices(id) ON DELETE RESTRICT,
+ FOREIGN KEY(farm_id) REFERENCES pig_farms(id) ON DELETE RESTRICT,
+ CHECK(base_amount+vat_amount=total_amount),
+ CHECK(category IN ('feed','transport','medicines','reproduction','supplies','other'))
+) ENGINE=InnoDB;

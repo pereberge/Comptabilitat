@@ -98,6 +98,23 @@ test('MySQL: cuentas, asientos atómicos, aislamiento, concurrencia e idempotenc
   assert.equal(paired[0].parent_id,paired[1].parent_id);
   const straight=await service.createAccount({code:'4360',description:'Custom account'});
   assert.equal(straight.kind,'account');assert.equal(straight.parent_code,'436');
+  const split=await service.createEntry({...body(),lines:[
+   {account_id:first.id,description:'Base',debit:'1000.00',credit:'0'},
+   {account_id:first.id,description:'Tax',debit:'210.00',credit:'0'},
+   {account_id:second.id,description:'Payment',debit:'0',credit:'1210.00'},
+  ]});
+  for(const value of ['1000','1000,00','1000.00','1210.00']){
+   const found=await service.listEntries({exercise_id:period.insertId,amount:value,view:'lines'});
+   assert.equal(found.length,3);assert.ok(found.every(line=>line.entry_id===split.id));
+   assert.deepEqual(found.map(line=>line.description),['Base','Tax','Payment']);
+   assert.equal((await service.listEntries({exercise_id:period.insertId,amount:value}))[0].id,split.id);
+  }
+  assert.equal((await service.listEntries({exercise_id:period.insertId,amount:'1000.01',view:'lines'})).length,0);
+  assert.equal((await service.listEntries({exercise_id:period.insertId,amount:'0',view:'lines'})).length,0);
+  assert.equal((await service.listEntries({exercise_id:period.insertId,amount:'1000',number:'1',view:'lines'})).length,0);
+  assert.equal((await service.listEntries({exercise_id:period.insertId,amount:'1000',from:'2026-10-16',view:'lines'})).length,0);
+  for(const value of ['1 OR 1=1','-1','1.001','1.000,00',[],{}])await assert.rejects(service.listEntries({exercise_id:period.insertId,amount:value}),error=>error.code==='INVALID_AMOUNT');
+  await assert.rejects(foreign.listEntries({exercise_id:period.insertId,amount:'1000',view:'lines'}),error=>error.code==='EXERCISE_NOT_FOUND');
  }finally{
   if(server)await new Promise(resolve=>server.close(resolve));
   if(companyId){

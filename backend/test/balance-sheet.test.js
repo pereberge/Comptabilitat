@@ -20,6 +20,22 @@ test('100,000 assets equal capital: both official models reconcile',()=>{
   assert.equal(result.checks.valid,true);assert.equal(result.checks.reconciles_trial_balance,true);
  }
 });
+test('pending 473 tax payments stay in current assets and reconcile in both balance models',()=>{
+ for(const model of ['normal','abbreviated']){
+  const source=trial([['4730','578.06'],['4731','628.52'],['1000','-1206.58']]);source.rows[0].code='47300002';
+  const result=buildBalanceSheet(source,model);
+  assert.deepEqual(result.totals,{assets:'1206.58',equity_liabilities:'1206.58',difference:'0.00'});
+  assert.equal(result.checks.complete,true);assert.equal(result.checks.reconciles_trial_balance,true);assert.equal(result.checks.no_double_count,true);
+  const all=leaves(result);assert.equal(all.filter(row=>row.pgc_prefix==='473').length,2);
+  const collect=node=>[node,...node.children.flatMap(collect)],nodes=result.sections.flatMap(collect);
+  const caption=nodes.find(node=>node.accounts.some(account=>account.code==='4730'));
+  assert.match(caption.label,model==='normal'?/Activos por impuesto corriente/:/Otros deudores/);assert.equal(caption.side,'asset');
+  assert.equal(result.result.total,'0.00');
+  const credited=buildBalanceSheet(trial([['4730','-0.01'],['5720','0.01']]),model);
+  assert.equal(credited.totals.difference,'0.00');assert.equal(credited.diagnostic.warnings[0].code,'UNUSUAL_SIGN');
+ }
+});
+
 test('accumulated amortization and impairments reduce their asset, never liabilities',()=>{
  const result=buildBalanceSheet(trial([['2130','100000.00'],['2813','-30000.00'],['2913','-5000.00'],['1000','-65000.00']]),'normal');
  assert.equal(result.totals.assets,'65000.00');assert.equal(result.checks.valid,true);
@@ -41,6 +57,34 @@ test('opposite balances preserve signs and remain visible in diagnostic',()=>{
  assert.equal(result.totals.assets,'-200.00');assert.equal(result.totals.equity_liabilities,'-200.00');
  assert.equal(result.checks.balanced,true);assert.equal(result.checks.valid,false);assert.equal(result.diagnostic.warnings.length,2);
 });
+test('imported 2400 investments stay visible without assuming the missing related-party detail',()=>{
+ for(const model of ['normal','abbreviated']){
+  const source=trial([['2400','73584.00'],['2403','100.00'],['2404','200.00'],['2405','300.00'],['1000','-74184.00']]);source.rows[0].code='24000001';source.rows[0].description='INVERSIONS A NOU FONS';
+  const result=buildBalanceSheet(source,model),all=leaves(result);
+  assert.deepEqual(result.totals,{assets:'74184.00',equity_liabilities:'74184.00',difference:'0.00'});
+  assert.equal(result.checks.complete,true);assert.equal(result.checks.no_double_count,true);assert.equal(result.checks.reconciles_trial_balance,true);
+  const noncurrent=result.sections.find(node=>node.label==='A) ACTIVO NO CORRIENTE');
+  const pending=noncurrent.children.find(node=>node.id==='asset-linked-participations');
+  assert.equal(pending.amount,'73584.00');assert.equal(pending.accounts[0].code,'2400');assert.equal(pending.accounts[0].subaccounts[0].code,'24000001');
+  assert.deepEqual(all.map(row=>row.pgc_prefix).sort(),['100','2400','2403','2404','2405']);
+  assert.equal(result.checks.valid,false);assert.equal(result.diagnostic.warnings.length,1);assert.equal(result.diagnostic.warnings[0].code,'PGC_DETAIL_REQUIRED');
+  assert.equal(result.diagnostic.warnings[0].account.amount,'73584.00');
+  const csv=balanceSheetCsv(result);assert.ok(csv.some(row=>row.includes('24000001')));assert.ok(csv.some(row=>row.some(cell=>typeof cell==='string'&&cell.includes('desglose PGC'))));
+  const credited=buildBalanceSheet(trial([['2400','-0.01'],['5720','0.01']]),model);
+  assert.equal(credited.totals.difference,'0.00');assert.ok(credited.diagnostic.warnings.some(warning=>warning.code==='UNUSUAL_SIGN'));
+ }
+});
+test('generic imported 2810 amortization reduces material assets in both models',()=>{
+ for(const model of ['normal','abbreviated']){
+  const result=buildBalanceSheet(trial([['2110','100000.00'],['2810','-13651.85'],['2811','-1000.00'],['1000','-85348.15']]),model);
+  assert.deepEqual(result.totals,{assets:'85348.15',equity_liabilities:'85348.15',difference:'0.00'});
+  assert.equal(result.checks.complete,true);assert.equal(result.checks.no_double_count,true);assert.equal(result.checks.reconciles_trial_balance,true);
+  const material=result.sections[0].children.find(node=>node.label==='II. Inmovilizado material.');
+  assert.equal(material.amount,'85348.15');assert.equal(leaves(result).find(row=>row.parent_code==='2810').corrector,true);
+  if(model==='normal'){assert.equal(material.accounts[0].code,'2810');assert.equal(result.diagnostic.warnings[0].code,'PGC_DETAIL_REQUIRED');}
+ }
+});
+
 test('unknown accounts cannot hide behind an arithmetically balanced result',()=>{
  const result=buildBalanceSheet(trial([['199','100.00'],['1991','-100.00']]));
  assert.equal(result.checks.balanced,true);assert.equal(result.checks.complete,false);assert.equal(result.checks.valid,false);

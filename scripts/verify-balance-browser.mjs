@@ -17,9 +17,11 @@ try{
  await send('Runtime.enable');await send('Page.enable');
  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
  await send('Page.navigate',{url:'http://127.0.0.1:5180/balance-situacion'});
- await wait(`document.querySelector('.balance-totals')`);
+ await wait(`document.querySelector('.balance-comparison,.balance-totals')`);
  assert.equal(await evaluate(`document.querySelector('h1').textContent`),'Balance de Situación');
- assert.equal(await evaluate(`document.querySelectorAll('.balance-column').length`),2);
+ assert.equal(await evaluate(`Array.from(document.querySelectorAll('.report-filters button')).find(button=>button.hasAttribute('aria-pressed'))?.getAttribute('aria-pressed')`),'true');
+ await evaluate(`Array.from(document.querySelectorAll('.report-filters button')).find(button=>button.hasAttribute('aria-pressed')).click()`);
+ await wait(`document.querySelectorAll('.balance-column').length===2&&!document.querySelector('.report-filters button').disabled`);
  await evaluate(`document.querySelectorAll('.balance-node,.balance-account').forEach(d=>d.open=true)`);
  const subaccount=await evaluate(`document.querySelector('.balance-subaccount a')?.getAttribute('href')`);
  assert.ok(subaccount?.startsWith('/mayor?'));
@@ -31,7 +33,7 @@ try{
  await evaluate(`Array.from(document.querySelectorAll('a')).find(a=>a.textContent==='Volver al Balance de Situación').click()`);
  await wait(`document.querySelector('.balance-totals')`);
  assert.equal(await evaluate(`document.querySelector('input[type=date]').value`),metadata.date);
- await evaluate(`const select=document.querySelector('.report-filters select');select.value='normal';select.dispatchEvent(new Event('change',{bubbles:true}))`);
+ await evaluate(`const select=Array.from(document.querySelectorAll('.report-filters label')).find(label=>label.textContent.includes('Tipo de balance')).querySelector('select');select.value='normal';select.dispatchEvent(new Event('change',{bubbles:true}))`);
  await wait(`document.querySelector('.page-heading button').disabled`);
  await evaluate(`document.querySelector('form').requestSubmit()`);
  await wait(`location.search.includes('model=normal')&&document.querySelector('.balance-totals')&&!document.querySelector('.page-heading button').disabled`);

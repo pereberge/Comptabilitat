@@ -1,0 +1,43 @@
+import {accessError} from '../services/access-errors.js';
+import { fiscalErrors } from '../services/verifactu.js';
+export const t={
+ invoices:'Facturas',portfolio:'Cartera',issued:'Emitidas · cobros',received:'Recibidas · pagos',newIssued:'Nueva factura emitida',newReceived:'Registrar factura recibida',
+ invoiceIntro:'Registra las facturas y crea sus recibos y vencimientos automáticamente.',portfolioIntro:'Cobros y pagos de todos los ejercicios de la empresa.',
+ all:'Todos',direction:'Tipo',search:'Buscar factura o tercero',filter:'Consultar',status:'Estado',exercise:'Ejercicio de la factura',reference:'Número de factura',invoiceDate:'Fecha de factura',postingDate:'Fecha contable',
+ autoReference:'Usar siguiente número',autoReferenceHelp:'Consecutivo automático; puedes editarlo.',manualReferenceHelp:'Número manual. Puedes recuperar el siguiente consecutivo.',lastReference:'Último número identificado',firstReference:'Primera numeración del ejercicio',invoiceSource:'Facturas',journalSource:'Diario',numberingLoading:'Consultando el siguiente número…',
+ partyAccountSearch:'Buscar cliente / proveedor por nombre o código',partyAccountSearchHint:'Nombre, razón social, CIF o código',noPartyAccounts:'No hay cuentas que coincidan con la búsqueda.',selectedAccount:'Seleccionada',matchingAccounts:'cuentas encontradas',
+ party:'Cliente / proveedor',partyName:'Nombre o razón social',taxId:'CIF / NIF',address:'Domicilio',email:'Correo',partyAccount:'Subcuenta del cliente / proveedor',newParty:'Crear subcuenta automáticamente',partyParent:'Cuenta del nuevo tercero',
+ customer:'Cliente',debtor:'Deudor',supplier:'Proveedor',creditor:'Acreedor',partyHelp:'Selecciona un tercero existente o crea uno con los datos de esta factura.',
+ items:'Conceptos e impuestos',concept:'Concepto',base:'Base imponible',vatRate:'IVA (%)',vat:'IVA',withholdingRate:'Retención (%)',withholding:'Retención',total:'Total a cobrar / pagar',
+ addLine:'Añadir concepto',remove:'Quitar',accounting:'Cuentas contables',offset:'Cuenta de ingreso / gasto / activo',vatAccount:'Cuenta de IVA',withholdingAccount:'Cuenta de retención',automatic:'Automática',
+ receipts:'Recibos y vencimientos',receipt:'Recibo',dueDate:'Vencimiento',originalDue:'Vencimiento inicial',amount:'Importe',paid:'Cobrado / pagado',remaining:'Pendiente',
+ numberReceipts:'Número de recibos',firstDue:'Primer vencimiento',every:'Cada (meses)',distribute:'Distribuir importe',addReceipt:'Añadir vencimiento',scheduleHelp:'Puedes editar las fechas y los importes. La suma de los recibos debe coincidir con el total de la factura.',
+ scheduleMismatch:'La suma de los recibos no coincide con el total de la factura.',paymentMethod:'Forma de cobro / pago',notes:'Observaciones',
+ saveInvoice:'Registrar factura y crear recibos',save:'Guardar',cancel:'Cancelar',loading:'Cargando…',close:'Cerrar',detail:'Ver detalle',viewInvoice:'Ver factura',viewReceipts:'Ver recibos',entry:'Ver asiento',print:'Imprimir / guardar PDF',
+ invoiceCreated:'Factura registrada. Se han creado sus recibos y el asiento contable.',closed:'El ejercicio está cerrado. Selecciona o crea un ejercicio abierto para registrar facturas.',manageExercises:'Gestionar ejercicios',
+ emptyInvoices:'No hay facturas registradas con estos filtros.',emptyReceipts:'No hay recibos con estos filtros.',open:'Pendientes y parciales',pending:'Pendiente',partial:'Parcial',settled:'Liquidado',void:'Anulado',overdue:'Vencido',
+ collection:'A cobrar',payment:'A pagar',pendingCollections:'Pendiente de cobro',pendingPayments:'Pendiente de pago',overdueCollections:'Cobros vencidos',overduePayments:'Pagos vencidos',
+ from:'Vencimientos desde',to:'Hasta',asOf:'Fecha de referencia de vencidos',recordCollection:'Registrar cobro',recordPayment:'Registrar pago',reschedule:'Editar vencimiento',
+ paymentDate:'Fecha de cobro / pago',bank:'Banco / caja',bankHelp:'Selecciona la subcuenta de banco o caja donde se registra el movimiento.',movementReference:'Referencia de la operación',
+ paymentExercise:'Ejercicio del movimiento',noOpenExercise:'No hay un ejercicio abierto para esta fecha. Revisa la fecha o crea el ejercicio correspondiente.',noBank:'Añade una subcuenta de banco o caja (grupo 57) para registrar el movimiento.',manageAccounts:'Gestionar subcuentas',
+ settlements:'Historial de cobros y pagos',noSettlements:'Todavía no hay movimientos registrados.',reverse:'Anular movimiento',reversed:'Anulado por contrasiento',reason:'Motivo',reversalDate:'Fecha del contrasiento',
+ reversalHelp:'Se registrará un asiento contrario y el importe volverá a quedar pendiente en el recibo.',voidInvoice:'Anular factura',voidHelp:'Se registrará el contrasiento y se anularán sus recibos. Los cobros y pagos activos deben anularse previamente.',
+ changedDueHelp:'Cambiar el vencimiento no modifica el importe ni los movimientos ya registrados.',issuer:'Empresa',originalInvoice:'Factura de origen',receiptCollection:'Recibo de cobro',receiptPayment:'Recibo de pago',
+ currency:'Importes en EUR',resetInvoice:'Mostrar toda la cartera',export:'Exportar CSV',operationSaved:'Movimiento guardado y cartera actualizada.',
+ methods:{transfer:'Transferencia',direct_debit:'Domiciliación',cash:'Efectivo',card:'Tarjeta',other:'Otra'},
+};
+const errors={
+ INVALID_INVOICE_NUMBERING:'La numeración automática solo está disponible para nuevas facturas emitidas.',INVOICE_NUMBER_UNAVAILABLE:'No se ha podido determinar el consecutivo. Revisa e introduce el número de factura.',
+ INVALID_INVOICE:'Revisa los datos y el número de la factura.',INVALID_INVOICE_LINES:'Añade entre 1 y 40 conceptos con sus importes.',INVALID_INVOICE_AMOUNT:'La factura debe tener un importe positivo y dentro del límite permitido.',
+ INVALID_TAX_RATE:'El porcentaje debe estar entre 0 y 100, con un máximo de dos decimales.',INVALID_AMOUNT:'Revisa los importes: deben ser positivos y tener como máximo dos decimales.',TOTAL_TOO_LARGE:'El importe supera el límite permitido.',
+ INVALID_INSTALLMENTS:'Indica entre 1 y 60 recibos con importes positivos.',INSTALLMENT_TOTAL_MISMATCH:t.scheduleMismatch,INVALID_DUE_DATE:'El vencimiento no puede ser anterior a la fecha de la factura.',
+ INVALID_DATE:'Revisa las fechas.',INVALID_INVOICE_DATE:'La fecha contable o de anulación no puede ser anterior a la factura.',INVALID_PAYMENT_DATE:'La fecha del movimiento no puede ser anterior a su documento de origen.',
+ INVALID_INVOICE_ACCOUNT:'La subcuenta no corresponde al tipo de factura o impuesto.',INVALID_PARTY_ACCOUNT:'Selecciona una subcuenta de cliente, proveedor o acreedor del tipo adecuado.',INVALID_BANK_ACCOUNT:'Selecciona una subcuenta de banco o caja del grupo 57.',
+ EXERCISE_CLOSED:'El ejercicio contable está cerrado.',DATE_OUTSIDE_EXERCISE:'La fecha del movimiento está fuera del ejercicio seleccionado.',EXERCISE_NOT_FOUND:'No se ha encontrado el ejercicio.',ACCOUNT_NOT_FOUND:'La subcuenta seleccionada no está disponible en esta empresa.',
+ INVOICE_REFERENCE_EXISTS:'Ya existe una factura con este número. En recibidas, comprueba también el proveedor.',INVOICE_NOT_FOUND:'No se ha encontrado la factura en esta empresa.',RECEIPT_NOT_FOUND:'No se ha encontrado el recibo en esta empresa.',
+ SETTLEMENT_EXCEEDS_REMAINING:'El importe supera el pendiente del recibo. Actualiza la cartera.',RECEIPT_NOT_PENDING:'Solo se pueden editar recibos pendientes o parcialmente liquidados.',INVOICE_VOIDED:'La factura está anulada.',
+ INVOICE_HAS_SETTLEMENTS:'Anula primero los cobros o pagos activos de los recibos de esta factura.',SETTLEMENT_REVERSED:'Este movimiento ya está anulado.',SETTLEMENT_NOT_FOUND:'No se ha encontrado el movimiento.',
+ REQUEST_CONFLICT:'La operación ya se ha enviado con otros datos. Consulta el detalle antes de registrar otra.',INVALID_COMPANY_EMAIL:'Revisa el correo del cliente o proveedor.',
+ NETWORK_ERROR:'No se puede contactar con el servidor. Consulta el detalle antes de repetir una operación.',INVALID_DESCRIPTION:'Completa los conceptos de la factura.',CODE_EXHAUSTED:'No quedan códigos disponibles para nuevos terceros en esta cuenta.',
+};
+export function treasuryError(cause){return accessError(cause) || fiscalErrors[cause.code || cause.message] || errors[cause.code || cause.message] || 'No se ha podido completar la operación. Revisa los datos e inténtalo de nuevo.';}

@@ -12,6 +12,7 @@ function positiveInteger(name, fallback) {
 export const config = {
   host: process.env.HOST || '127.0.0.1', port: positiveInteger('PORT', 3000),
   companyId: positiveInteger('COMPANY_ID', 1),
+  backupDirectory: process.env.BACKUP_DIRECTORY || undefined,
   database: {
     host: process.env.DB_HOST || '127.0.0.1', port: positiveInteger('DB_PORT', 3306),
     database: process.env.DB_NAME || 'contabilidad', user: process.env.DB_USER || 'contabilidad_app',

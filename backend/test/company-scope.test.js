@@ -21,7 +21,7 @@ test('API company selection scopes concurrent requests, defaults and invalid IDs
   const base='http://127.0.0.1:'+server.address().port+'/api';
   const request=(path,id)=>fetch(base+path,{headers:id===undefined?{}:{'X-Company-Id':id}});
   try {
-    assert.deepEqual(await (await request('/companies')).json(),companies);
+    assert.deepEqual(await (await request('/companies')).json(),companies.map(company=>({...company,business_format:'general',tax_id:'',city:'',logo_url:null})));
     for(const id of ['1','2']) {
       const context=await (await request('/context',id)).json();
       assert.equal(context.company.id,Number(id));
