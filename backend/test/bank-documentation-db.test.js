@@ -53,7 +53,8 @@ test('MySQL bank anchors and invoice inbox: matching, refresh, direct draft tran
   await t.test('stale metadata, wrong owners and non-PDF files keep the original pending',async()=>{
    const stale=await docs.upload(invoicePdf(name,'STALE'),{...body,request_id:randomUUID()});await docs.update(stale.id,{title:'Changed',description:'',version:stale.version});
    await assert.rejects(docs.toInvoices(stale.id,{version:stale.version,exercise_id:company.year}),error('DOCUMENTATION_CHANGED'));
-   const wrong=await other.upload(pdf,{...body,request_id:randomUUID()});await assert.rejects(other.toInvoices(wrong.id,{version:wrong.version,exercise_id:foreign.year}),error('INVOICE_DOCUMENT_COMPANY_MISMATCH'));assert.equal((await other.get(wrong.id)).folder,'pending_invoices');
+   await assert.rejects(other.upload(pdf,{...body,request_id:randomUUID()}),error('DOCUMENTATION_COMPANY_REVIEW_REQUIRED'));
+   const review=await other.previewEncoded({content_base64:pdf.toString('base64')}),wrong=await other.upload(pdf,{...body,request_id:randomUUID(),company_preview_hash:review.preview_hash,company_preview_token:review.token,confirm_company_mismatch:true});await assert.rejects(other.toInvoices(wrong.id,{version:wrong.version,exercise_id:foreign.year}),error('INVOICE_DOCUMENT_COMPANY_MISMATCH'));assert.equal((await other.get(wrong.id)).folder,'pending_invoices');
    const image=await docs.upload(Buffer.from('image original'),{...body,source_name:'image.png',source_mime:'image/png',request_id:randomUUID()});await assert.rejects(docs.toInvoices(image.id,{version:image.version,exercise_id:company.year}),error('DOCUMENTATION_INVOICE_PDF_REQUIRED'));
    assert.equal(await count('invoice_documents',foreign.id),0);
   });

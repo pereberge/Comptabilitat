@@ -1,4 +1,5 @@
 export const es = {
+  tax:'Hacienda',
   farms:'Gestión de granjas',
   users:'Usuarios y permisos',
   companyEvolution:'Patrimonio y beneficio',
@@ -6,7 +7,7 @@ export const es = {
   dataBackup:'Copias de seguridad',
   documentation:'Documentación',
   bankReconciliation:'Conciliación bancaria',
-  invoices:'Facturas',portfolio:'Cartera',
+  invoices:'Facturas',portfolio:'Cartera',bankRemittances:'Cartera · Remesas bancarias',
   exercises: 'Ejercicios',
   balanceSheet:'Balance de Situación',profitLoss:'Pérdidas y Ganancias',
   ledger:'Libro Mayor',trialBalance:'Balance de Sumas y Saldos',
@@ -18,7 +19,7 @@ export const es = {
   local: 'Entorno local', version: 'Cuentas y asientos · Fases 2 y 3',
   exercise: 'Ejercicio', noExercise: 'Sin ejercicio disponible', loading: 'Cargando datos…',
   noCompany: 'Empresa sin configurar', retry: 'Volver a intentar', reload: 'Actualizar datos',
-  welcome: 'YUDI', intro: 'Empresa, ejercicio y estado de la aplicación en un solo lugar.',
+  welcome: 'RAMON', intro: 'Empresa, ejercicio y estado de la aplicación en un solo lugar.',
   overview: 'RESUMEN GENERAL', company: 'Empresa', period: 'Período contable', status: 'Estado del ejercicio',
   open: 'Abierto', closed: 'Cerrado', openHelp: 'Ejercicio disponible para registrar operaciones contables.',
   closedHelp: 'Ejercicio de solo consulta. No admite nuevas operaciones.',

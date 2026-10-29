@@ -81,8 +81,10 @@ export function createCompanyService(pool) {
       return rows.map(row => companyDetails(row));
     },
     async createCompany(body) {
-      if (!body || Object.keys(body).some(key => !['name', 'exercise', 'logo', 'business_format', ...companyProfileKeys].includes(key))) fail('INVALID_COMPANY');
+      if (!body || Object.keys(body).some(key => !['name', 'exercise', 'logo', 'business_format', 'subaccount_length', ...companyProfileKeys].includes(key))) fail('INVALID_COMPANY');
       const companyName = name(body.name, 160, 'INVALID_COMPANY_NAME');
+      const accountLength=body.subaccount_length===undefined?8:body.subaccount_length;
+      if(!Number.isInteger(accountLength)||accountLength<6||accountLength>20)fail('INVALID_SUBACCOUNT_LENGTH');
       const format=businessFormat(body.business_format===undefined?'general':body.business_format);
       const profile = { ...emptyCompanyProfile(), ...validateCompanyProfile(body) };
       const exercise = body.exercise;
@@ -92,7 +94,7 @@ export function createCompanyService(pool) {
       if (start > end) fail('INVALID_EXERCISE_PERIOD');
       const logo = validateLogo(body.logo);
       return transaction(async db => {
-        const [company] = await db.execute('INSERT INTO companies (name,business_format) VALUES (?,?)', [companyName,format]);
+        const [company] = await db.execute('INSERT INTO companies (name,business_format,subaccount_length) VALUES (?,?,?)', [companyName,format,accountLength]);
         await db.execute(`INSERT INTO accounting_exercises (company_id, name, start_date, end_date, status, is_default)
           VALUES (?, ?, ?, ?, 'open', 1)`, [company.insertId, exerciseName, start, end]);
         await saveProfile(db, company.insertId, profile);

@@ -49,6 +49,8 @@ export function createExerciseClearService(pool,companyId){
  }
  async function blocked(db,exercise){
   const result=[];
+  const [[remittance]]=await db.execute("SELECT m.id FROM bank_remittances m JOIN portfolio_receipts r ON r.company_id=m.company_id AND JSON_CONTAINS(m.receipt_ids,CAST(r.id AS JSON)) JOIN trade_invoices i ON i.company_id=r.company_id AND i.id=r.invoice_id WHERE m.company_id=? AND m.status='prepared' AND i.exercise_id=? LIMIT 1",[companyId,exercise.id]);
+  if(remittance)result.push({code:'bank_remittance',message:'Cancela primero la remesa bancaria '+remittance.id+' que contiene recibos de este ejercicio.',exercise_id:exercise.id,exercise_name:exercise.name});
   const add=async(code,message,sql,params)=>{const [rows]=await db.execute(sql,params);for(const row of rows)result.push({code,message,exercise_id:row.exercise_id,exercise_name:row.exercise_name,count:row.total});};
   await add('dependent_opening','Anula primero la apertura de este ejercicio dependiente.',`SELECT e.id AS exercise_id,e.name AS exercise_name,COUNT(*) AS total
    FROM journal_entries j JOIN accounting_exercises e ON e.company_id=j.company_id AND e.id=j.exercise_id
@@ -113,7 +115,7 @@ export function createExerciseClearService(pool,companyId){
   for(const exerciseId of selected)states.push(await state(db,exerciseId));
   const blockers=[];
   for(const data of states){
-   for(const blocker of data.blockers)if(blocker.code==='verifactu'||!selected.has(blocker.exercise_id))blockers.push({...blocker,message:blocker.code==='verifactu'?blocker.message:'Incluye también el ejercicio '+blocker.exercise_name+' en la copia para sustituir estos datos. '+blocker.message});
+   for(const blocker of data.blockers)if(['verifactu','bank_remittance'].includes(blocker.code)||!selected.has(blocker.exercise_id))blockers.push({...blocker,message:['verifactu','bank_remittance'].includes(blocker.code)?blocker.message:'Incluye también el ejercicio '+blocker.exercise_name+' en la copia para sustituir estos datos. '+blocker.message});
    for(const set of data.sets.filter(set=>set.action==='update')){
     for(const row of set.rows)if(!selected.has(row.exercise_id))blockers.push({code:'external_changes',message:'La sustitución afectaría a movimientos de otro ejercicio. Incluye también ese período en la copia.',exercise_id:row.exercise_id});
    }

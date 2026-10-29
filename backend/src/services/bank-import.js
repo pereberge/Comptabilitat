@@ -10,6 +10,7 @@ import { readReconciliationLedger, reconciliationLedgerHash } from './bank-recon
 import { bankLedgerReadThrough,bankReconciliationDates } from '../../../shared/bank-reconciliation.js';
 import {readPendingDocumentInvoices} from './document-invoice-data.js';
 import {readBankStatementPdf as extractPdf} from './bank-pdf-reader.js';
+import {readReconciliationRules} from './reconciliation-rules.js';
 
 const previews = new Map(), lifetime=15*60*1000;
 let active=0;
@@ -42,13 +43,17 @@ export function createBankImportService(pool,companyId) {
     if(!periodRows.length)fail('BANK_STATEMENT_PERIOD_MISMATCH',409);
     const through=periodRows.at(-1).date;
     const lines=await readReconciliationLedger(db,companyId,meta.exercise.id,bankLedgerReadThrough(through,meta.exercise.end_date));
-    const [history]=await db.execute(`SELECT e.exercise_id,e.id AS entry_id,e.number,e.entry_date,e.status,e.entry_type,
+    const [history]=await db.execute(`SELECT e.exercise_id,e.id AS entry_id,e.number,e.entry_date,e.status,e.entry_type,e.description AS entry_description,
       a.code,a.description AS account_name,l.position,l.description,l.debit,l.credit FROM journal_entries e
       JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id
       WHERE e.company_id=? AND e.entry_date<=? ORDER BY e.entry_date,e.number,l.position`,[companyId,through]);
     const statement=preview.statement.bank.detected?preview.statement:{...preview.statement,bank:{...preview.statement.bank,name:account.description}};
     const pendingInvoices=await readPendingDocumentInvoices(db,companyId);
-    const snapshot=buildBankAnalysis({...meta,account,statement,lines,history,pendingInvoices,sourceName:preview.sourceName,sourceHash:preview.sourceHash});
+    const rules=await readReconciliationRules(db,companyId,account.id);
+    let previous=null;
+    if(selection.replace_current&&preview.existing){const [[row]]=await db.execute('SELECT snapshot FROM bank_reconciliations WHERE company_id=? AND id=?',[companyId,preview.existing.id]);if(row)previous=typeof row.snapshot==='string'?JSON.parse(row.snapshot):row.snapshot;}
+    const snapshot=buildBankAnalysis({...meta,account,statement,lines,history,pendingInvoices,rules,manualProposals:previous?.manual_proposals||[],sourceName:preview.sourceName,sourceHash:preview.sourceHash});
+    if(selection.replace_current){snapshot.workflow='direct';snapshot.work_start_date=previous?.work_start_date||snapshot.scope.analysis_start_date;snapshot.work_anchor=previous?.work_anchor||{bank_date:snapshot.scope.last_matching_date,book_date:snapshot.scope.last_matching_book_date,bank_balance:snapshot.scope.last_matching_balance,book_balance:snapshot.scope.last_matching_book_balance,difference:snapshot.scope.balance_match_difference};snapshot.posted_movements=previous?.posted_movements||[];}
     return {snapshot,account,ledgerHash:reconciliationLedgerHash(lines)};
   }
   return {
@@ -87,7 +92,7 @@ export function createBankImportService(pool,companyId) {
         await db.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
         if(preview.existing&&(body.create_account===true||Number(body.account_id)!==preview.existing.account_id))fail('BANK_ACCOUNT_MISMATCH',409);
         const result=await analysis(db,preview,body);await db.commit();
-        preview.selection={account_id:body.account_id,create_account:body.create_account===true,bank_name:body.bank_name};preview.analysis=result;
+        preview.selection={account_id:body.account_id,create_account:body.create_account===true,bank_name:body.bank_name,replace_current:body.replace_current===true};preview.analysis=result;
         return {token:body.token,snapshot:result.snapshot,account:result.account,new_account:result.account.id===null,already_imported:!!preview.existing};
       }catch(error){await db.rollback();throw error;}finally{db.release();}
     },
@@ -114,11 +119,13 @@ export function createBankImportService(pool,companyId) {
           if(binding&&binding.account_id!==account.id)fail('BANK_ACCOUNT_MISMATCH',409);
           if(!binding)await db.execute('INSERT INTO bank_connections(company_id,account_id,iban,bank_code,bank_name) VALUES (?,?,?,?,?)',[companyId,account.id,preview.statement.bank.iban,preview.statement.bank.code,preview.statement.bank.detected?preview.statement.bank.name:account.description]);
         }
-        if(existing)return {id:existing.id,replayed:true};
+        if(existing&&!preview.selection.replace_current)return {id:existing.id,replayed:true};
         const selected={...preview.selection,create_account:false,account_id:account.id};
         const result=await analysis(db,preview,selected);
+        if(existing){await db.execute('UPDATE bank_reconciliations SET snapshot=?,ledger_hash=?,version=version+1 WHERE company_id=? AND id=?',[JSON.stringify(result.snapshot),result.ledgerHash,companyId,existing.id]);await db.execute('DELETE FROM bank_reconciliations WHERE company_id=? AND exercise_id=? AND id<>?',[companyId,meta.exercise.id,existing.id]);return {id:existing.id,replayed:false};}
         const [saved]=await db.execute(`INSERT INTO bank_reconciliations(company_id,exercise_id,account_id,source_name,source_sha256,source_pdf,source_mime,snapshot,ledger_hash)
           VALUES (?,?,?,?,?,?,?,?,?)`,[companyId,meta.exercise.id,account.id,preview.sourceName,preview.sourceHash,preview.buffer,preview.statement.mime,JSON.stringify(result.snapshot),result.ledgerHash]);
+        if(preview.selection.replace_current)await db.execute('DELETE FROM bank_reconciliations WHERE company_id=? AND exercise_id=? AND id<>?',[companyId,meta.exercise.id,saved.insertId]);
         return {id:saved.insertId,replayed:false};
       });
       previews.set(body.token,{companyId,exerciseId:preview.exerciseId,expires:preview.expires,result:saved});

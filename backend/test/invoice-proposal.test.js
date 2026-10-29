@@ -33,6 +33,12 @@ test('proposal prioritizes existing accounts and finds the existing invoice jour
  assert.equal(proposal.ready,true);assert.equal(proposal.form.offset_account_id,2);assert.equal(proposal.form.party_account_id,1);assert.equal(proposal.form.posting_date,'2026-10-20');assert.equal(proposal.candidates[0].number,130);assert.equal(proposal.candidates[0].reference_matches,true);assert.equal(JSON.stringify(form),before);
  assert.equal(proposal.journal.reduce((sum,row)=>sum+BigInt(row.debit.replace('.',''))-BigInt(row.credit.replace('.','')),0n),0n);
 });
+test('PDF proposals identify the fiscal profile by NIF and include the complete address before posting',()=>{
+ const known=accounts.map(account=>account.id===1?{...account,description:'Nombre contable distinto',party_profile:{name:'Electric Supplies SL',tax_id:'B11111111',address:'Carrer Major, 10',postal_code:'25001',city:'Lleida',province:'Lleida',country:'España',email:'facturas@example.com'}}:account);
+ const source={...form,party:{name:'Electric Supplies SL',tax_id:'B11111111',address:''},offset_account_id:2,vat_account_id:3};
+ const proposal=buildInvoiceProposal({form:source,extraction:parseInvoicePages(invoicePages()),accounts:known,journal:[],exercise});
+ assert.equal(proposal.form.party_account_id,1);assert.equal(proposal.form.party.address,'Carrer Major, 10');assert.equal(proposal.form.party.city,'Lleida');assert.equal(proposal.form.party.postal_code,'25001');assert.equal(proposal.ready,true);assert.equal(source.party.address,'');
+});
 test('unknown supplier, invalid schedule, invalid account and out of year posting remain incomplete',()=>{
  const build=value=>buildInvoiceProposal({form:{...form,...value},extraction:parseInvoicePages(invoicePages()),accounts,journal:[],exercise});
  assert.equal(build({}).ready,false);assert.equal(build({offset_account_id:2,vat_account_id:3}).ready,true);

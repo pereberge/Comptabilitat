@@ -1,5 +1,6 @@
 import { companyTextFields, paymentMethods, isValidIban } from '../../../shared/company-profile.js';
 import { fail } from './validation.js';
+import {isValidCreditorId,sepaIdentifier} from '../../../shared/sepa.js';
 
 export function validateCompanyProfile(body) {
   const result = {};
@@ -7,7 +8,9 @@ export function validateCompanyProfile(body) {
     if (!Object.hasOwn(body, field)) continue;
     if (typeof body[field] !== 'string') fail('INVALID_COMPANY_DETAILS');
     let value = body[field].trim();
-    if (['tax_id', 'iban', 'bic'].includes(field)) value = value.toUpperCase().replace(/\s/g, '');
+    if (['tax_id', 'iban', 'bic','sepa_creditor_id'].includes(field)) value = value.toUpperCase().replace(/\s/g, '');
+    if(field==='sepa_creditor_id'&&value&&!isValidCreditorId(value))fail('INVALID_CREDITOR_ID');
+    if(field==='bank_initiator_id'&&value&&!sepaIdentifier(value))fail('INVALID_INITIATOR_ID');
     if ([...value].length > limit || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value)) fail('INVALID_COMPANY_DETAILS');
     if (!['invoice_notes', 'registry_info'].includes(field) && /[\r\n\t]/.test(value)) fail('INVALID_COMPANY_DETAILS');
     if (field === 'tax_id' && value && !/^[A-Z0-9][A-Z0-9./-]*$/.test(value)) fail('INVALID_TAX_ID');

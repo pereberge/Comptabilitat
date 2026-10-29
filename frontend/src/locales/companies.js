@@ -12,6 +12,7 @@ export const t = {
   otherHelp: 'Logotipo, información registral, textos de las facturas y ejercicio inicial.',
   ibanHelp: 'Puedes introducir el IBAN con o sin espacios. Se comprueban el formato y los dígitos de control.',
   fields: {
+    sepa_creditor_id:'Identificador de acreedor SEPA (facilitado por el banco)',bank_initiator_id:'Identificador del presentador bancario (si lo exige el banco)',
     tax_id: 'CIF / NIF', trade_name: 'Nombre comercial', address: 'Domicilio fiscal',
     postal_code: 'Código postal', city: 'Población', province: 'Provincia', country: 'País',
     contact_person: 'Persona de contacto', phone: 'Teléfono', email: 'Correo electrónico',
@@ -31,6 +32,7 @@ export const t = {
   edit: 'Editar', updateData: 'Actualizar datos', select: 'Seleccionar', selected: 'Empresa seleccionada',
   empty: 'Crea tu primera empresa para empezar a trabajar.',
   errors: {
+    INVALID_CREDITOR_ID:'Revisa el identificador de acreedor SEPA y sus dígitos de control.',INVALID_INITIATOR_ID:'El identificador del presentador admite hasta 35 caracteres SEPA.',
     INVALID_COMPANY: 'Revisa los datos de la empresa.',
     INVALID_COMPANY_NAME: 'Introduce un nombre de empresa de hasta 160 caracteres.',
     INVALID_COMPANY_FORMAT:'Selecciona un formato de empresa de la lista.',

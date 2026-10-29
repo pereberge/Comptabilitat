@@ -6,6 +6,12 @@ import { accountingController } from '../controllers/accounting.js';
 import { requireMaster } from '../middleware/access.js';
 export function apiRouter(service, accounting) {
  const router=Router(), controller=contextController(service);
+ router.get('/tax/vat',async(req,res)=>res.json(await req.vat.get(req.query)));
+ router.get('/tax/vat/entries/:id/source',async(req,res)=>{const source=await req.vat.source(req.params.id);res.set('Content-Type','application/pdf').set('X-Content-Type-Options','nosniff').set('Content-Disposition',"inline; filename*=UTF-8''"+encodeURIComponent(source.source_name)).send(source.source_pdf);});
+ router.post('/tax/vat/preview',async(req,res)=>res.json(await req.vat.preview(req.query,req.body)));
+ router.post('/tax/vat/settlement-preview',async(req,res)=>res.json(await req.vat.settlementPreview(req.query,req.body)));
+ router.put('/tax/vat/draft',async(req,res)=>res.json(await req.vat.save(req.query,req.body)));
+ router.post('/tax/vat/filing',async(req,res)=>{const file=await req.vat.filing(req.query,req.body);res.set('Content-Type','application/octet-stream').set('X-Content-Type-Options','nosniff').set('Content-Disposition','attachment; filename="'+file.filename+'"').send(file.file);});
  router.get('/farms',async(req,res)=>res.json(await req.farms.list(req.query)));
  router.post('/farms',async(req,res)=>res.status(201).json(await req.farms.saveFarm(req.body)));
  router.patch('/farms/:id',async(req,res)=>res.json(await req.farms.saveFarm(req.body,req.params.id)));
@@ -87,6 +93,8 @@ export function apiRouter(service, accounting) {
  router.get('/invoices/:id/delete-preview',async(req,res)=>res.json(await req.invoiceDeletion.preview(req.params.id)));
  router.post('/invoices/:id/delete',async(req,res)=>res.json(await req.invoiceDeletion.remove(req.params.id,req.body)));
  router.get('/documentation',async(req,res)=>res.json(await req.documentation.list(req.query)));
+ router.post('/documentation/preview',async(req,res)=>res.json(await req.documentation.previewEncoded(req.body)));
+ router.post('/documentation/:id/company-check',async(req,res)=>res.json(await req.documentation.checkCompany(req.params.id,req.body)));
  router.post('/documentation',async(req,res)=>res.status(201).json(await req.documentation.uploadEncoded(req.body)));
  router.get('/documentation/:id',async(req,res)=>res.json(await req.documentation.get(req.params.id)));
  router.patch('/documentation/:id',async(req,res)=>res.json(await req.documentation.update(req.params.id,req.body)));
@@ -120,8 +128,15 @@ export function apiRouter(service, accounting) {
  router.get('/invoices/:id',async(req,res)=>res.json(await req.invoices.get(req.params.id)));
  router.post('/invoices/:id/void',async(req,res)=>res.json(await req.invoices.void(req.params.id,req.body)));
  router.get('/portfolio',async(req,res)=>res.json(await req.portfolio.list(req.query)));
+ router.get('/bank-remittances',async(req,res)=>res.json(await req.bankRemittances.list(req.query)));
+ router.get('/bank-remittances/options',async(req,res)=>res.json(await req.bankRemittances.options(req.query)));
+ router.post('/bank-remittances/preview',async(req,res)=>res.json(await req.bankRemittances.preview(req.body)));
+ router.post('/bank-remittances',async(req,res)=>res.json(await req.bankRemittances.create(req.body)));
+ router.get('/bank-remittances/:id/file',async(req,res)=>{const file=await req.bankRemittances.file(req.params.id);res.set('Content-Type','application/xml; charset=utf-8').set('X-Content-Type-Options','nosniff').set('Content-Disposition','attachment; filename="'+file.filename+'"').send(file.file);});
+ router.post('/bank-remittances/:id/cancel',async(req,res)=>res.json(await req.bankRemittances.cancel(req.params.id)));
  router.get('/portfolio/receipts/:id',async(req,res)=>res.json(await req.portfolio.get(req.params.id)));
  router.patch('/portfolio/receipts/:id',async(req,res)=>res.json(await req.portfolio.update(req.params.id,req.body)));
+ router.post('/portfolio/receipts/:id/split',async(req,res)=>res.json(await req.portfolio.split(req.params.id,req.body)));
  router.post('/portfolio/receipts/:id/settle',async(req,res)=>res.json(await req.portfolio.settle(req.params.id,req.body)));
  router.post('/portfolio/settlements/:id/reverse',async(req,res)=>res.json(await req.portfolio.reverse(req.params.id,req.body)));
  router.post('/journal-import/preview',raw({type:'application/pdf',limit:'5mb'}),async(req,res)=>{
@@ -143,6 +158,9 @@ export function apiRouter(service, accounting) {
  router.post('/bank-import/discard',async(req,res)=>res.json(await req.bankImport.discard(req.body)));
  router.get('/bank-reconciliations/:id',async(req,res)=>res.json(await req.bankReconciliations.get(req.params.id)));
  router.post('/bank-reconciliations/:id/reanalyze',async(req,res)=>res.json(await req.bankReconciliations.reanalyze(req.params.id)));
+ router.post('/bank-reconciliations/:id/proposals',async(req,res)=>res.json(await req.bankReconciliations.saveProposal(req.params.id,req.body)));
+ router.post('/bank-reconciliations/:id/entries',async(req,res)=>res.json(await req.bankReconciliations.postMovement(req.params.id,req.body)));
+ router.delete('/bank-reconciliations/:id/rules/:ruleId',async(req,res)=>res.json(await req.bankReconciliations.removeRule(req.params.id,req.params.ruleId,req.body)));
  router.get('/bank-reconciliations/:id/source',async(req,res)=>{
    const source=await req.bankReconciliations.source(req.params.id);
    res.set('Content-Type',source.source_mime).set('X-Content-Type-Options','nosniff')

@@ -6,8 +6,9 @@ import { errorHandler } from './middleware/errors.js';
 export function createApp(service, accounting, companyScope, access) {
   const app = express();
   app.disable('x-powered-by');
+  app.use('/api/tax/vat', express.json({ limit: '2mb' }));
   app.use('/api/companies', express.json({ limit: '3mb' }));
-  app.post('/api/documentation', express.json({ limit: '15mb' }));
+  app.post(['/api/documentation','/api/documentation/preview'], express.json({ limit: '15mb' }));
   app.post('/api/data-backups/preview', express.raw({ type: 'application/octet-stream', limit: '100mb' }));
   app.use(express.json({ limit: '32kb' }));
   app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });

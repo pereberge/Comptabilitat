@@ -1,4 +1,7 @@
 import { parseAccountCode } from '../../../shared/account-codes.js';
+import { accountPartyType,normalizePartyProfile } from '../../../shared/account-party.js';
+import {normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
+import {normalizeSepaMandate} from '../../../shared/sepa.js';
 import { ensureAccount } from './account-hierarchy.js';
 import { lockCompany, nextSubaccountCode } from './subaccounts.js';
 import { createHash } from 'node:crypto';
@@ -26,6 +29,17 @@ export async function postJournalEntry(db,companyId,body) {
  return {id:entry.insertId,number};
 }
 export function createAccountingService(pool, companyId) {
+ function mandate(value,row){if(accountPartyType(row)!=='customer')fail('INVALID_PARTY_ACCOUNT');if(value===null)return null;try{return normalizeSepaMandate(value);}catch(error){fail(error.message);}}
+ function paymentProfile(value,row){
+  if(!accountPartyType(row))fail('INVALID_PARTY_ACCOUNT');
+  if(value===null)return null;
+  try{return normalizePartyPaymentProfile(value);}catch(error){fail(error.message);}
+ }
+ function profile(value,row){
+  if(!accountPartyType(row))fail('INVALID_PARTY_ACCOUNT');
+  if(value===null)return null;
+  try{return normalizePartyProfile(value);}catch(error){fail(error.message);}
+ }
  async function transaction(action,readOnly=false) {
   const db=await pool.getConnection();
   try{if(readOnly){await db.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');}else await db.beginTransaction();const value=await action(db);await db.commit();return value;}
@@ -59,7 +73,7 @@ export function createAccountingService(pool, companyId) {
    if(search.length>200) fail('INVALID_SEARCH');
    if(query.kind && !['account','subaccount'].includes(query.kind)) fail('INVALID_KIND');
    const params=[companyId]; let where='a.company_id=?';
-   if(search){where+=' AND (LOCATE(?,a.code)>0 OR LOCATE(?,a.description)>0)';params.push(search,search);}
+   if(search){where+=" AND (LOCATE(?,CONVERT(a.code USING utf8mb4))>0 OR LOCATE(?,a.description)>0 OR LOCATE(?,a.party_profile->>'$.name')>0 OR LOCATE(?,a.party_profile->>'$.tax_id')>0)";params.push(search,search,search,search);}
    if(query.kind){where+=' AND a.kind=?';params.push(query.kind);}
    const [rows]=await pool.execute('SELECT a.*,p.code AS parent_code FROM accounts a LEFT JOIN accounts p ON p.id=a.parent_id WHERE '+where+' ORDER BY a.code',params);
    return rows;
@@ -87,16 +101,26 @@ export function createAccountingService(pool, companyId) {
     if(kind==='subaccount' && (!parentCode || parentCode.length<3 || parentCode.length>=code.length || !code.startsWith(parentCode))) fail('INVALID_PARENT');
     const parent=await ensureAccount(db,companyId,parentCode);
     if(body.parent_id && (!parent || Number(body.parent_id)!==parent.id)) fail('INVALID_PARENT');
-    const [result]=await db.execute('INSERT INTO accounts(company_id,code,description,kind,parent_id) VALUES (?,?,?,?,?)',[companyId,code,text,kind,parent?.id??null]);
+    const party=body.party_profile===undefined?null:profile(body.party_profile,{code,kind});
+    const payment=body.payment_profile===undefined?null:paymentProfile(body.payment_profile,{code,kind});
+    const sepa=body.sepa_mandate===undefined?null:mandate(body.sepa_mandate,{code,kind});
+    const [result]=await db.execute('INSERT INTO accounts(company_id,code,description,kind,parent_id,party_profile,payment_profile,sepa_mandate) VALUES (?,?,?,?,?,?,?,?)',[companyId,code,text,kind,parent?.id??null,party===null?null:JSON.stringify(party),payment===null?null:JSON.stringify(payment),sepa===null?null:JSON.stringify(sepa)]);
     return account(db,result.insertId);
    });
   },
   async updateAccount(accountId,body) {
-   if(!body || Object.keys(body).some(key=>key!=='description')) fail('IMMUTABLE_ACCOUNT');
-   const text=description(body.description);
-   await account(pool,accountId);
-   await pool.execute('UPDATE accounts SET description=? WHERE company_id=? AND id=?',[text,companyId,id(accountId)]);
-   return account(pool,accountId);
+   if(!body || typeof body!=='object'||Array.isArray(body)||!Object.keys(body).length||Object.keys(body).some(key=>!['description','party_profile','payment_profile','sepa_mandate'].includes(key))) fail('IMMUTABLE_ACCOUNT');
+   return transaction(async db=>{
+    await lockCompany(db,companyId);
+    const row=await account(db,accountId),text=body.description===undefined?row.description:description(body.description);
+    if(body.party_profile!==undefined){
+     const party=profile(body.party_profile,row);
+     await db.execute('UPDATE accounts SET description=?,party_profile=? WHERE company_id=? AND id=?',[text,party===null?null:JSON.stringify(party),companyId,row.id]);
+    }else await db.execute('UPDATE accounts SET description=? WHERE company_id=? AND id=?',[text,companyId,row.id]);
+    if(body.payment_profile!==undefined){const payment=paymentProfile(body.payment_profile,row);await db.execute('UPDATE accounts SET payment_profile=? WHERE company_id=? AND id=?',[payment===null?null:JSON.stringify(payment),companyId,row.id]);}
+    if(body.sepa_mandate!==undefined){const sepa=mandate(body.sepa_mandate,row);await db.execute('UPDATE accounts SET sepa_mandate=? WHERE company_id=? AND id=?',[sepa===null?null:JSON.stringify(sepa),companyId,row.id]);}
+    return account(db,row.id);
+   });
   },
   async nextCode(parentId) {
    const parent=await account(pool,parentId);
@@ -128,7 +152,7 @@ export function createAccountingService(pool, companyId) {
    return rows;
   },
   getEntry:entryId=>transaction(db=>entry(db,entryId),true),
-  async updateEntry(entryId,body) {
+  async updateEntry(entryId,body,{canRemoveLines=true}={}) {
    const target=id(entryId);
    if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!['exercise_id','entry_date','description','lines','revision'].includes(key)))fail('IMMUTABLE_ENTRY');
    if(typeof body.revision!=='string'||!/^[a-f0-9]{64}$/.test(body.revision))fail('INVALID_ENTRY_REVISION');
@@ -151,6 +175,7 @@ export function createAccountingService(pool, companyId) {
     if(body.revision!==before.revision&&!unchanged)throw new HttpError(409,'ENTRY_CHANGED');
     const lineIds=body.lines.map(line=>line.id===undefined?null:id(line.id));
     if(new Set(lineIds.filter(Boolean)).size!==lineIds.filter(Boolean).length||lineIds.some(value=>value&&!before.lines.some(line=>line.id===value)))fail('INVALID_LINES');
+    if(!canRemoveLines&&!unchanged&&before.lines.some(line=>!lineIds.includes(line.id)))throw new HttpError(403,'PERMISSION_DENIED');
     for(const accountId of [...new Set(data.lines.map(line=>line.account_id))].sort((a,b)=>a-b)){
      const selected=await account(db,accountId);if(selected.kind!=='subaccount')fail('SUBACCOUNT_REQUIRED');
     }

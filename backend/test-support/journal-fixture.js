@@ -40,7 +40,7 @@ export function journalPagesPdf(pages) {
   const pageIds=[];
   const literal=value=>value.replace(/[\\()]/g,'\\$&').replace(/[^\x20-\x7e]/g,char=>'\\'+char.charCodeAt(0).toString(8).padStart(3,'0'));
   for(const page of pages){
-    const id=objects.length+1, content=page.items.map(row=>`BT /F1 8 Tf ${row.x} ${row.y} Td (${literal(row.text)}) Tj ET`).join('\n');
+    const id=objects.length+1, content=page.items.map(row=>`BT /F1 ${row.fontSize??8} Tf ${row.x} ${row.y} Td (${literal(row.text)}) Tj ET`).join('\n');
     pageIds.push(id);
     objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${id+1} 0 R >>`);
     objects.push(`<< /Length ${Buffer.byteLength(content)} >>\nstream\n${content}\nendstream`);

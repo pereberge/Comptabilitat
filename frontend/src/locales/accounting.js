@@ -1,3 +1,5 @@
+import {partyText} from './parties.js';
+import {remittanceErrors} from './remittances.js';
 export const t = {
  editEntry:'Editar asiento',entryUpdated:'Asiento actualizado.',
  homeEntriesHelp:'Del más antiguo al más reciente, con la vista situada en el último asiento. Pulsa cualquier línea para editar el asiento.',
@@ -21,11 +23,11 @@ export const t = {
  closed:'El ejercicio está cerrado. Solo se permite consultar.',noExercise:'Selecciona un ejercicio para consultar o registrar asientos.',
  accountHelp:'Cuentas y subcuentas creadas manualmente para la empresa, compartidas entre ejercicios.',
  entryHelp:'Asientos definitivos del ejercicio seleccionado. Los importes admiten coma o punto decimal, sin separador de miles.',
- immutable:'El código, el tipo y la cuenta padre no se modifican; puedes editar la descripción.',
+ immutable:'El código, el tipo y la cuenta padre no se modifican; puedes editar la descripción y los datos fiscales del tercero.',
  confirmDiscard:'Hay cambios sin guardar. ¿Quieres descartarlos?',successEntry:'Asiento registrado.',
  noSubaccounts:'Crea al menos una subcuenta en el plan de cuentas antes de registrar un asiento.',
  invalidTotals:'Revisa los importes: máximo dos decimales, sin negativos ni separadores de miles.',
- errors:{
+ errors:{...partyText.errors,...remittanceErrors,
  PERMISSION_DENIED:'Tu usuario no tiene permiso para esta acción. Cambia al máster o revisa los permisos.',
  INVALID_SUBACCOUNT_FORMAT:'Usa cuenta.subcuenta, por ejemplo 4300.0001. El código completo debe tener la longitud configurada para subcuentas.',
  SUBACCOUNT_SEPARATOR_REQUIRED:'Separa la cuenta y la subcuenta con un punto para identificar el padre, por ejemplo 4300.0001.',
@@ -40,7 +42,7 @@ export const t = {
  INVALID_KIND:'Selecciona Cuenta o Subcuenta.',INVALID_PARENT:'Selecciona un padre válido. Las cuentas amplían un dígito; las subcuentas usan la longitud configurada y una cuenta de al menos tres dígitos.',
  PARENT_HAS_ACCOUNTS:'Esta cuenta tiene cuentas hijas. Selecciona una cuenta del último nivel.',
  PARENT_HAS_SUBACCOUNTS:'Esta cuenta ya tiene subcuentas operativas y no admite nuevas cuentas hijas.',
- IMMUTABLE_ACCOUNT:'Solo se puede cambiar la descripción.',CODE_EXHAUSTED:'No quedan códigos disponibles para este padre.',
+ IMMUTABLE_ACCOUNT:'Solo se pueden cambiar la descripción y los datos fiscales del tercero.',CODE_EXHAUSTED:'No quedan códigos disponibles para este padre.',
  ACCOUNT_NOT_FOUND:'No se ha encontrado la cuenta en esta empresa.',EXERCISE_NOT_FOUND:'No se ha encontrado el ejercicio.',
  IMMUTABLE_ENTRY:'El número, la empresa y el ejercicio del asiento no se pueden cambiar.',INVALID_ENTRY_REVISION:'Actualiza el asiento antes de editarlo.',ENTRY_CHANGED:'Otra sesión ha modificado el asiento. Ciérralo y vuelve a abrirlo para revisar los cambios.',ENTRY_NOT_EDITABLE:'Los asientos anulados, de apertura, regularización o cierre se gestionan desde sus operaciones.',ENTRY_LINKED_DOCUMENT:'Este asiento está vinculado a una factura o a un cobro o pago. Modifícalo desde su documento de origen.',
  ENTRY_NOT_FOUND:'No se ha encontrado el asiento.',EXERCISE_CLOSED:'El ejercicio está cerrado. No permite registrar ni editar asientos.',

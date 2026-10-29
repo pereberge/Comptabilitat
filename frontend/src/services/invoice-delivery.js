@@ -12,6 +12,7 @@ async function response(path,options={}){
 }
 function download(blob,filename){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return {filename,size:blob.size};}
 export async function downloadInvoicePdf(invoiceId,options){const file=await response('/invoices/'+invoiceId+'/pdf'+query(options));return download(file.body,file.filename||'factura.pdf');}
+export async function loadInvoicePdf(invoiceId,options){const file=await response('/invoices/'+invoiceId+'/pdf'+query(options));return {url:URL.createObjectURL(file.body),filename:file.filename||'factura.pdf'};}
 export async function downloadInvoiceEmail(invoiceId,body){const file=await response('/invoices/'+invoiceId+'/email-draft',{method:'POST',body});return download(file.body,file.filename||'factura.eml');}
 export function invoiceMailto({to,subject,message}){return 'mailto:'+encodeURIComponent(to||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(message);}
 export async function printInvoice(invoiceId){

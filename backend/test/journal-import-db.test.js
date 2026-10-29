@@ -11,6 +11,8 @@ import { createReportService } from '../src/services/reports.js';
 import { createApp } from '../src/app.js';
 import { companyScope } from '../src/middleware/company-scope.js';
 import { journalPdf } from '../test-support/journal-fixture.js';
+import { journalPagesPdf } from '../test-support/journal-fixture.js';
+import { listadoPages } from '../test-support/journal-listado-fixture.js';
 
 async function clean(pool,ids) {
   for(const id of ids){
@@ -22,6 +24,23 @@ async function clean(pool,ids) {
   }
 }
 const period=year=>({name:String(year),start_date:year+'-01-01',end_date:year+'-12-31'});
+
+test('MySQL: LISTADO creates ten-digit accounts, preserves line positions and keeps an unfinished year open',{skip:process.env.TEST_MYSQL!=='1'},async()=>{
+ const pool=mysql.createPool(config.database),ids=[],context=createContextService(pool,config.companyId);
+ try{
+  const company=await context.createCompany({name:'Listado test '+randomUUID(),exercise:period(2026),subaccount_length:10});ids.push(company.id);
+  const exercise=(await context.getContext(company.id)).exercises[0],service=createJournalImportService(pool,company.id),source=journalPagesPdf(listadoPages(company.name));
+  assert.equal(company.subaccount_length,10);
+  const preview=await service.preview(source,exercise.id,'listado.pdf');assert.equal(preview.source_layout,'listado_diario');assert.equal(preview.totals.ignored_empty_lines,1);
+  const result=await service.commit(preview.token);assert.equal(result.entries,3);assert.equal(result.lines,6);assert.equal(result.debit,'98.50');assert.equal(result.credit,'98.50');
+  assert.equal((await context.getContext(company.id)).exercises[0].status,'open');
+  const [[stored]]=await pool.execute('SELECT source_pdf,source_hash FROM journal_imports WHERE company_id=?',[company.id]);assert.deepEqual(stored.source_pdf,source);assert.equal(stored.source_hash,createHash('sha256').update(source).digest('hex'));
+  const [lines]=await pool.execute('SELECT a.code,l.source_line_number,l.debit,l.credit FROM journal_lines l JOIN journal_entries e ON e.id=l.entry_id AND e.company_id=l.company_id JOIN accounts a ON a.id=l.account_id AND a.company_id=l.company_id WHERE l.company_id=? AND e.number=2026000040 ORDER BY l.position',[company.id]);
+  assert.deepEqual(lines.map(line=>line.source_line_number),[1,3]);assert.ok(lines.every(line=>line.code.length===10));assert.equal(lines[0].debit,'-1.50');
+  assert.equal((await service.commit((await service.preview(source,exercise.id)).token)).replayed,true);
+  await assert.rejects(context.updateCompany(company.id,{name:company.name,subaccount_length:8}),error=>error.code==='INVALID_COMPANY');
+ }finally{await clean(pool,ids);await pool.end();}
+});
 
 test('MySQL: exercise creation prevents overlap, isolates companies and atomically selects a default',{skip:process.env.TEST_MYSQL!=='1'},async()=>{
   const pool=mysql.createPool(config.database),ids=[],context=createContextService(pool,config.companyId);

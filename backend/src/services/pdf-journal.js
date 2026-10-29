@@ -1,6 +1,7 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { decimal } from '../../../shared/money.js';
 import { parseDiariPages } from './pdf-journal-diari.js';
+import { parseListadoJournalPages } from './pdf-journal-listado.js';
 
 const moneyPattern = /^-?(?:\d{1,3}(?:\.\d{3})*|\d+),\d{2}$/;
 const datePattern = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -25,6 +26,7 @@ function normalizedItems(items) {
 export function parseJournalPages(pages) {
   if(!Array.isArray(pages) || !pages.length || pages.length>300)invalid('INVALID');
   if(pages[0].items.some(item=>(item.str??item.text)?.replace(/\s/g,'')==='DIARI'))return parseDiariPages(pages);
+  if(pages[0].items.some(item=>(item.str??item.text)?.trim()==='LISTADO DEL DIARIO'))return parseListadoJournalPages(pages);
   let sourceCompany, startDate, endDate, current = null, totalDebit = 0n, totalCredit = 0n;
   const entries = [], numbers = new Set(), accountNames = new Map(), codeLengths = new Set();
   for (const [pageIndex, page] of pages.entries()) {

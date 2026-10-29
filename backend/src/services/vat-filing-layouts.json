@@ -1,0 +1,1727 @@
+{
+ "2025": {
+  "version": "1.02",
+  "source": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_300_399/archivos_25/DR303e25.xlsx",
+  "sha256": "6c3d7eeb714e0deb52f91d7e8dbadeb83f16c1d32d25f9e871756f3ddf0117e6",
+  "header_length": 328,
+  "footer_length": 18,
+  "pages": {
+   "01000": {
+    "length": 1581,
+    "fields": [
+     {
+      "position": 1,
+      "length": 2,
+      "type": "An",
+      "literal": "<T"
+     },
+     {
+      "position": 3,
+      "length": 3,
+      "type": "Num",
+      "literal": "303"
+     },
+     {
+      "position": 6,
+      "length": 5,
+      "type": "Num",
+      "literal": "01000"
+     },
+     {
+      "position": 11,
+      "length": 1,
+      "type": "An",
+      "literal": ">"
+     },
+     {
+      "position": 12,
+      "length": 1,
+      "type": "A",
+      "key": "complementary_page"
+     },
+     {
+      "position": 13,
+      "length": 1,
+      "type": "A",
+      "key": "declaration_type"
+     },
+     {
+      "position": 14,
+      "length": 9,
+      "type": "An",
+      "key": "nif"
+     },
+     {
+      "position": 23,
+      "length": 80,
+      "type": "An",
+      "key": "name"
+     },
+     {
+      "position": 103,
+      "length": 4,
+      "type": "Num",
+      "key": "year"
+     },
+     {
+      "position": 107,
+      "length": 2,
+      "type": "An",
+      "key": "period"
+     },
+     {
+      "position": 109,
+      "length": 1,
+      "type": "Num",
+      "key": "foral"
+     },
+     {
+      "position": 110,
+      "length": 1,
+      "type": "Num",
+      "key": "redeme"
+     },
+     {
+      "position": 111,
+      "length": 1,
+      "type": "Num",
+      "key": "simplified"
+     },
+     {
+      "position": 112,
+      "length": 1,
+      "type": "Num",
+      "key": "joint"
+     },
+     {
+      "position": 113,
+      "length": 1,
+      "type": "Num",
+      "key": "cash_regime"
+     },
+     {
+      "position": 114,
+      "length": 1,
+      "type": "Num",
+      "key": "cash_recipient"
+     },
+     {
+      "position": 115,
+      "length": 1,
+      "type": "Num",
+      "key": "special_prorata"
+     },
+     {
+      "position": 116,
+      "length": 1,
+      "type": "Num",
+      "key": "revoke_prorata"
+     },
+     {
+      "position": 117,
+      "length": 1,
+      "type": "Num",
+      "key": "insolvency"
+     },
+     {
+      "position": 118,
+      "length": 8,
+      "type": "An",
+      "key": "insolvency_date"
+     },
+     {
+      "position": 126,
+      "length": 1,
+      "type": "An",
+      "key": "insolvency_type"
+     },
+     {
+      "position": 127,
+      "length": 1,
+      "type": "Num",
+      "key": "voluntary_sii"
+     },
+     {
+      "position": 128,
+      "length": 1,
+      "type": "Num",
+      "key": "annual_exempt"
+     },
+     {
+      "position": 129,
+      "length": 1,
+      "type": "Num",
+      "key": "annual_activity"
+     },
+     {
+      "position": 130,
+      "length": 17,
+      "type": "Num",
+      "key": "box:150"
+     },
+     {
+      "position": 147,
+      "length": 5,
+      "type": "Num",
+      "key": "box:151",
+      "literal": "00000"
+     },
+     {
+      "position": 152,
+      "length": 17,
+      "type": "Num",
+      "key": "box:152"
+     },
+     {
+      "position": 169,
+      "length": 17,
+      "type": "Num",
+      "key": "box:01"
+     },
+     {
+      "position": 186,
+      "length": 5,
+      "type": "Num",
+      "key": "box:02",
+      "literal": "00400"
+     },
+     {
+      "position": 191,
+      "length": 17,
+      "type": "Num",
+      "key": "box:03"
+     },
+     {
+      "position": 208,
+      "length": 17,
+      "type": "Num",
+      "key": "box:153"
+     },
+     {
+      "position": 225,
+      "length": 5,
+      "type": "Num",
+      "key": "box:154",
+      "literal": "00000"
+     },
+     {
+      "position": 230,
+      "length": 17,
+      "type": "Num",
+      "key": "box:155"
+     },
+     {
+      "position": 247,
+      "length": 17,
+      "type": "Num",
+      "key": "box:04"
+     },
+     {
+      "position": 264,
+      "length": 5,
+      "type": "Num",
+      "key": "box:05",
+      "literal": "01000"
+     },
+     {
+      "position": 269,
+      "length": 17,
+      "type": "Num",
+      "key": "box:06"
+     },
+     {
+      "position": 286,
+      "length": 17,
+      "type": "Num",
+      "key": "box:07"
+     },
+     {
+      "position": 303,
+      "length": 5,
+      "type": "Num",
+      "key": "box:08",
+      "literal": "02100"
+     },
+     {
+      "position": 308,
+      "length": 17,
+      "type": "Num",
+      "key": "box:09"
+     },
+     {
+      "position": 325,
+      "length": 17,
+      "type": "Num",
+      "key": "box:10"
+     },
+     {
+      "position": 342,
+      "length": 17,
+      "type": "Num",
+      "key": "box:11"
+     },
+     {
+      "position": 359,
+      "length": 17,
+      "type": "Num",
+      "key": "box:12"
+     },
+     {
+      "position": 376,
+      "length": 17,
+      "type": "Num",
+      "key": "box:13"
+     },
+     {
+      "position": 393,
+      "length": 17,
+      "type": "N",
+      "key": "box:14"
+     },
+     {
+      "position": 410,
+      "length": 17,
+      "type": "N",
+      "key": "box:15"
+     },
+     {
+      "position": 427,
+      "length": 17,
+      "type": "Num",
+      "key": "box:156"
+     },
+     {
+      "position": 444,
+      "length": 5,
+      "type": "Num",
+      "key": "box:157",
+      "literal": "00175"
+     },
+     {
+      "position": 449,
+      "length": 17,
+      "type": "Num",
+      "key": "box:158"
+     },
+     {
+      "position": 466,
+      "length": 17,
+      "type": "Num",
+      "key": "box:16"
+     },
+     {
+      "position": 483,
+      "length": 5,
+      "type": "Num",
+      "key": "box:17",
+      "literal": "00000"
+     },
+     {
+      "position": 488,
+      "length": 17,
+      "type": "Num",
+      "key": "box:18"
+     },
+     {
+      "position": 505,
+      "length": 17,
+      "type": "Num",
+      "key": "box:19"
+     },
+     {
+      "position": 522,
+      "length": 5,
+      "type": "Num",
+      "key": "box:20",
+      "literal": "00140"
+     },
+     {
+      "position": 527,
+      "length": 17,
+      "type": "Num",
+      "key": "box:21"
+     },
+     {
+      "position": 544,
+      "length": 17,
+      "type": "Num",
+      "key": "box:22"
+     },
+     {
+      "position": 561,
+      "length": 5,
+      "type": "Num",
+      "key": "box:23",
+      "literal": "00520"
+     },
+     {
+      "position": 566,
+      "length": 17,
+      "type": "Num",
+      "key": "box:24"
+     },
+     {
+      "position": 583,
+      "length": 17,
+      "type": "N",
+      "key": "box:25"
+     },
+     {
+      "position": 600,
+      "length": 17,
+      "type": "N",
+      "key": "box:26"
+     },
+     {
+      "position": 617,
+      "length": 17,
+      "type": "N",
+      "key": "box:27"
+     },
+     {
+      "position": 634,
+      "length": 17,
+      "type": "Num",
+      "key": "box:28"
+     },
+     {
+      "position": 651,
+      "length": 17,
+      "type": "Num",
+      "key": "box:29"
+     },
+     {
+      "position": 668,
+      "length": 17,
+      "type": "Num",
+      "key": "box:30"
+     },
+     {
+      "position": 685,
+      "length": 17,
+      "type": "Num",
+      "key": "box:31"
+     },
+     {
+      "position": 702,
+      "length": 17,
+      "type": "Num",
+      "key": "box:32"
+     },
+     {
+      "position": 719,
+      "length": 17,
+      "type": "Num",
+      "key": "box:33"
+     },
+     {
+      "position": 736,
+      "length": 17,
+      "type": "Num",
+      "key": "box:34"
+     },
+     {
+      "position": 753,
+      "length": 17,
+      "type": "Num",
+      "key": "box:35"
+     },
+     {
+      "position": 770,
+      "length": 17,
+      "type": "Num",
+      "key": "box:36"
+     },
+     {
+      "position": 787,
+      "length": 17,
+      "type": "Num",
+      "key": "box:37"
+     },
+     {
+      "position": 804,
+      "length": 17,
+      "type": "Num",
+      "key": "box:38"
+     },
+     {
+      "position": 821,
+      "length": 17,
+      "type": "Num",
+      "key": "box:39"
+     },
+     {
+      "position": 838,
+      "length": 17,
+      "type": "N",
+      "key": "box:40"
+     },
+     {
+      "position": 855,
+      "length": 17,
+      "type": "N",
+      "key": "box:41"
+     },
+     {
+      "position": 872,
+      "length": 17,
+      "type": "N",
+      "key": "box:42"
+     },
+     {
+      "position": 889,
+      "length": 17,
+      "type": "N",
+      "key": "box:43"
+     },
+     {
+      "position": 906,
+      "length": 17,
+      "type": "N",
+      "key": "box:44"
+     },
+     {
+      "position": 923,
+      "length": 17,
+      "type": "N",
+      "key": "box:45"
+     },
+     {
+      "position": 940,
+      "length": 17,
+      "type": "N",
+      "key": "box:46"
+     },
+     {
+      "position": 957,
+      "length": 17,
+      "type": "Num",
+      "key": "box:165"
+     },
+     {
+      "position": 974,
+      "length": 5,
+      "type": "Num",
+      "key": "box:166",
+      "literal": "00000"
+     },
+     {
+      "position": 979,
+      "length": 17,
+      "type": "Num",
+      "key": "box:167"
+     },
+     {
+      "position": 996,
+      "length": 17,
+      "type": "Num",
+      "key": "box:168"
+     },
+     {
+      "position": 1013,
+      "length": 5,
+      "type": "Num",
+      "key": "box:169",
+      "literal": "00050"
+     },
+     {
+      "position": 1018,
+      "length": 17,
+      "type": "Num",
+      "key": "box:170"
+     },
+     {
+      "position": 1035,
+      "length": 522,
+      "type": "An"
+     },
+     {
+      "position": 1557,
+      "length": 13,
+      "type": "An"
+     },
+     {
+      "position": 1570,
+      "length": 12,
+      "type": "An",
+      "literal": "</T30301000>"
+     }
+    ]
+   },
+   "03000": {
+    "length": 1017,
+    "fields": [
+     {
+      "position": 1,
+      "length": 2,
+      "type": "An",
+      "literal": "<T"
+     },
+     {
+      "position": 3,
+      "length": 3,
+      "type": "Num",
+      "literal": "303"
+     },
+     {
+      "position": 6,
+      "length": 5,
+      "type": "Num",
+      "literal": "03000"
+     },
+     {
+      "position": 11,
+      "length": 1,
+      "type": "An",
+      "literal": ">"
+     },
+     {
+      "position": 12,
+      "length": 17,
+      "type": "N",
+      "key": "box:59"
+     },
+     {
+      "position": 29,
+      "length": 17,
+      "type": "N",
+      "key": "box:60"
+     },
+     {
+      "position": 46,
+      "length": 17,
+      "type": "N",
+      "key": "box:120"
+     },
+     {
+      "position": 63,
+      "length": 17,
+      "type": "N",
+      "key": "box:122"
+     },
+     {
+      "position": 80,
+      "length": 17,
+      "type": "N",
+      "key": "box:123"
+     },
+     {
+      "position": 97,
+      "length": 17,
+      "type": "N",
+      "key": "box:124"
+     },
+     {
+      "position": 114,
+      "length": 17,
+      "type": "N",
+      "key": "box:62"
+     },
+     {
+      "position": 131,
+      "length": 17,
+      "type": "N",
+      "key": "box:63"
+     },
+     {
+      "position": 148,
+      "length": 17,
+      "type": "N",
+      "key": "box:74"
+     },
+     {
+      "position": 165,
+      "length": 17,
+      "type": "N",
+      "key": "box:75"
+     },
+     {
+      "position": 182,
+      "length": 17,
+      "type": "N",
+      "key": "box:76"
+     },
+     {
+      "position": 199,
+      "length": 17,
+      "type": "N",
+      "key": "box:64"
+     },
+     {
+      "position": 216,
+      "length": 5,
+      "type": "Num",
+      "key": "box:65"
+     },
+     {
+      "position": 221,
+      "length": 17,
+      "type": "N",
+      "key": "box:66"
+     },
+     {
+      "position": 238,
+      "length": 17,
+      "type": "Num",
+      "key": "box:77"
+     },
+     {
+      "position": 255,
+      "length": 17,
+      "type": "Num",
+      "key": "box:110"
+     },
+     {
+      "position": 272,
+      "length": 17,
+      "type": "Num",
+      "key": "box:78"
+     },
+     {
+      "position": 289,
+      "length": 17,
+      "type": "Num",
+      "key": "box:87"
+     },
+     {
+      "position": 306,
+      "length": 17,
+      "type": "N",
+      "key": "box:68"
+     },
+     {
+      "position": 323,
+      "length": 17,
+      "type": "N",
+      "key": "box:69"
+     },
+     {
+      "position": 340,
+      "length": 17,
+      "type": "Num",
+      "key": "box:70"
+     },
+     {
+      "position": 357,
+      "length": 17,
+      "type": "Num",
+      "key": "box:109"
+     },
+     {
+      "position": 374,
+      "length": 17,
+      "type": "N",
+      "key": "box:71"
+     },
+     {
+      "position": 391,
+      "length": 1,
+      "type": "An",
+      "key": "no_activity"
+     },
+     {
+      "position": 392,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 393,
+      "length": 13,
+      "type": "An"
+     },
+     {
+      "position": 406,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 407,
+      "length": 17,
+      "type": "N",
+      "key": "box:108"
+     },
+     {
+      "position": 424,
+      "length": 17,
+      "type": "Num",
+      "key": "box:111"
+     },
+     {
+      "position": 441,
+      "length": 120,
+      "type": "An"
+     },
+     {
+      "position": 561,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 562,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 563,
+      "length": 443,
+      "type": "An"
+     },
+     {
+      "position": 1006,
+      "length": 12,
+      "type": "An",
+      "literal": "</T30303000>"
+     }
+    ]
+   },
+   "DID00": {
+    "length": 823,
+    "fields": [
+     {
+      "position": 1,
+      "length": 2,
+      "type": "An",
+      "literal": "<T"
+     },
+     {
+      "position": 3,
+      "length": 3,
+      "type": "Num",
+      "literal": "303"
+     },
+     {
+      "position": 6,
+      "length": 5,
+      "type": "An",
+      "literal": "DID00"
+     },
+     {
+      "position": 11,
+      "length": 1,
+      "type": "An",
+      "literal": ">"
+     },
+     {
+      "position": 12,
+      "length": 11,
+      "type": "An",
+      "key": "bic"
+     },
+     {
+      "position": 23,
+      "length": 34,
+      "type": "An",
+      "key": "iban"
+     },
+     {
+      "position": 57,
+      "length": 70,
+      "type": "An",
+      "key": "bank_name"
+     },
+     {
+      "position": 127,
+      "length": 35,
+      "type": "An",
+      "key": "bank_address"
+     },
+     {
+      "position": 162,
+      "length": 30,
+      "type": "An",
+      "key": "bank_city"
+     },
+     {
+      "position": 192,
+      "length": 2,
+      "type": "An",
+      "key": "bank_country"
+     },
+     {
+      "position": 194,
+      "length": 1,
+      "type": "Num",
+      "key": "sepa"
+     },
+     {
+      "position": 195,
+      "length": 617,
+      "type": "An"
+     },
+     {
+      "position": 812,
+      "length": 12,
+      "type": "An",
+      "literal": "</T303DID00>"
+     }
+    ]
+   }
+  }
+ },
+ "2026": {
+  "version": "1.01",
+  "source": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_300_399/archivos_26/DR303e26v101.xlsx",
+  "sha256": "0be8b156da2250c6b11f6253e0165221ed2e549ec4c65a562021bec6b9b8489b",
+  "header_length": 328,
+  "footer_length": 18,
+  "pages": {
+   "01000": {
+    "length": 1581,
+    "fields": [
+     {
+      "position": 1,
+      "length": 2,
+      "type": "An",
+      "literal": "<T"
+     },
+     {
+      "position": 3,
+      "length": 3,
+      "type": "Num",
+      "literal": "303"
+     },
+     {
+      "position": 6,
+      "length": 5,
+      "type": "Num",
+      "literal": "01000"
+     },
+     {
+      "position": 11,
+      "length": 1,
+      "type": "An",
+      "literal": ">"
+     },
+     {
+      "position": 12,
+      "length": 1,
+      "type": "A",
+      "key": "complementary_page"
+     },
+     {
+      "position": 13,
+      "length": 1,
+      "type": "A",
+      "key": "declaration_type"
+     },
+     {
+      "position": 14,
+      "length": 9,
+      "type": "An",
+      "key": "nif"
+     },
+     {
+      "position": 23,
+      "length": 80,
+      "type": "An",
+      "key": "name"
+     },
+     {
+      "position": 103,
+      "length": 4,
+      "type": "Num",
+      "key": "year"
+     },
+     {
+      "position": 107,
+      "length": 2,
+      "type": "An",
+      "key": "period"
+     },
+     {
+      "position": 109,
+      "length": 1,
+      "type": "Num",
+      "key": "foral"
+     },
+     {
+      "position": 110,
+      "length": 1,
+      "type": "Num",
+      "key": "redeme"
+     },
+     {
+      "position": 111,
+      "length": 1,
+      "type": "Num",
+      "key": "simplified"
+     },
+     {
+      "position": 112,
+      "length": 1,
+      "type": "Num",
+      "key": "joint"
+     },
+     {
+      "position": 113,
+      "length": 1,
+      "type": "Num",
+      "key": "cash_regime"
+     },
+     {
+      "position": 114,
+      "length": 1,
+      "type": "Num",
+      "key": "cash_recipient"
+     },
+     {
+      "position": 115,
+      "length": 1,
+      "type": "Num",
+      "key": "special_prorata"
+     },
+     {
+      "position": 116,
+      "length": 1,
+      "type": "Num",
+      "key": "revoke_prorata"
+     },
+     {
+      "position": 117,
+      "length": 1,
+      "type": "Num",
+      "key": "insolvency"
+     },
+     {
+      "position": 118,
+      "length": 8,
+      "type": "An",
+      "key": "insolvency_date"
+     },
+     {
+      "position": 126,
+      "length": 1,
+      "type": "An",
+      "key": "insolvency_type"
+     },
+     {
+      "position": 127,
+      "length": 1,
+      "type": "Num",
+      "key": "voluntary_sii"
+     },
+     {
+      "position": 128,
+      "length": 1,
+      "type": "Num",
+      "key": "annual_exempt"
+     },
+     {
+      "position": 129,
+      "length": 1,
+      "type": "Num",
+      "key": "annual_activity"
+     },
+     {
+      "position": 130,
+      "length": 1,
+      "type": "Num",
+      "key": "hydrocarbons"
+     },
+     {
+      "position": 131,
+      "length": 17,
+      "type": "Num",
+      "key": "box:150"
+     },
+     {
+      "position": 148,
+      "length": 5,
+      "type": "Num",
+      "key": "box:151",
+      "literal": "00000"
+     },
+     {
+      "position": 153,
+      "length": 17,
+      "type": "Num",
+      "key": "box:152"
+     },
+     {
+      "position": 170,
+      "length": 17,
+      "type": "Num",
+      "key": "box:165"
+     },
+     {
+      "position": 187,
+      "length": 5,
+      "type": "Num",
+      "key": "box:166",
+      "literal": "00000"
+     },
+     {
+      "position": 192,
+      "length": 17,
+      "type": "Num",
+      "key": "box:167"
+     },
+     {
+      "position": 209,
+      "length": 17,
+      "type": "Num",
+      "key": "box:01"
+     },
+     {
+      "position": 226,
+      "length": 5,
+      "type": "Num",
+      "key": "box:02",
+      "literal": "00400"
+     },
+     {
+      "position": 231,
+      "length": 17,
+      "type": "Num",
+      "key": "box:03"
+     },
+     {
+      "position": 248,
+      "length": 17,
+      "type": "Num",
+      "key": "box:153"
+     },
+     {
+      "position": 265,
+      "length": 5,
+      "type": "Num",
+      "key": "box:154",
+      "literal": "00000"
+     },
+     {
+      "position": 270,
+      "length": 17,
+      "type": "Num",
+      "key": "box:155"
+     },
+     {
+      "position": 287,
+      "length": 17,
+      "type": "Num",
+      "key": "box:04"
+     },
+     {
+      "position": 304,
+      "length": 5,
+      "type": "Num",
+      "key": "box:05",
+      "literal": "01000"
+     },
+     {
+      "position": 309,
+      "length": 17,
+      "type": "Num",
+      "key": "box:06"
+     },
+     {
+      "position": 326,
+      "length": 17,
+      "type": "Num",
+      "key": "box:07"
+     },
+     {
+      "position": 343,
+      "length": 5,
+      "type": "Num",
+      "key": "box:08",
+      "literal": "02100"
+     },
+     {
+      "position": 348,
+      "length": 17,
+      "type": "Num",
+      "key": "box:09"
+     },
+     {
+      "position": 365,
+      "length": 17,
+      "type": "Num",
+      "key": "box:10"
+     },
+     {
+      "position": 382,
+      "length": 17,
+      "type": "Num",
+      "key": "box:11"
+     },
+     {
+      "position": 399,
+      "length": 17,
+      "type": "Num",
+      "key": "box:12"
+     },
+     {
+      "position": 416,
+      "length": 17,
+      "type": "Num",
+      "key": "box:13"
+     },
+     {
+      "position": 433,
+      "length": 17,
+      "type": "N",
+      "key": "box:14"
+     },
+     {
+      "position": 450,
+      "length": 17,
+      "type": "N",
+      "key": "box:15"
+     },
+     {
+      "position": 467,
+      "length": 17,
+      "type": "Num",
+      "key": "box:156"
+     },
+     {
+      "position": 484,
+      "length": 5,
+      "type": "Num",
+      "key": "box:157",
+      "literal": "00175"
+     },
+     {
+      "position": 489,
+      "length": 17,
+      "type": "Num",
+      "key": "box:158"
+     },
+     {
+      "position": 506,
+      "length": 17,
+      "type": "Num",
+      "key": "box:168"
+     },
+     {
+      "position": 523,
+      "length": 5,
+      "type": "Num",
+      "key": "box:169",
+      "literal": "00050"
+     },
+     {
+      "position": 528,
+      "length": 17,
+      "type": "Num",
+      "key": "box:170"
+     },
+     {
+      "position": 545,
+      "length": 17,
+      "type": "Num",
+      "key": "box:16"
+     },
+     {
+      "position": 562,
+      "length": 5,
+      "type": "Num",
+      "key": "box:17",
+      "literal": "00000"
+     },
+     {
+      "position": 567,
+      "length": 17,
+      "type": "Num",
+      "key": "box:18"
+     },
+     {
+      "position": 584,
+      "length": 17,
+      "type": "Num",
+      "key": "box:19"
+     },
+     {
+      "position": 601,
+      "length": 5,
+      "type": "Num",
+      "key": "box:20",
+      "literal": "00140"
+     },
+     {
+      "position": 606,
+      "length": 17,
+      "type": "Num",
+      "key": "box:21"
+     },
+     {
+      "position": 623,
+      "length": 17,
+      "type": "Num",
+      "key": "box:22"
+     },
+     {
+      "position": 640,
+      "length": 5,
+      "type": "Num",
+      "key": "box:23",
+      "literal": "00520"
+     },
+     {
+      "position": 645,
+      "length": 17,
+      "type": "Num",
+      "key": "box:24"
+     },
+     {
+      "position": 662,
+      "length": 17,
+      "type": "N",
+      "key": "box:25"
+     },
+     {
+      "position": 679,
+      "length": 17,
+      "type": "N",
+      "key": "box:26"
+     },
+     {
+      "position": 696,
+      "length": 17,
+      "type": "N",
+      "key": "box:27"
+     },
+     {
+      "position": 713,
+      "length": 17,
+      "type": "Num",
+      "key": "box:28"
+     },
+     {
+      "position": 730,
+      "length": 17,
+      "type": "Num",
+      "key": "box:29"
+     },
+     {
+      "position": 747,
+      "length": 17,
+      "type": "Num",
+      "key": "box:30"
+     },
+     {
+      "position": 764,
+      "length": 17,
+      "type": "Num",
+      "key": "box:31"
+     },
+     {
+      "position": 781,
+      "length": 17,
+      "type": "Num",
+      "key": "box:32"
+     },
+     {
+      "position": 798,
+      "length": 17,
+      "type": "Num",
+      "key": "box:33"
+     },
+     {
+      "position": 815,
+      "length": 17,
+      "type": "Num",
+      "key": "box:34"
+     },
+     {
+      "position": 832,
+      "length": 17,
+      "type": "Num",
+      "key": "box:35"
+     },
+     {
+      "position": 849,
+      "length": 17,
+      "type": "Num",
+      "key": "box:36"
+     },
+     {
+      "position": 866,
+      "length": 17,
+      "type": "Num",
+      "key": "box:37"
+     },
+     {
+      "position": 883,
+      "length": 17,
+      "type": "Num",
+      "key": "box:38"
+     },
+     {
+      "position": 900,
+      "length": 17,
+      "type": "Num",
+      "key": "box:39"
+     },
+     {
+      "position": 917,
+      "length": 17,
+      "type": "N",
+      "key": "box:40"
+     },
+     {
+      "position": 934,
+      "length": 17,
+      "type": "N",
+      "key": "box:41"
+     },
+     {
+      "position": 951,
+      "length": 17,
+      "type": "N",
+      "key": "box:42"
+     },
+     {
+      "position": 968,
+      "length": 17,
+      "type": "N",
+      "key": "box:43"
+     },
+     {
+      "position": 985,
+      "length": 17,
+      "type": "N",
+      "key": "box:44"
+     },
+     {
+      "position": 1002,
+      "length": 17,
+      "type": "N",
+      "key": "box:45"
+     },
+     {
+      "position": 1019,
+      "length": 17,
+      "type": "N",
+      "key": "box:46"
+     },
+     {
+      "position": 1036,
+      "length": 521,
+      "type": "An"
+     },
+     {
+      "position": 1557,
+      "length": 13,
+      "type": "An"
+     },
+     {
+      "position": 1570,
+      "length": 12,
+      "type": "An",
+      "literal": "</T30301000>"
+     }
+    ]
+   },
+   "03000": {
+    "length": 1017,
+    "fields": [
+     {
+      "position": 1,
+      "length": 2,
+      "type": "An",
+      "literal": "<T"
+     },
+     {
+      "position": 3,
+      "length": 3,
+      "type": "Num",
+      "literal": "303"
+     },
+     {
+      "position": 6,
+      "length": 5,
+      "type": "Num",
+      "literal": "03000"
+     },
+     {
+      "position": 11,
+      "length": 1,
+      "type": "An",
+      "literal": ">"
+     },
+     {
+      "position": 12,
+      "length": 17,
+      "type": "N",
+      "key": "box:59"
+     },
+     {
+      "position": 29,
+      "length": 17,
+      "type": "N",
+      "key": "box:60"
+     },
+     {
+      "position": 46,
+      "length": 17,
+      "type": "N",
+      "key": "box:120"
+     },
+     {
+      "position": 63,
+      "length": 17,
+      "type": "N",
+      "key": "box:122"
+     },
+     {
+      "position": 80,
+      "length": 17,
+      "type": "N",
+      "key": "box:123"
+     },
+     {
+      "position": 97,
+      "length": 17,
+      "type": "N",
+      "key": "box:124"
+     },
+     {
+      "position": 114,
+      "length": 17,
+      "type": "N",
+      "key": "box:62"
+     },
+     {
+      "position": 131,
+      "length": 17,
+      "type": "N",
+      "key": "box:63"
+     },
+     {
+      "position": 148,
+      "length": 17,
+      "type": "N",
+      "key": "box:74"
+     },
+     {
+      "position": 165,
+      "length": 17,
+      "type": "N",
+      "key": "box:75"
+     },
+     {
+      "position": 182,
+      "length": 17,
+      "type": "N",
+      "key": "box:76"
+     },
+     {
+      "position": 199,
+      "length": 17,
+      "type": "N",
+      "key": "box:64"
+     },
+     {
+      "position": 216,
+      "length": 5,
+      "type": "Num",
+      "key": "box:65"
+     },
+     {
+      "position": 221,
+      "length": 17,
+      "type": "N",
+      "key": "box:66"
+     },
+     {
+      "position": 238,
+      "length": 17,
+      "type": "Num",
+      "key": "box:77"
+     },
+     {
+      "position": 255,
+      "length": 17,
+      "type": "Num",
+      "key": "box:110"
+     },
+     {
+      "position": 272,
+      "length": 17,
+      "type": "Num",
+      "key": "box:78"
+     },
+     {
+      "position": 289,
+      "length": 17,
+      "type": "Num",
+      "key": "box:87"
+     },
+     {
+      "position": 306,
+      "length": 17,
+      "type": "N",
+      "key": "box:68"
+     },
+     {
+      "position": 323,
+      "length": 17,
+      "type": "N",
+      "key": "box:108"
+     },
+     {
+      "position": 340,
+      "length": 17,
+      "type": "N",
+      "key": "box:69"
+     },
+     {
+      "position": 357,
+      "length": 17,
+      "type": "Num",
+      "key": "box:70"
+     },
+     {
+      "position": 374,
+      "length": 17,
+      "type": "Num",
+      "key": "box:109"
+     },
+     {
+      "position": 391,
+      "length": 17,
+      "type": "Num",
+      "key": "box:112"
+     },
+     {
+      "position": 408,
+      "length": 17,
+      "type": "N",
+      "key": "box:71"
+     },
+     {
+      "position": 425,
+      "length": 1,
+      "type": "An",
+      "key": "no_activity"
+     },
+     {
+      "position": 426,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 427,
+      "length": 13,
+      "type": "An"
+     },
+     {
+      "position": 440,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 441,
+      "length": 17,
+      "type": "Num",
+      "key": "box:111"
+     },
+     {
+      "position": 458,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 459,
+      "length": 1,
+      "type": "An"
+     },
+     {
+      "position": 460,
+      "length": 546,
+      "type": "An"
+     },
+     {
+      "position": 1006,
+      "length": 12,
+      "type": "An",
+      "literal": "</T30303000>"
+     }
+    ]
+   },
+   "DID00": {
+    "length": 823,
+    "fields": [
+     {
+      "position": 1,
+      "length": 2,
+      "type": "An",
+      "literal": "<T"
+     },
+     {
+      "position": 3,
+      "length": 3,
+      "type": "Num",
+      "literal": "303"
+     },
+     {
+      "position": 6,
+      "length": 5,
+      "type": "An",
+      "literal": "DID00"
+     },
+     {
+      "position": 11,
+      "length": 1,
+      "type": "An",
+      "literal": ">"
+     },
+     {
+      "position": 12,
+      "length": 11,
+      "type": "An",
+      "key": "bic"
+     },
+     {
+      "position": 23,
+      "length": 34,
+      "type": "An",
+      "key": "iban"
+     },
+     {
+      "position": 57,
+      "length": 70,
+      "type": "An",
+      "key": "bank_name"
+     },
+     {
+      "position": 127,
+      "length": 35,
+      "type": "An",
+      "key": "bank_address"
+     },
+     {
+      "position": 162,
+      "length": 30,
+      "type": "An",
+      "key": "bank_city"
+     },
+     {
+      "position": 192,
+      "length": 2,
+      "type": "An",
+      "key": "bank_country"
+     },
+     {
+      "position": 194,
+      "length": 1,
+      "type": "Num",
+      "key": "sepa"
+     },
+     {
+      "position": 195,
+      "length": 617,
+      "type": "An"
+     },
+     {
+      "position": 812,
+      "length": 12,
+      "type": "An",
+      "literal": "</T303DID00>"
+     }
+    ]
+   }
+  }
+ }
+}

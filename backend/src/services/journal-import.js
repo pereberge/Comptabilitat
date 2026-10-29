@@ -58,7 +58,7 @@ export function createJournalImportService(pool, companyId) {
       previews.set(token,{companyId,exerciseId:meta.exercise.id,source,buffer:Buffer.from(buffer),sourceName,sourceHash:sha(buffer),contentHash,expires:Date.now()+lifetime});
       return {token,company:meta.company,exercise:{id:meta.exercise.id,name:meta.exercise.name},source_company:source.source_company,
         start_date:source.start_date,end_date:source.end_date,pages:source.pages,totals:source.totals,has_closing:source.has_closing,already_imported:!!existing,
-        source_format:source.format||'libro_diario',numbering:source.numbering||'source',period_inferred:!!source.period_inferred,covered_from:source.covered_from||source.entries[0].entry_date,covered_to:source.covered_to||source.entries.at(-1).entry_date,
+        source_format:source.format||'libro_diario',source_layout:source.layout||null,numbering:source.numbering||'source',period_inferred:!!source.period_inferred,covered_from:source.covered_from||source.entries[0].entry_date,covered_to:source.covered_to||source.entries.at(-1).entry_date,
         sample:[source.entries[0],source.entries.at(-1)].map(({number,entry_date,description,debit,credit,entry_type,source_journal_code,source_entry_reference})=>({number,entry_date,description,debit,credit,entry_type,source_journal_code,source_entry_reference}))};
     },
     async commit(token) {

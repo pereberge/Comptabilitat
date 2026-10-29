@@ -2,15 +2,22 @@ import { calculateInvoice } from '../../../shared/invoice-money.js';
 import { amount } from './report-amount.js';
 import { validateInvoice } from './invoice-validation.js';
 import { invoiceIdentity } from './invoice-pdf.js';
+import {completeFiscalProfile} from '../../../shared/account-party.js';
+import {partyPaymentReceipts,normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
 
 const stop=new Set(['DE','DEL','LA','SL','SLU','SA','S','L','U','UNIPERSONAL','COMERCIALIZADORA','COMERCIALITZADORA','REFERENCIA']);
 function partyScore(name,description){const tokens=String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/[^A-Z0-9]+/).filter(token=>token.length>=3&&!stop.has(token));return tokens.length&&tokens.every(token=>invoiceIdentity(description).includes(token))?tokens.length:0;}
 export function buildInvoiceProposal({form:input,extraction,accounts,journal,invoices=[],exercise}){
  const form=structuredClone(input),received=form.direction==='received',warnings=[...extraction.warnings],byId=new Map(accounts.map(account=>[account.id,account]));
  const parties=accounts.filter(account=>account.kind==='subaccount'&&(received?/^(400|410)/:/^(430|440)/).test(account.code));
+ if(!form.party_account_id&&form.party?.tax_id){const tax=invoiceIdentity(form.party.tax_id),matches=parties.filter(account=>account.party_profile?.tax_id&&invoiceIdentity(account.party_profile.tax_id)===tax);if(matches.length===1)form.party_account_id=matches[0].id;}
  if(!form.party_account_id){const named=parties.filter(account=>partyScore(form.party?.name,account.description)>0);if(named.length===1)form.party_account_id=named[0].id;}
+ const party=parties.find(account=>account.id===Number(form.party_account_id));
+ if(party?.party_profile)form.party=completeFiscalProfile(form.party,party.party_profile);
  const grouped=new Map();for(const row of journal){if(!grouped.has(row.entry_id))grouped.set(row.entry_id,[]);grouped.get(row.entry_id).push(row);}
  let totals=null;try{totals=calculateInvoice(form.lines,form.withholding_rate||'0');}catch{}
+ let paymentError=false;
+ if(totals&&form.automatic_receipts)try{const profile=normalizePartyPaymentProfile(party?.payment_profile||{});if(form.payment_profile&&JSON.stringify(normalizePartyPaymentProfile(form.payment_profile))!==JSON.stringify(profile))throw new Error();form.payment_profile=profile;form.receipts=partyPaymentReceipts(totals.total_amount,form.invoice_date,profile);}catch{paymentError=true;warnings.push('Revisa las condiciones de cobro o pago del tercero.');}
  const candidates=[];
  if(totals&&form.party_account_id){
   for(const rows of grouped.values()){
@@ -67,5 +74,5 @@ export function buildInvoiceProposal({form:input,extraction,accounts,journal,inv
   (amount(totals.tax_total)===0n||form.vat_account_id)&&(amount(totals.withholding_total)===0n||form.withholding_account_id)&&
   form.posting_date>=exercise.start_date&&form.posting_date<=exercise.end_date&&form.posting_date>=form.invoice_date);
  return {form,totals,journal:lines,candidates:matches.slice(0,12),existing_invoice:existing?{id:existing.id,entry_id:existing.entry_id,reference:existing.reference,total_amount:existing.total_amount}:null,
-  basis,alternatives,warnings:[...new Set(warnings)],ready:complete&&valid&&accountsValid&&extraction.currency==='EUR'&&!extraction.multiple_invoices,needs_amount_review:!extraction.totals_verified||!!extraction.withholding_review||printedDifference};
+  basis,alternatives,warnings:[...new Set(warnings)],ready:complete&&valid&&accountsValid&&!paymentError&&extraction.currency==='EUR'&&!extraction.multiple_invoices,needs_amount_review:!extraction.totals_verified||!!extraction.withholding_review||printedDifference};
 }

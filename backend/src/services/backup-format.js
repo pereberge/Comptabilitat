@@ -5,6 +5,11 @@ import { companyFormats } from '../../../shared/company-formats.js';
 import {farmLotsOverlap} from '../../../shared/farm-lots.js';
 import {calculateFarmSale} from '../../../shared/farm-sale-money.js';
 import {transferAmounts,productionDecimal} from '../../../shared/farm-production.js';
+import {reconciliationConcept,scaleReconciliationCounterLines} from '../../../shared/reconciliation-proposals.js';
+import { normalizeVatInput,vatPeriod } from '../../../shared/vat-model.js';
+import {accountPartyType,normalizePartyProfile} from '../../../shared/account-party.js';
+import {normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
+import {normalizeSepaMandate} from '../../../shared/sepa.js';
 
 export const MAX_BACKUP_FILE = 100 * 1024 * 1024;
 export const MAX_BACKUP_JSON = 256 * 1024 * 1024;
@@ -12,9 +17,11 @@ export const TABLES = {
  companies: { key: ['id'], refs: {} },
  company_details: { key: ['company_id'], refs: {} },
  company_logos: { key: ['company_id'], refs: {} },
+ vat_drafts: { key: ['tax_year','frequency','period'], refs: {} },
  accounting_exercises: { key: ['start_date','end_date'], refs: {} },
  accounts: { key: ['code'], refs: { parent_id:'accounts' } },
  bank_connections: { key: ['iban'], refs: { account_id:'accounts' } },
+ bank_reconciliation_rules: {key:['bank_account_id','concept_key','direction'],refs:{bank_account_id:'accounts'}},
  suppliers: { key: ['code'], refs: { account_id:'accounts' } },
  company_documents: { key: ['request_id'], refs: {} },
  pig_farms: { key: ['code'], refs: {} },
@@ -34,12 +41,14 @@ export const TABLES = {
  trade_invoice_lines: { key: ['invoice_id','position'], refs: { invoice_id:'trade_invoices' } },
  portfolio_receipts: { key: ['invoice_id','position'], refs: { invoice_id:'trade_invoices' } },
  portfolio_settlements: { key: ['request_id'], refs: { exercise_id:'accounting_exercises',receipt_id:'portfolio_receipts',bank_account_id:'accounts',entry_id:'journal_entries',reversal_entry_id:'journal_entries' } },
+ bank_remittances:{key:['request_id'],refs:{}},
  invoice_documents: { key: ['exercise_id','source_sha256'], refs: { exercise_id:'accounting_exercises',invoice_id:'trade_invoices',entry_id:'journal_entries' } },
  bank_reconciliations: { key: ['exercise_id','account_id','source_sha256'], refs: { exercise_id:'accounting_exercises',account_id:'accounts' } },
 };
 export const TABLE_ORDER = Object.keys(TABLES);
-export const SHARED = new Set(['companies','company_details','company_logos','accounts','bank_connections','suppliers','company_documents','pig_farms','farm_lots','farm_documents']);
+export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents']);
 export const FARM_TABLES = new Set(['pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
+export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'bank_reconciliation_rules','vat_drafts','bank_remittances']);
 export const fail = (code, status=400) => { throw new HttpError(status, code); };
 export const sha = value => createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 export const encodeRow = row => Object.fromEntries(Object.entries(row).map(([key,value])=>[key,Buffer.isBuffer(value)?{$binary_base64:value.toString('base64')}:value]));
@@ -69,7 +78,7 @@ export function readBackup(buffer) {
   for(const lot of data.tables.farm_lots){if(!plain(lot))continue;const farm=data.tables.pig_farms.find(row=>plain(row)&&row.id===lot.farm_id);if(typeof farm?.code!=='string'||! /^[1-9]\d{0,8}$/.test(String(lot.code)))continue;const code=farm.code+'-'+lot.code;if(!data.tables.farm_lots.some(other=>plain(other)&&other!==lot&&other.farm_id===lot.farm_id&&other.code===code))lot.code=code;}
  }
  // Add wholly absent farm tables from older archives after verifying their original checksum.
- for(const table of FARM_TABLES)if([data.tables,data.references,data.schema].every(section=>plain(section)&&!Object.hasOwn(section,table))){data.tables[table]=[];data.references[table]=[];data.schema[table]=[];}
+ for(const table of OPTIONAL_TABLES)if([data.tables,data.references,data.schema].every(section=>plain(section)&&!Object.hasOwn(section,table))){data.tables[table]=[];data.references[table]=[];data.schema[table]=[];}
  validateBackup(data);
  return data;
 }
@@ -113,6 +122,41 @@ export function validateBackup(data) {
   if(owned[table].has(identity(row))&&table==='farm_cost_lines'&&!owned.farm_invoices.has(row.invoice_id))fail('BACKUP_BROKEN_LINKS');
  }
  const codes=new Set();
+ for(const account of [...data.tables.accounts,...data.references.accounts])if(account.sepa_mandate!=null){try{if(accountPartyType(account)!=='customer')throw new Error();normalizeSepaMandate(account.sepa_mandate);}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const receipt of [...data.tables.portfolio_receipts,...data.references.portfolio_receipts])if(receipt.split_history!=null){
+  if(!Array.isArray(receipt.split_history))fail('BACKUP_INVALID_ACCOUNTING');
+  for(const split of receipt.split_history){
+   if(!plain(split)||!Array.isArray(split.parts)||split.parts.length<2||split.parts.length>60||!plain(split.before)||typeof split.request_id!=='string'||! /^[a-f0-9]{64}$/.test(split.request_hash)||new Set(split.parts.map(row=>row.receipt_id)).size!==split.parts.length)fail('BACKUP_INVALID_ACCOUNTING');
+   if(split.parts.some(row=>indexes.portfolio_receipts.get(row.receipt_id)?.invoice_id!==receipt.invoice_id||money(row.amount)<=0n)||split.parts.reduce((sum,row)=>sum+money(row.amount),0n)!==money(split.before.amount)-money(split.before.paid_amount))fail('BACKUP_INVALID_ACCOUNTING');
+  }
+ }
+ for(const remittance of data.tables.bank_remittances){
+  if(!['issued','received'].includes(remittance.direction)||!['prepared','cancelled','archived'].includes(remittance.status)||!Array.isArray(remittance.receipt_ids)||remittance.receipt_ids.some(value=>!Number.isSafeInteger(value)||value<1)||new Set(remittance.receipt_ids).size!==remittance.receipt_ids.length||!plain(remittance.snapshot)||!Array.isArray(remittance.snapshot.items)||!remittance.snapshot.items.length||remittance.snapshot.items.length>1000||!plain(remittance.snapshot.bank)||! /^[A-Za-z0-9.-]+\.xml$/.test(remittance.filename))fail('BACKUP_INVALID_FILE');
+  if(sha(binaryValue(remittance.xml_content))!==remittance.xml_sha256)fail('BACKUP_CHECKSUM');
+  if(remittance.snapshot.items.reduce((sum,row)=>sum+money(row.amount),0n)!==money(remittance.snapshot.total))fail('BACKUP_INVALID_ACCOUNTING');
+ }
+ for(const account of [...data.tables.accounts,...data.references.accounts])if(account.payment_profile!=null){try{if(!accountPartyType(account))throw new Error();normalizePartyPaymentProfile(account.payment_profile);}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const invoice of [...data.tables.trade_invoices,...data.references.trade_invoices])if(invoice.payment_snapshot!=null){try{normalizePartyPaymentProfile(invoice.payment_snapshot);}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const account of [...data.tables.accounts,...data.references.accounts])if(account.party_profile!=null){
+  try{if(!accountPartyType(account))throw new Error();normalizePartyProfile(account.party_profile);}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+ }
+ for(const invoice of [...data.tables.trade_invoices,...data.references.trade_invoices])if(invoice.party_snapshot!=null){
+  try{const profile=normalizePartyProfile(invoice.party_snapshot);if(['name','tax_id','address','email'].some(key=>profile[key]!==invoice['party_'+key]))throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+ }
+ for(const draft of data.tables.vat_drafts){
+  try{vatPeriod({year:draft.tax_year,frequency:draft.frequency,period:draft.period});normalizeVatInput(draft.payload);if(!Number.isSafeInteger(draft.version)||draft.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+ }
+ for(const rule of data.tables.bank_reconciliation_rules){
+  if(typeof rule.concept!=='string'||rule.concept.length>200||rule.concept_key!==reconciliationConcept(rule.concept)||rule.concept_key.length<3||!['in','out'].includes(rule.direction)||indexes.accounts.get(rule.bank_account_id)?.kind!=='subaccount')fail('BACKUP_INVALID_ACCOUNTING');
+  const value=money(rule.bank_amount);if(!value||(value<0n)!==(rule.direction==='out'))fail('BACKUP_INVALID_ACCOUNTING');
+  try{scaleReconciliationCounterLines(rule.counter_lines,rule.bank_amount,rule.bank_amount);}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+  if(new Set(rule.counter_lines.map(line=>line.account_id)).size!==rule.counter_lines.length||rule.counter_lines.some(line=>line.account_id===rule.bank_account_id||indexes.accounts.get(line.account_id)?.kind!=='subaccount'))fail('BACKUP_BROKEN_LINKS');
+ }
+ for(const report of data.tables.bank_reconciliations){
+  const posted=report.snapshot?.posted_movements;if(posted!==undefined){if(!Array.isArray(posted)||posted.length>10000)fail('BACKUP_INVALID_ACCOUNTING');for(const movement of posted)if(indexes.journal_entries.get(movement.entry_id)?.exercise_id!==report.exercise_id)fail('BACKUP_BROKEN_LINKS');}
+  const manual=report.snapshot?.manual_proposals;if(manual===undefined)continue;if(!Array.isArray(manual)||manual.length>10000)fail('BACKUP_INVALID_ACCOUNTING');
+  for(const proposal of manual){try{scaleReconciliationCounterLines(proposal.counter_lines,proposal.bank_amount,proposal.bank_amount);}catch{fail('BACKUP_INVALID_ACCOUNTING');}if(proposal.counter_lines.some(line=>line.account_id===report.account_id||indexes.accounts.get(line.account_id)?.kind!=='subaccount'))fail('BACKUP_BROKEN_LINKS');}
+ }
  const lots=data.tables.farm_lots;
  for(const [index,lot]of lots.entries()){
   try{for(const field of ['entry_kg_per_pig','entry_price_per_pig','feed_opening_kg','feed_closing_kg'])if(lot[field]!=null)productionDecimal(lot[field],field==='entry_price_per_pig'?2:3,{positive:field==='entry_kg_per_pig'});}catch{fail('BACKUP_INVALID_ACCOUNTING');}

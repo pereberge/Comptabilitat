@@ -1,6 +1,8 @@
 import { cents } from '../../../shared/money.js';
 import { date,fail,id } from './validation.js';
 import { HttpError } from '../middleware/errors.js';
+import {createHash} from 'node:crypto';
+export function receiptRevision(row){return createHash('sha256').update(JSON.stringify([row.id,row.invoice_id,row.amount,row.due_date,row.payment_method,row.notes,row.paid_amount,row.invoice_status])).digest('hex');}
 export const activePayments=`SELECT company_id,receipt_id,SUM(amount) AS paid_amount,MAX(payment_date) AS last_payment_date FROM portfolio_settlements WHERE reversal_entry_id IS NULL GROUP BY company_id,receipt_id`;
 export const today=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date());
 export async function receiptRows(db,companyId,query={}){
@@ -16,11 +18,12 @@ export async function receiptRows(db,companyId,query={}){
  if(search){where+=' AND (LOCATE(?,i.reference)>0 OR LOCATE(?,i.party_name)>0 OR LOCATE(?,i.party_tax_id)>0)';params.push(search,search,search);}
  if(query.status&&!['all','open','pending','partial','settled','overdue','void'].includes(query.status))fail('INVALID_PORTFOLIO_FILTER');
  const [rows]=await db.execute(`SELECT r.*,i.exercise_id,i.direction,i.reference,i.invoice_date,i.posting_date,i.party_name,i.party_tax_id,i.party_address,i.party_account_id,i.status AS invoice_status,i.entry_id AS invoice_entry_id,e.name AS exercise_name,
+   (SELECT m.id FROM bank_remittances m WHERE m.company_id=r.company_id AND m.status='prepared' AND JSON_CONTAINS(m.receipt_ids,CAST(r.id AS JSON)) LIMIT 1) AS remittance_id,
    COALESCE(p.paid_amount,0.00) AS paid_amount,r.amount-COALESCE(p.paid_amount,0.00) AS remaining_amount,p.last_payment_date
    FROM portfolio_receipts r JOIN trade_invoices i ON i.id=r.invoice_id AND i.company_id=r.company_id
    JOIN accounting_exercises e ON e.company_id=i.company_id AND e.id=i.exercise_id
    LEFT JOIN (${activePayments}) p ON p.receipt_id=r.id AND p.company_id=r.company_id WHERE ${where} ORDER BY r.due_date,r.id`,params);
- return rows.map(row=>({...row,remaining_amount:row.invoice_status==='void'?'0.00':row.remaining_amount,status:row.invoice_status==='void'?'void':cents(row.remaining_amount)===0n?'settled':cents(row.paid_amount)>0n?'partial':'pending',overdue:row.invoice_status!=='void'&&cents(row.remaining_amount)>0n&&row.due_date<asOf,as_of:asOf}))
+ return rows.map(row=>({...row,revision:receiptRevision(row),remaining_amount:row.invoice_status==='void'?'0.00':row.remaining_amount,status:row.invoice_status==='void'?'void':cents(row.remaining_amount)===0n?'settled':cents(row.paid_amount)>0n?'partial':'pending',overdue:row.invoice_status!=='void'&&cents(row.remaining_amount)>0n&&row.due_date<asOf,as_of:asOf}))
   .filter(row=>!query.status||query.status==='all'||(query.status==='open'?['pending','partial'].includes(row.status):query.status==='overdue'?row.overdue:row.status===query.status));
 }
 export async function receiptDetail(db,companyId,receiptId){

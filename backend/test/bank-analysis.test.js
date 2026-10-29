@@ -55,7 +55,7 @@ test('prior user criterion takes precedence over generic fees and handles refund
  const history=[previous,{...previous,code:'62900001',position:2,debit:'10.00',credit:'0.00'}];
  const alternative={id:3,code:'62900001',kind:'subaccount',description:'Historic criterion'};
  const data=build([row(1,'2026-01-03','COMISION CUSTODIA','-10.00','90.00'),row(2,'2026-01-04','MANTENIMENT','30.00','120.00')],[],history,[account,fee,alternative]);
- assert.equal(data.proposals[0].lines[0].code,alternative.code);assert.match(data.proposals[0].basis,/Según tus datos/);
+ assert.equal(data.proposals[0].lines[0].code,alternative.code);assert.equal(data.proposals[0].source,'history');assert.equal(data.proposals[0].history_number,5);
  assert.equal(data.proposals[1].lines[0].code,account.code);assert.equal(data.proposals[1].lines[1].credit,'30.00');
 });
 test('multi-year sources only use selected-year rows and never force transfer income',()=>{

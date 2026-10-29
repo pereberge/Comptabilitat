@@ -7,10 +7,7 @@ import AppIcon from '../components/AppIcon.vue';
 import StatusBadge from '../components/StatusBadge.vue';
 import AccountingReviewButton from '../components/AccountingReviewButton.vue';
 import HomeEntries from '../components/HomeEntries.vue';
-import {latestExercise} from '../../../shared/report-periods.js';
-const { company, companies, exercises, selectedExercise, loading, error, refresh, selectCompany, selectExercise } = useContext();
-const initialExercise=latestExercise(exercises.value.filter(exercise=>exercise.status==='open'))||latestExercise(exercises.value);
-if(initialExercise)selectExercise(String(initialExercise.id));
+const { company, companies, selectedExercise, loading, error, refresh, selectCompany } = useContext();
 onMounted(()=>window.scrollTo({top:0,behavior:'instant'}));
 const shortcutCompanies = computed(() => {
   const withLogo = companies.value.filter(item => item.logo_url);

@@ -7,6 +7,7 @@ import { hash,method,positiveAmount,requestId,text } from './invoice-validation.
 import { receiptDetail,receiptRows,today } from './portfolio-data.js';
 import { requireAccount,reverseJournal } from './trade-posting.js';
 import { postJournalEntry } from './accounting.js';
+import {requireUnremittedReceipt} from './remittance-lock.js';
 export function createPortfolioService(pool,companyId){
  return {
   async list(query={}){
@@ -16,16 +17,46 @@ export function createPortfolioService(pool,companyId){
   },
   get:receiptId=>withTransaction(pool,async db=>{
    const receipt=await receiptDetail(db,companyId,receiptId);
-   const [[invoice]]=await db.execute('SELECT issuer_snapshot FROM trade_invoices WHERE company_id=? AND id=?',[companyId,receipt.invoice_id]);
-   return {...receipt,issuer_snapshot:typeof invoice.issuer_snapshot==='string'?JSON.parse(invoice.issuer_snapshot):invoice.issuer_snapshot};
+   const [[invoice]]=await db.execute('SELECT issuer_snapshot,payment_snapshot FROM trade_invoices WHERE company_id=? AND id=?',[companyId,receipt.invoice_id]);
+   return {...receipt,issuer_snapshot:typeof invoice.issuer_snapshot==='string'?JSON.parse(invoice.issuer_snapshot):invoice.issuer_snapshot,payment_snapshot:typeof invoice.payment_snapshot==='string'?JSON.parse(invoice.payment_snapshot):invoice.payment_snapshot};
   }),
   async update(receiptId,body){
    const target=id(receiptId),due=date(body?.due_date),paymentMethod=method(body?.payment_method),notes=text(body?.notes,500);
    return withTransaction(pool,async db=>{
     await lockCompany(db,companyId);const receipt=await receiptDetail(db,companyId,target);
     if(['void','settled'].includes(receipt.status))throw new HttpError(409,'RECEIPT_NOT_PENDING');if(due<receipt.invoice_date)fail('INVALID_DUE_DATE');
+    await requireUnremittedReceipt(db,companyId,target);
+    if(body.revision!==undefined&&body.revision!==receipt.revision)throw new HttpError(409,'RECEIPT_CHANGED');
     await db.execute('UPDATE portfolio_receipts SET due_date=?,payment_method=?,notes=? WHERE company_id=? AND id=?',[due,paymentMethod,notes,companyId,target]);
     return receiptDetail(db,companyId,target);
+   });
+  },
+  async split(receiptId,body){
+   const target=id(receiptId),key=requestId(body?.request_id);
+   if(!Array.isArray(body.parts)||body.parts.length<2||body.parts.length>60)fail('INVALID_INSTALLMENTS');
+   const parts=body.parts.map(row=>({due_date:date(row?.due_date),amount:positiveAmount(row?.amount)}));
+   const data={parts,revision:body.revision??null,payment_method:body.payment_method===undefined?null:method(body.payment_method),notes:body.notes===undefined?null:text(body.notes,500)},digest=hash({receipt_id:target,...data});
+   return withTransaction(pool,async db=>{
+    await lockCompany(db,companyId);
+    const [[source]]=await db.execute('SELECT split_history FROM portfolio_receipts WHERE company_id=? AND id=? FOR UPDATE',[companyId,target]);if(!source)throw new HttpError(404,'RECEIPT_NOT_FOUND');
+    const history=typeof source.split_history==='string'?JSON.parse(source.split_history):source.split_history||[],existing=history.find(row=>row.request_id===key);
+    if(existing){if(existing.request_hash!==digest)fail('REQUEST_CONFLICT');return {...await receiptDetail(db,companyId,target),split_receipt_ids:existing.parts.map(row=>row.receipt_id),replayed:true};}
+    const receipt=await receiptDetail(db,companyId,target);
+    if(!['pending','partial'].includes(receipt.status))throw new HttpError(409,'RECEIPT_NOT_PENDING');
+    await requireUnremittedReceipt(db,companyId,target);
+    if(data.revision!==null&&data.revision!==receipt.revision)throw new HttpError(409,'RECEIPT_CHANGED');
+    if(parts.some(row=>row.due_date<receipt.invoice_date))fail('INVALID_DUE_DATE');
+    if(parts.reduce((sum,row)=>sum+cents(row.amount),0n)!==cents(receipt.remaining_amount))fail('SPLIT_TOTAL_MISMATCH');
+    const [[count]]=await db.execute('SELECT COUNT(*) AS count,MAX(position) AS last FROM portfolio_receipts WHERE company_id=? AND invoice_id=?',[companyId,receipt.invoice_id]);if(count.count+parts.length-1>60)fail('RECEIPT_LIMIT');
+    const payment=data.payment_method||receipt.payment_method,notes=data.notes??receipt.notes;
+    await db.execute('UPDATE portfolio_receipts SET amount=?,due_date=?,payment_method=?,notes=? WHERE company_id=? AND id=?',[decimal(cents(receipt.paid_amount)+cents(parts[0].amount)),parts[0].due_date,payment,notes,companyId,target]);
+    const saved=[{receipt_id:target,...parts[0]}];
+    for(const [index,part]of parts.slice(1).entries()){
+     const [row]=await db.execute('INSERT INTO portfolio_receipts(company_id,invoice_id,position,original_due_date,due_date,amount,payment_method,notes) VALUES (?,?,?,?,?,?,?,?)',[companyId,receipt.invoice_id,count.last+index+1,part.due_date,part.due_date,part.amount,payment,notes]);saved.push({receipt_id:row.insertId,...part});
+    }
+    history.push({request_id:key,request_hash:digest,created_at:new Date().toISOString(),before:{amount:receipt.amount,paid_amount:receipt.paid_amount,due_date:receipt.due_date,payment_method:receipt.payment_method,notes:receipt.notes},parts:saved});
+    await db.execute('UPDATE portfolio_receipts SET split_history=? WHERE company_id=? AND id=?',[JSON.stringify(history),companyId,target]);
+    return {...await receiptDetail(db,companyId,target),split_receipt_ids:saved.map(row=>row.receipt_id),replayed:false};
    });
   },
   async settle(receiptId,body){

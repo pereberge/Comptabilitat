@@ -49,7 +49,7 @@ async function toggleThird(event){if(event.currentTarget.form.reportValidity())a
 watch(()=>route.fullPath,()=>{
  if(route.name!=='profitLoss')return;
  const q=route.query;
- const exercise=['2','3'].includes(q.comparison_count)&&q.company_id===String(company.value.id)&&exercises.value.find(row=>String(row.id)===q.exercise_id)||latestExercise(exercises.value);
+ const exercise=['2','3'].includes(q.comparison_count)&&q.company_id===String(company.value.id)&&exercises.value.find(row=>String(row.id)===q.exercise_id)||selectedExercise.value||latestExercise(exercises.value);
  if(exercise)selectExercise(String(exercise.id));
 },{immediate:true});
 watch([()=>route.fullPath,selectedId],([path],previous=[])=>{

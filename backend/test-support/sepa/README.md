@@ -1,0 +1,6 @@
+Schemas used for offline XML validation were downloaded on 2026-10-29 from Bank of Ireland's public [SEPA technical documentation](https://businessbanking.bankofireland.com/payments-and-cards/online-banking/sepa/sepa-business/download-supporting-documentation/):
+
+- [pain.001.001.09.BOI.01](https://businessbanking.bankofireland.com/app/uploads/pain.001.001.09.BOI_.01-1.zip)
+- [pain.008.001.08.BOI.02](https://businessbanking.bankofireland.com/app/uploads/pain.008.001.08_BOI.02.zip)
+
+The files retain their original contents and notices. They are validation fixtures, not a claim that every bank accepts the same customer configuration. Generated documents use the standard ISO 20022 namespaces, following the EPC's 2025 [SCT guidelines](https://www.europeanpaymentscouncil.eu/document-library/implementation-guidelines/sepa-credit-transfer-customer-psp-implementation-1) and [SDD CORE guidelines](https://www.europeanpaymentscouncil.eu/document-library/implementation-guidelines/sepa-direct-debit-core-customer-psp-implementation-1). Creditor identifier checks exclude the business code as described in the [EPC creditor identifier overview](https://www.europeanpaymentscouncil.eu/document-library/guidance-documents/creditor-identifier-overview).

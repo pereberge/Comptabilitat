@@ -1,5 +1,15 @@
 # Contabilidad — Mantenimiento de subcuentas y asientos
 
+**Clientes y proveedores:** las subcuentas 430/440 y 400/410 incluyen una ficha de datos fiscales que se carga en las facturas y se conserva en su impresión y PDF. Requiere la migración 034. [Uso y conservación de los datos](docs/clientes-proveedores.md).
+
+**Cartera y remesas:** permite cambiar vencimientos, dividir el pendiente de un recibo y generar ficheros XML de cobros 19 SEPA CORE y pagos 34 SEPA desde **Cartera → Remesas de clientes / Remesas de proveedores**. Los IBAN y mandatos se guardan en las fichas de clientes/proveedores. Requiere la migración 036. [Uso y validaciones](docs/cartera-remesas.md).
+
+**Recibos automáticos:** en la ficha del cliente o proveedor, **Cobro y pago** guarda la forma de pago, plazo, número de recibos, periodicidad, día fijo e IBAN. La factura carga estas condiciones y calcula sus vencimientos e importes automáticamente. Requiere la migración 035. [Condiciones de cobro y pago](docs/clientes-proveedores.md).
+
+**Facturas pendientes y empresa:** al añadir una factura en Documentación, se avisa si sus datos corresponden a otra empresa y se ofrece guardarla en la empresa correcta del programa. **Revisar empresa** permite trasladar las que ya estaban mal archivadas, conservando el original y respetando los accesos de cada usuario. [Comprobación y traslado](docs/documentacion-y-borrado.md).
+
+Al refrescar o cerrar y volver a abrir el programa se recuperan la última pantalla, empresa y ejercicio de cada usuario, así como la factura que estuviera abierta. La selección se conserva también después de cerrar sesión y volver a entrar con el mismo usuario. Si no hay una selección guardada, se abre el ejercicio más reciente. Cambiar de empresa abre su último ejercicio. Al elegir otro ejercicio se muestran sus últimos movimientos. Inicio sitúa el diario al final y Asientos contables muestra primero los más recientes.
+
 La ficha de empresa incluye **Formato de empresa: General / Producción porcina**. Producción porcina admite también el PDF **DIARI** con diarios y referencias originales. Aplicar la migración 021. Uso, validaciones y archivo facilitado: [docs/produccion-porcina.md](docs/produccion-porcina.md).
 
 **Gestión de granjas**, exclusiva de Producción porcina: lotes con numeración `granja-1`, totales del ciclo seleccionado, detalle al pulsar un tipo de gasto, cuido manual y bajas visibles. Incluye entrada por animal, ventas, traspasos de pienso e informe con selector de granja/lote e índice de conversión. Importa las facturas de Sant Isidre y conserva las asignaciones de gastos. Requiere las migraciones 022 a 026. [Uso y validaciones](docs/gestion-granjas.md).
@@ -8,13 +18,13 @@ La ficha de empresa incluye **Formato de empresa: General / Producción porcina*
 
 En **Copias de seguridad** (`/copias-seguridad`), selecciona la empresa y marca uno, varios o todos sus ejercicios. **Hacer copia de seguridad** descarga sus datos y originales; **Importar datos** revisa el archivo y recupera los movimientos en ejercicios vacíos. Incluye facturas, cartera, PDF, conciliaciones y documentos comunes. También permite programar copias completas diarias, semanales y mensuales en el servidor, descargarlas y borrar las antiguas por fecha y tipo con revisión previa. Aplicar la migración 020. Uso, límites y pruebas: [docs/copias-seguridad.md](docs/copias-seguridad.md).
 
-Aplicación local con Vue 3 (Composition API), Vite, JavaScript, Vue Router, Express y MySQL. Interfaz en español, textos centralizados y datos persistentes reales. No incluye cierres, regularización, apertura automática ni automatización de IVA.
+Aplicación local con Vue 3 (Composition API), Vite, JavaScript, Vue Router, Express y MySQL. Interfaz en español, textos centralizados y datos persistentes reales. El apartado de Hacienda prepara borradores del modelo 303 para el régimen general; la presentación se realiza en la Sede de la AEAT.
 
 ## Mantenimiento de subcuentas
 
 Pantalla única para consultar, crear y editar cuentas y subcuentas. El alta utiliza un solo formulario: código y descripción. La notación cuenta.subcuenta (4300.0001) identifica el padre sin seleccionarlo. El servidor crea los niveles que falten y deduce el tipo; no hay selector de tipo ni de padre.
 
-Se ha retirado el módulo independiente de proveedores. Sus tablas y posibles datos se conservan, pero su interfaz y API ya no están disponibles. Las fichas ampliadas de proveedores, clientes y otras entidades según el número de cuenta se implementarán más adelante.
+Las fichas de clientes, deudores, proveedores y acreedores se gestionan desde su subcuenta, sin un módulo independiente de proveedores. Los datos del antiguo módulo de proveedores se recuperan en la ficha fiscal mediante la migración 034.
 
 ## Instalación y ejecución
 
@@ -90,7 +100,7 @@ En “Mantenimiento de subcuentas” puedes buscar por código o descripción, f
 - Las cuentas amplían un dígito de su padre; la jerarquía que falte se crea automáticamente. Para códigos oficiales se usa el nombre del catálogo; los niveles personalizados se crean con “Cuenta [código]”, editable después.
 - Las subcuentas pertenecen al prefijo indicado antes del punto, de al menos tres dígitos. El código completo sin punto tiene la longitud configurada en `companies.subaccount_length` (8 inicialmente). Ejemplo: 4300.0001 se almacena como 43000001, con padre 4300 y sufijo 0001.
 - Las cuentas generales y subcuentas existentes pueden coexistir: cargar desarrollos oficiales no mueve ni renumera las subcuentas históricas. Los movimientos siguen vinculados a los mismos IDs.
-- El código, tipo y padre son inmutables; solo se edita la descripción. Esto evita ciclos y cambios en la clasificación de movimientos existentes.
+- El código, tipo y padre son inmutables; se pueden editar la descripción y la ficha fiscal del cliente o proveedor. Esto evita ciclos y cambios en la clasificación de movimientos existentes.
 - “Proponer código de subcuenta” parte de una cuenta escrita en el campo Código (por ejemplo 4300) y devuelve el siguiente al mayor código completo de su prefijo; es una propuesta. Si otro usuario lo ocupa antes del guardado, la restricción única lo rechaza y puedes pedir otra propuesta.
 - No hay borrado de cuentas por API. Las claves foráneas impiden eliminar cuentas con movimientos.
 
@@ -251,6 +261,8 @@ En **Cartera** (`/cartera`), consulta pendientes y vencidos de todos los ejercic
 
 ## Informes contables
 
+En **Hacienda** (`/hacienda`), prepara el **modelo 303 de IVA mensual o trimestral** del régimen general. Cada base, cuota y total permite consultar sus facturas o asientos de origen. Las líneas fiscales separan 477/472 y sus subcuentas, con sumas parciales y CSV. **Proponer asiento de IVA** muestra la liquidación con cuentas reales, compensaciones y comprobación contra el modelo. Incluye revisión de diarios importados, deducibilidad, borradores guardados, impresión y **archivo de presentación .303** de la empresa y período abiertos para importar en Pre303. Aplicar la migración `033_vat_drafts.sql`. [Uso, alcance fiscal y validación](docs/hacienda-iva.md).
+
 El botón **Revisar contabilidad**, junto a **Actualizar datos** en Inicio y a **Actualizar conciliación** en Conciliación bancaria, revisa los apuntes y el plan de cuentas de la empresa y el ejercicio seleccionados. Muestra errores comprobables, observaciones a contrastar y propuestas de mejora, con filtros, enlaces al mayor/asientos y CSV. No modifica datos. Incluye revisión de IVA, saldos, apertura/cierre, bancos y cartera. Uso, criterios y pruebas: [docs/revision-contable.md](docs/revision-contable.md).
 
 En **Conciliación bancaria** (`/conciliacion-bancaria`), **Subir extracto** permite cargar PDF con texto o CSV de diferentes bancos, detectar banco e IBAN, vincular su subcuenta y preparar la conciliación desde el último saldo coincidente. Los informes incluyen el documento original, los movimientos pendientes, las coincidencias con el diario y las propuestas de asientos exportables en CSV. Los préstamos sin desglose, las transferencias sin justificar y los saldos anteriores desconocidos quedan pendientes de revisión. No contabiliza las propuestas. Avisa si cambian los apuntes utilizados en el análisis y evita duplicar el mismo extracto. Aplicar las migraciones `010_bank_reconciliations.sql` y `011_bank_statement_import.sql`. Uso, formatos y alcance: [docs/conciliacion-bancaria.md](docs/conciliacion-bancaria.md).
@@ -270,6 +282,8 @@ Desde Mantenimiento de subcuentas, usa **Importar cuentas desde PDF**. Incluye p
 Las pestañas **Empresas** y **Ejercicios** permiten crear empresas y añadir años a la empresa seleccionada. En **Ejercicios** (`/ejercicios`), pulsa **Nuevo ejercicio**, revisa nombre y fechas y guarda. Los períodos de una misma empresa no pueden solaparse. Al crear el ejercicio puedes marcar **Crear también el asiento de apertura** desde el ejercicio anterior cerrado, revisando sus saldos antes de guardar. La ficha permite **Generar cierre**, **Generar apertura**, **Anular cierre**, **Anular apertura** y consultar su historial. Aplicar la migración `009_exercise_operations.sql`. Uso, condiciones, API y pruebas: [docs/ejercicios.md](docs/ejercicios.md).
 
 En un ejercicio vacío, **Importar libro diario PDF** permite revisar un informe compatible `LIBRO DIARIO` y restaurar sus movimientos. Se comprueban las sumas por asiento, los arrastres entre páginas y el total de cada página antes de guardar. Se conservan la numeración original, incluido el número 0, los nombres y conceptos de cada línea, sus signos y las líneas a cero. El informe debe coincidir con el nombre de empresa, las fechas completas del ejercicio y la longitud de sus subcuentas.
+
+También admite `LISTADO DEL DIARIO`, con cabecera de asiento y columnas CUENTA/NOMBRE/CONCEPTO/DEBE/HABER. Verifica los totales de cada asiento, el total general y la secuencia de páginas; conserva los asientos que continúan en otra página. Solo omite filas sin cuenta ni concepto con ambos importes a cero, indicando su cantidad en la revisión. La API de alta admite `subaccount_length` entre 6 y 20 (8 por defecto), para crear la empresa con la longitud del diario antes de importarlo.
 
 La migración `007_journal_import.sql` incorpora el registro de importación y conserva el PDF original y su SHA-256 en MySQL. La creación de subcuentas, asientos, líneas y registro de origen se realiza en una única transacción con comprobación final de cantidades y totales. Repetir la misma importación no duplica movimientos; un diario diferente no sustituye un ejercicio con movimientos. Un PDF con cierre al final del período deja el ejercicio cerrado para consulta.
 

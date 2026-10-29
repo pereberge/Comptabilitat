@@ -11,6 +11,9 @@ import {readPendingDocumentInvoices} from './document-invoice-data.js';
 import {matchPendingInvoices} from './bank-invoice-matches.js';
 import {parseBankCsv} from './bank-statement.js';
 import {readBankStatementPdf} from './bank-pdf-reader.js';
+import {readReconciliationRules,validateManualReconciliation,saveReconciliationRule,removeReconciliationRule} from './reconciliation-rules.js';
+import {postJournalEntry} from './accounting.js';
+import {reconciliationProposal} from '../../../shared/reconciliation-proposals.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // Include every account: the proposals also depend on VAT and prior journal criteria.
@@ -38,18 +41,43 @@ async function exercise(db, companyId, exerciseId) {
 }
 
 export function createBankReconciliationService(pool, companyId) {
-  async function find(db, reconciliationId) {
-      const [[row]] = await db.execute(`SELECT id,company_id,exercise_id,account_id,source_name,source_mime,source_sha256,snapshot,ledger_hash,created_at
-      FROM bank_reconciliations WHERE company_id=? AND id=?`, [companyId,id(reconciliationId)]);
+  async function find(db, reconciliationId,lock=false) {
+      const [[row]] = await db.execute(`SELECT id,company_id,exercise_id,account_id,source_name,source_mime,source_sha256,snapshot,ledger_hash,version,created_at
+      FROM bank_reconciliations WHERE company_id=? AND id=?`+(lock?' FOR UPDATE':''), [companyId,id(reconciliationId)]);
     if (!row) throw new HttpError(404, 'RECONCILIATION_NOT_FOUND');
     return {...row,snapshot:parse(row.snapshot)};
   }
+  async function rebuild(db,row){
+    const previous=row.snapshot,period=await exercise(db,companyId,row.exercise_id);
+    const [[company]]=await db.execute('SELECT id,name FROM companies WHERE id=?',[companyId]);
+    const [accounts]=await db.execute('SELECT id,code,description,kind FROM accounts WHERE company_id=?',[companyId]);
+    const account=accounts.find(candidate=>candidate.id===row.account_id),savedRows=Array.isArray(previous.bank_rows)&&previous.bank_rows.length;
+    let statement;
+    if(savedRows)statement={rows:previous.bank_rows,bank:{name:previous.account.name_by_user,iban_masked:previous.account.iban_masked},mime:row.source_mime,pages:previous.source.pages,from:previous.source.full_from||previous.source.from,to:previous.source.full_to||previous.source.to,initial_balance:previous.source.initial_balance_inferred};
+    else{
+      const [[original]]=await db.execute('SELECT source_pdf FROM bank_reconciliations WHERE company_id=? AND id=?',[companyId,row.id]);
+      statement=original.source_pdf.subarray(0,5).toString()==='%PDF-'?await readBankStatementPdf(original.source_pdf):parseBankCsv(original.source_pdf);statement.bank.name=previous.account.name_by_user;
+    }
+    const periodRows=statement.rows.filter(movement=>movement.date>=period.start_date&&movement.date<=period.end_date);
+    if(!periodRows.length)fail('BANK_STATEMENT_PERIOD_MISMATCH',409);
+    const lastDate=periodRows.at(-1).date,through=bankLedgerReadThrough(lastDate,period.end_date),lines=await readReconciliationLedger(db,companyId,period.id,through);
+    const [history]=await db.execute(`SELECT e.exercise_id,e.id AS entry_id,e.number,e.entry_date,e.status,e.entry_type,e.description AS entry_description,a.code,a.description AS account_name,l.position,l.description,l.debit,l.credit
+      FROM journal_entries e JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id
+      WHERE e.company_id=? AND e.entry_date<=? ORDER BY e.entry_date,e.number,l.position`,[companyId,lastDate]);
+    const pendingInvoices=await readPendingDocumentInvoices(db,companyId),rules=await readReconciliationRules(db,companyId,row.account_id);
+    const snapshot=buildBankAnalysis({company,exercise:period,account,statement,lines,history,accounts,pendingInvoices,rules,manualProposals:previous.manual_proposals||[],sourceName:row.source_name,sourceHash:row.source_sha256});
+    for(const field of ['workflow','work_start_date','work_anchor','posted_movements'])if(Object.hasOwn(previous,field))snapshot[field]=previous[field];
+    if(savedRows)snapshot.source.rows=previous.source.rows??snapshot.source.rows;
+    if(snapshot.source.rows!==snapshot.source.selected_rows){const note=snapshot.review_notes.find(item=>item.title==='Otros ejercicios');if(note)note.detail='El documento abarca varios ejercicios. Este informe utiliza únicamente las fechas del ejercicio seleccionado; conserva el documento completo.';}
+    return {snapshot,ledgerHash:reconciliationLedgerHash(lines),account,accounts,period};
+  }
+  async function storeAnalysis(db,row,result){await db.execute('UPDATE bank_reconciliations SET snapshot=?,ledger_hash=?,version=version+1 WHERE company_id=? AND id=?',[JSON.stringify(result.snapshot),result.ledgerHash,companyId,row.id]);}
   return {
     async list(query) {
       const period = await exercise(pool,companyId,query.exercise_id);
       const [rows] = await pool.execute(`SELECT r.id,r.source_name,r.created_at,a.code AS account_code,
         JSON_UNQUOTE(JSON_EXTRACT(r.snapshot,'$.account.name_by_user')) AS bank_name,
-        JSON_UNQUOTE(JSON_EXTRACT(r.snapshot,'$.source.to')) AS statement_date
+        JSON_UNQUOTE(JSON_EXTRACT(r.snapshot,'$.source.to')) AS statement_date,JSON_UNQUOTE(JSON_EXTRACT(r.snapshot,'$.workflow')) AS workflow
         FROM bank_reconciliations r JOIN accounts a ON a.company_id=r.company_id AND a.id=r.account_id
         WHERE r.company_id=? AND r.exercise_id=? ORDER BY r.id DESC`, [companyId,period.id]);
       return rows;
@@ -69,9 +97,11 @@ export function createBankReconciliationService(pool, companyId) {
         const lastEntry = lines.find(line => line.status === 'posted' && line.code === account.code && line.entry_date === (data.scope.last_book_entry_date||dates.bookCutoff) && line.number === data.scope.last_book_entry);
         const pendingInvoices=await readPendingDocumentInvoices(db,companyId),forward=(data.bank_rows||data.scope.bank_pending||[]).filter(movement=>!dates.bankCutoff||movement.date>dates.bankCutoff);
         const invoiceMatches=matchPendingInvoices(forward,pendingInvoices);
+        const rules=await readReconciliationRules(db,companyId,row.account_id);
+        const ids=(data.posted_movements||[]).map(item=>item.entry_id),postedEntries=ids.length?(await db.execute('SELECT e.id,e.number,e.status,e.entry_date,(SELECT CAST(COALESCE(SUM(l.debit-l.credit),0) AS DECIMAL(15,2)) FROM journal_lines l WHERE l.company_id=e.company_id AND l.entry_id=e.id AND l.account_id=?) AS bank_amount FROM journal_entries e WHERE e.company_id=? AND e.id IN ('+ids.map(()=>'?').join(',')+')',[row.account_id,companyId,...ids]))[0]:[];
         await db.commit();
         const { ledger_hash, ...report } = row;
-        return {...report,pending_invoice_matches:invoiceMatches,exercise:period,account,last_matching_entry_id:lastEntry?.entry_id ?? null,current:{
+        return {...report,rules,posted_entries:postedEntries,pending_invoice_matches:invoiceMatches,exercise:period,account,last_matching_entry_id:lastEntry?.entry_id ?? null,current:{
           as_of:dates.bookThrough,ledger_changed:reconciliationLedgerHash(lines) !== ledger_hash,
           book_balance:decimal(currentBalance),cutoff_balance:cutoff === null ? null : decimal(cutoff),
           difference_book_minus_bank:decimal(currentBalance - amount(data.bank_balance)),
@@ -80,33 +110,47 @@ export function createBankReconciliationService(pool, companyId) {
       finally { db.release(); }
     },
     async reanalyze(reconciliationId){
+      return withTransaction(pool,async db=>{await lockCompany(db,companyId);const row=await find(db,reconciliationId);await storeAnalysis(db,row,await rebuild(db,row));return {id:row.id};});
+    },
+    async saveProposal(reconciliationId,body){
       return withTransaction(pool,async db=>{
-        await lockCompany(db,companyId);const row=await find(db,reconciliationId),previous=row.snapshot;
-        const period=await exercise(db,companyId,row.exercise_id);
-        const [[company]]=await db.execute('SELECT id,name FROM companies WHERE id=?',[companyId]);
-        const [accounts]=await db.execute('SELECT id,code,description,kind FROM accounts WHERE company_id=?',[companyId]);
-        const account=accounts.find(candidate=>candidate.id===row.account_id);
-        const savedRows=Array.isArray(previous.bank_rows)&&previous.bank_rows.length;
-        let statement;
-        if(savedRows)statement={rows:previous.bank_rows,bank:{name:previous.account.name_by_user,iban_masked:previous.account.iban_masked},mime:row.source_mime,pages:previous.source.pages,from:previous.source.full_from||previous.source.from,to:previous.source.full_to||previous.source.to,initial_balance:previous.source.initial_balance_inferred};
-        else{
-          const [[original]]=await db.execute('SELECT source_pdf FROM bank_reconciliations WHERE company_id=? AND id=?',[companyId,row.id]);
-          statement=original.source_pdf.subarray(0,5).toString()==='%PDF-'?await readBankStatementPdf(original.source_pdf):parseBankCsv(original.source_pdf);
-          statement.bank.name=previous.account.name_by_user;
-        }
-        const periodRows=statement.rows.filter(movement=>movement.date>=period.start_date&&movement.date<=period.end_date);
-        if(!periodRows.length)fail('BANK_STATEMENT_PERIOD_MISMATCH',409);
-        const lastDate=periodRows.at(-1).date,through=bankLedgerReadThrough(lastDate,period.end_date),lines=await readReconciliationLedger(db,companyId,period.id,through);
-        const [history]=await db.execute(`SELECT e.exercise_id,e.id AS entry_id,e.number,e.entry_date,e.status,e.entry_type,a.code,a.description AS account_name,l.position,l.description,l.debit,l.credit
-          FROM journal_entries e JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id
-          WHERE e.company_id=? AND e.entry_date<=? ORDER BY e.entry_date,e.number,l.position`,[companyId,lastDate]);
-        const pendingInvoices=await readPendingDocumentInvoices(db,companyId);
-        const snapshot=buildBankAnalysis({company,exercise:period,account,statement,lines,history,accounts,pendingInvoices,sourceName:row.source_name,sourceHash:row.source_sha256});
-        if(savedRows)snapshot.source.rows=previous.source.rows??snapshot.source.rows;
-        if(snapshot.source.rows!==snapshot.source.selected_rows){const note=snapshot.review_notes.find(item=>item.title==='Otros ejercicios');if(note)note.detail='El documento abarca varios ejercicios. Este informe utiliza únicamente las fechas del ejercicio seleccionado; conserva el documento completo.';}
-        await db.execute('UPDATE bank_reconciliations SET snapshot=?,ledger_hash=? WHERE company_id=? AND id=?',[JSON.stringify(snapshot),reconciliationLedgerHash(lines),companyId,row.id]);
-        return {id:row.id};
+        await lockCompany(db,companyId);const row=await find(db,reconciliationId);
+        if(row.version!==body?.version)throw new HttpError(409,'RECONCILIATION_CHANGED');
+        const current=await rebuild(db,row),movement=current.snapshot.scope.bank_pending.find(item=>String(item.id)===String(body.movement_id));
+        if(!movement)throw new HttpError(409,'RECONCILIATION_MOVEMENT_MATCHED');
+        const {manual,pattern,conceptKey}=validateManualReconciliation(body,movement,current.account,current.accounts,current.period);
+        row.snapshot.manual_proposals=[...(row.snapshot.manual_proposals||[]).filter(item=>String(item.movement_id)!==String(movement.id)),manual];
+        if(body.remember)await saveReconciliationRule(db,companyId,row.account_id,manual,pattern,conceptKey);
+        const result=await rebuild(db,row);await storeAnalysis(db,row,result);
+        return {id:row.id,remembered:body.remember,proposal:result.snapshot.proposals.find(item=>String(item.movement_id)===String(movement.id))};
       });
+    },
+    async postMovement(reconciliationId,body){
+      return withTransaction(pool,async db=>{
+        await lockCompany(db,companyId);const row=await find(db,reconciliationId,true);
+        await db.execute('SELECT id FROM accounting_exercises WHERE company_id=? AND id=? FOR UPDATE',[companyId,row.exercise_id]);
+        if(typeof body?.request_id!=='string'||!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(body.request_id))fail('INVALID_REQUEST');
+        const current=await rebuild(db,row),movement=current.snapshot.bank_rows.find(item=>String(item.id)===String(body.movement_id));
+        if(!movement)throw new HttpError(409,'RECONCILIATION_MOVEMENT_MATCHED');
+        const {manual,pattern,conceptKey}=validateManualReconciliation(body,movement,current.account,current.accounts,current.period);
+        const digest=createHash('sha256').update(JSON.stringify({manual,remember:body.remember,pattern})).digest('hex');
+        const previous=(row.snapshot.posted_movements||[]).find(item=>item.request_id===body.request_id);
+        if(previous){if(previous.request_hash!==digest)throw new HttpError(409,'REQUEST_CONFLICT');return {id:row.id,entry_id:previous.entry_id,number:previous.number,remembered:body.remember,replayed:true};}
+        if(row.version!==body.version)throw new HttpError(409,'RECONCILIATION_CHANGED');
+        const recorded=(row.snapshot.posted_movements||[]).find(item=>String(item.movement_id)===String(movement.id));
+        if(recorded){const [[entry]]=await db.execute('SELECT e.status,(SELECT CAST(COALESCE(SUM(l.debit-l.credit),0) AS DECIMAL(15,2)) FROM journal_lines l WHERE l.company_id=e.company_id AND l.entry_id=e.id AND l.account_id=?) AS bank_amount FROM journal_entries e WHERE e.company_id=? AND e.id=?',[row.account_id,companyId,recorded.entry_id]);if(entry?.status==='posted')throw new HttpError(409,entry.bank_amount===movement.amount?'RECONCILIATION_MOVEMENT_MATCHED':'RECONCILIATION_ENTRY_CHANGED');}
+        if(!current.snapshot.scope.bank_pending.some(item=>String(item.id)===String(movement.id)))throw new HttpError(409,'RECONCILIATION_MOVEMENT_MATCHED');
+        const proposal=reconciliationProposal(movement,manual,current.account,current.accounts);if(!proposal)fail('RECONCILIATION_INVALID_PROPOSAL');
+        const saved=await postJournalEntry(db,companyId,{exercise_id:row.exercise_id,entry_date:manual.date,description:manual.concept,request_id:body.request_id,lines:proposal.lines.map(line=>({account_id:line.account_id,description:manual.concept,debit:line.debit,credit:line.credit}))});
+        if(body.remember)await saveReconciliationRule(db,companyId,row.account_id,manual,pattern,conceptKey);
+        row.snapshot.manual_proposals=(row.snapshot.manual_proposals||[]).filter(item=>String(item.movement_id)!==String(movement.id));
+        row.snapshot.posted_movements=[...(row.snapshot.posted_movements||[]).filter(item=>String(item.movement_id)!==String(movement.id)),{movement_id:movement.id,entry_id:saved.id,number:saved.number,request_id:body.request_id,request_hash:digest}];
+        await storeAnalysis(db,row,await rebuild(db,row));
+        return {id:row.id,entry_id:saved.id,number:saved.number,remembered:body.remember,replayed:saved.replayed||false};
+      });
+    },
+    async removeRule(reconciliationId,ruleId,body){
+      return withTransaction(pool,async db=>{await lockCompany(db,companyId);const row=await find(db,reconciliationId);await removeReconciliationRule(db,companyId,row.account_id,ruleId,body?.version);await storeAnalysis(db,row,await rebuild(db,row));return {id:row.id};});
     },
     async source(reconciliationId) {
       const [[row]] = await pool.execute('SELECT source_name,source_mime,source_pdf FROM bank_reconciliations WHERE company_id=? AND id=?', [companyId,id(reconciliationId)]);

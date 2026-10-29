@@ -1,7 +1,7 @@
 <script setup>
 import {useAccess} from '../composables/access.js';
 const {can}=useAccess();
-import { computed, ref, watch, onBeforeUnmount } from 'vue';
+import { computed, nextTick, ref, watch, onBeforeUnmount } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import { useContext } from '../composables/context.js';
 import { api } from '../services/accounting.js';
@@ -20,13 +20,13 @@ let generation=0,lineKey=0;
 const newLine=()=>({key:++lineKey,account_id:'',debit:'',credit:''});
 const totals=computed(()=>{let debit=0n,credit=0n;try{for(const line of form.value?.lines||[]){debit+=cents(line.debit||'0');credit+=cents(line.credit||'0');}return {debit,credit,difference:debit-credit,valid:true};}catch{return {debit:0n,credit:0n,difference:0n,valid:false};}});
 const canSave=computed(()=>!busy.value&&form.value&&selectedExercise.value?.status==='open'&&String(form.value.exercise_id)===selectedId.value&&totals.value.valid&&totals.value.debit>0n&&totals.value.difference===0n&&form.value.lines.length>=2&&form.value.lines.every(line=>line.account_id));
-async function load(){
+async function load({positionAtLatest=false}={}){
  const ticket=++generation;entries.value=[];error.value='';
  if(!selectedId.value)return;loading.value=true;
- try{const data=await api('/entries?'+new URLSearchParams({exercise_id:selectedId.value,view:'lines',...filters.value}));if(ticket===generation)entries.value=data;}
+ try{const data=await api('/entries?'+new URLSearchParams({exercise_id:selectedId.value,view:'lines',...filters.value}));if(ticket===generation){entries.value=data;if(positionAtLatest){loading.value=false;await nextTick();if(ticket===generation)window.scrollTo({top:0,behavior:'instant'});}}}
  catch(e){if(ticket===generation)error.value=errorText(e);}finally{if(ticket===generation)loading.value=false;}
 }
-watch(selectedId,()=>{detailId.value=null;filters.value={from:'',to:'',number:'',amount:''};load();},{immediate:true});
+watch(selectedId,()=>{detailId.value=null;filters.value={from:'',to:'',number:'',amount:''};load({positionAtLatest:true});},{immediate:true});
 async function entrySaved(){notice.value=t.entryUpdated;await load();}
 async function open(){
  formError.value='';notice.value='';busy.value=true;

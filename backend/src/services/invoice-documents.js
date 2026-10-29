@@ -4,10 +4,10 @@ import { HttpError } from '../middleware/errors.js';
 import { id } from './validation.js';
 import { withTransaction } from '../db/transaction.js';
 import { lockCompany } from './subaccounts.js';
-import { invoiceIdentity } from './invoice-pdf.js';
 import { buildInvoiceProposal } from './invoice-proposal.js';
 import { validateInvoice } from './invoice-validation.js';
 import { createInvoiceService } from './invoices.js';
+import {invoiceCompanyMatches} from './document-company.js';
 
 const previews=new Map(),lifetime=15*60*1000;let active=0;
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
@@ -24,7 +24,7 @@ export function createInvoiceDocumentService(pool,companyId){
   const [[company]]=await db.execute('SELECT c.id,c.name,d.tax_id FROM companies c LEFT JOIN company_details d ON d.company_id=c.id WHERE c.id=?',[companyId]);
   const [[exercise]]=await db.execute('SELECT id,name,start_date,end_date,status FROM accounting_exercises WHERE company_id=? AND id=?',[companyId,id(exerciseId)]);
   if(!exercise)fail('EXERCISE_NOT_FOUND',404);
-  const [accounts]=await db.execute('SELECT id,code,description,kind FROM accounts WHERE company_id=? ORDER BY code',[companyId]);
+  const [accounts]=await db.execute('SELECT id,code,description,kind,party_profile,payment_profile FROM accounts WHERE company_id=? ORDER BY code',[companyId]);
   const [journal]=await db.execute(`SELECT e.id AS entry_id,e.number,e.entry_date,e.description AS entry_description,e.status,e.entry_type,l.account_id,a.code,l.debit,l.credit
    FROM journal_entries e JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id
    WHERE e.company_id=? AND e.exercise_id=? ORDER BY e.entry_date,e.number,l.position`,[companyId,exercise.id]);
@@ -32,7 +32,7 @@ export function createInvoiceDocumentService(pool,companyId){
   return {company,exercise,accounts,journal,invoices};
  }
  function owner(extraction,company){
-  const match=party=>!!(party?.name&&invoiceIdentity(party.name)===invoiceIdentity(company.name)||party?.tax_id&&company.tax_id&&invoiceIdentity(party.tax_id)===invoiceIdentity(company.tax_id));
+  const match=party=>!!invoiceCompanyMatches(party,company);
   if(match(extraction.supplier))return 'issued';if(match(extraction.customer))return 'received';
   if(extraction.customer?.name&&extraction.supplier?.name)fail('INVOICE_DOCUMENT_COMPANY_MISMATCH',409);return 'received';
  }

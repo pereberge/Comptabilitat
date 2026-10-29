@@ -22,6 +22,8 @@ export function parseInvoicePages(pages){
  const empty={parser:'manual',supplier:{name:'',tax_id:'',address:''},customer:{name:'',tax_id:'',address:''},reference:'',invoice_date:null,due_date:null,payment_method:'transfer',lines:[],total_amount:null,tax_total:null,base_total:null,withholding_rate:'0',pages:pages.length,currency:'EUR',warnings:[]};
  if(!text.trim())return {...empty,warnings:['El PDF es una imagen. Conserva el original y completa los datos manualmente; no se han inventado importes.']};
  const result={...empty,parser:'generic',warnings:[]};
+ // Keep explicit fiscal identifiers even when an unfamiliar layout has no party labels.
+ result.company_tax_ids=[...new Set([...normalized.matchAll(/\b(?:N\.?I\.?F\.?|C\.?I\.?F\.?|VAT)(?:\s*(?:cliente|client|destinatario|proveedor|proveidor|emisor))?\s*[:.-]?\s*((?:ES[\s.-]*)?(?:[A-Z][\s.-]*\d{7}[\s.-]*[A-Z0-9]|\d{8}[\s.-]*[A-Z]))\b/gi)].map(match=>match[1].replace(/[\s.-]/g,'').toUpperCase()))];
  const clean=value=>String(value||'').replace(/\s+/g,' ').trim();
  const field=label=>clean(normalized.match(new RegExp('(?:^|\\n)'+label+'\\s*[:：]\\s*([^\\n]+)','i'))?.[1]);
  const dateField=label=>{const value=normalized.match(new RegExp(label+'\\s*[:：]\\s*([^\\n]+)','i'))?.[1];return value?invoiceDate(value.trim()):null;};

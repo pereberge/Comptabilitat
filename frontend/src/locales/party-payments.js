@@ -1,0 +1,7 @@
+export const partyPaymentText={
+ title:'Cobro y pago',help:'Estas condiciones se usarán para crear los recibos de las nuevas facturas. Cero días significa al contado.',
+ paymentMethod:'Forma de cobro / pago',companyMethod:'Usar la forma de pago de la empresa',dueDays:'Días hasta el primer vencimiento',installments:'Número de recibos',intervalMonths:'Meses entre recibos',paymentDay:'Día fijo de pago',noFixedDay:'Sin día fijo',iban:'IBAN del cliente / proveedor',day:'día',days:'días',month:'mes',months:'meses',defaults:'Sin condiciones guardadas: un recibo a 30 días y la forma de pago de la empresa.',
+ automatic:'Crear recibos automáticamente con la ficha del cliente / proveedor',automaticHelp:'Los vencimientos y los importes se calculan al seleccionar el tercero y al cambiar la fecha o el total. Desmarca la opción para ajustarlos solo en esta factura.',
+ methods:{transfer:'Transferencia',direct_debit:'Domiciliación',cash:'Efectivo',card:'Tarjeta',other:'Otra'},
+ errors:{INVALID_PARTY_PAYMENT:'Revisa las condiciones: de 0 a 3650 días, entre 1 y 60 recibos, de 1 a 12 meses entre recibos y un día fijo de 1 a 31 o sin día fijo.',INVALID_PAYMENT_METHOD:'Selecciona una forma de cobro o pago válida.',INVALID_IBAN:'Revisa el IBAN del cliente o proveedor.',PARTY_PAYMENT_CHANGED:'Las condiciones de la ficha han cambiado. Vuelve a abrir la factura para revisar sus recibos antes de guardarla.'},
+};

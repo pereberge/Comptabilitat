@@ -1,6 +1,8 @@
 import {accessError} from '../services/access-errors.js';
+import {partyText} from './parties.js';
 import { fiscalErrors } from '../services/verifactu.js';
 export const t={
+ splitReceipt:'Dividir recibo',splitHelp:'Reparte el importe pendiente en nuevos vencimientos. Se conservan los cobros o pagos ya registrados.',totalSplit:'Total a repartir',splitMismatch:'La suma debe coincidir con el importe pendiente y cada parte debe ser positiva.',inRemittance:'Incluido en remesa',
  invoices:'Facturas',portfolio:'Cartera',issued:'Emitidas · cobros',received:'Recibidas · pagos',newIssued:'Nueva factura emitida',newReceived:'Registrar factura recibida',
  invoiceIntro:'Registra las facturas y crea sus recibos y vencimientos automáticamente.',portfolioIntro:'Cobros y pagos de todos los ejercicios de la empresa.',
  all:'Todos',direction:'Tipo',search:'Buscar factura o tercero',filter:'Consultar',status:'Estado',exercise:'Ejercicio de la factura',reference:'Número de factura',invoiceDate:'Fecha de factura',postingDate:'Fecha contable',
@@ -26,7 +28,8 @@ export const t={
  currency:'Importes en EUR',resetInvoice:'Mostrar toda la cartera',export:'Exportar CSV',operationSaved:'Movimiento guardado y cartera actualizada.',
  methods:{transfer:'Transferencia',direct_debit:'Domiciliación',cash:'Efectivo',card:'Tarjeta',other:'Otra'},
 };
-const errors={
+const errors={...partyText.errors,
+ RECEIPT_CHANGED:'El recibo ha cambiado. Actualiza la cartera antes de continuar.',RECEIPT_IN_REMITTANCE:'El recibo está incluido en una remesa preparada. Cancela primero esa remesa si necesitas modificarlo.',SPLIT_TOTAL_MISMATCH:t.splitMismatch,RECEIPT_LIMIT:'La factura no puede superar los 60 recibos.',
  INVALID_INVOICE_NUMBERING:'La numeración automática solo está disponible para nuevas facturas emitidas.',INVOICE_NUMBER_UNAVAILABLE:'No se ha podido determinar el consecutivo. Revisa e introduce el número de factura.',
  INVALID_INVOICE:'Revisa los datos y el número de la factura.',INVALID_INVOICE_LINES:'Añade entre 1 y 40 conceptos con sus importes.',INVALID_INVOICE_AMOUNT:'La factura debe tener un importe positivo y dentro del límite permitido.',
  INVALID_TAX_RATE:'El porcentaje debe estar entre 0 y 100, con un máximo de dos decimales.',INVALID_AMOUNT:'Revisa los importes: deben ser positivos y tener como máximo dos decimales.',TOTAL_TOO_LARGE:'El importe supera el límite permitido.',

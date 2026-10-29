@@ -27,7 +27,7 @@ test('company creation rejects invalid names and exercise dates before writing',
     [{ ...valid, exercise: { ...valid.exercise, start_date: '2026-02-30' } }, 'INVALID_DATE'],
     [{ ...valid, exercise: { ...valid.exercise, end_date: '2025-12-31' } }, 'INVALID_EXERCISE_PERIOD'],
     [{ ...valid, logo: 'invalid' }, 'INVALID_COMPANY_LOGO'],
-    [{ ...valid, subaccount_length: 20 }, 'INVALID_COMPANY'],
+    ...[5,21,'10',null].map(subaccount_length=>[{...valid,subaccount_length},'INVALID_SUBACCOUNT_LENGTH']),
     [{ ...valid, business_format:'unknown' }, 'INVALID_COMPANY_FORMAT'],
     [{ ...valid, business_format:null }, 'INVALID_COMPANY_FORMAT'],
   ]) await assert.rejects(service.createCompany(body), error => error.code === code);

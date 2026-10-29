@@ -33,6 +33,7 @@ const tabs = [
   { id: 'collections', fields: [
     { key: 'bank_name' }, { key: 'account_holder' }, { key: 'iban', code: true, wide: true },
     { key: 'bic', code: true }, { key: 'payment_method', type: 'select' }, { key: 'payment_terms', wide: true },
+    {key:'sepa_creditor_id',code:true,wide:true},{key:'bank_initiator_id',code:true,wide:true},
   ] },
   { id: 'other', fields: [
     { key: 'journal_source_name', wide: true },
@@ -146,7 +147,7 @@ async function save() {
   <ManagementTabs />
   <div class="page-heading">
     <div><p class="eyebrow">{{ t.eyebrow }}</p><h1>{{ t.title }}</h1><p class="muted">{{ t.intro }}</p></div>
-    <button class="button primary" :disabled="!can('accounting_write')||(loading || busy)" @click="open()"><AppIcon name="building" />{{ t.newCompany }}</button>
+    <button class="button primary" :disabled="!can('companies_manage')||(loading || busy)" @click="open()"><AppIcon name="building" />{{ t.newCompany }}</button>
   </div>
   <p v-if="error" class="notice error-notice" role="alert">{{ es.errors[error] || es.unavailable }}</p>
   <p v-if="pageError" class="notice error-notice" role="alert">{{ pageError }}</p>

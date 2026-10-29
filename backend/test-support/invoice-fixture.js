@@ -1,12 +1,12 @@
-export function invoicePages(customer='INVOICE TEST SL',reference='SUP-2026-1'){
+export function invoicePages(customer='INVOICE TEST SL',reference='SUP-2026-1',options={}){
  return [{page:1,items:[
- 'Proveedor: Electric Supplies SL','CIF proveedor: B11111111','Cliente: '+customer,'CIF cliente: B12345674',
+ 'Proveedor: '+(options.supplierName||'Electric Supplies SL'),'CIF proveedor: '+(options.supplierTaxId??'B11111111'),'Cliente: '+customer,'CIF cliente: '+(options.customerTaxId??'B12345674'),
  'Numero factura: '+reference,'Fecha factura: 15/10/2026','Fecha vencimiento: 22/10/2026',
  'Concepto: Suministro','Base imponible: 16,33','IVA 21 %','Cuota IVA: 3,43','Total factura: 19,76',
  ].map((text,index)=>({text,x:35,y:780-index*24}))}];
 }
-export function invoicePdf(customer,reference){
- const rows=invoicePages(customer,reference)[0].items;
+export function invoicePdf(customer,reference,options={}){
+ const rows=invoicePages(customer,reference,options)[0].items;
  const literal=value=>value.replace(/[\\()]/g,'\\$&').replace(/[^\x20-\x7e]/g,char=>'\\'+char.charCodeAt(0).toString(8).padStart(3,'0'));
  const content=rows.map(row=>`BT /F1 10 Tf ${row.x} ${row.y} Td (${literal(row.text)}) Tj ET`).join('\n');
  const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [4 0 R] /Count 1 >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',

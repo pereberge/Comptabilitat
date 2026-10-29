@@ -4,11 +4,14 @@ const cookieName='accounting_session';
 function token(req){const value=(req.headers.cookie||'').split(';').map(part=>part.trim()).find(part=>part.startsWith(cookieName+'='))?.slice(cookieName.length+1);return /^[a-f0-9]{64}$/.test(value||'')?value:null;}
 export const requirePermission=(user,key)=>{if(!user?.permissions[key])throw new HttpError(403,'PERMISSION_DENIED');};
 export const requireMaster=user=>{if(user?.role!=='master')throw new HttpError(403,'PERMISSION_DENIED');};
-function normalizedPath(path){return path.toLowerCase().split('/').filter(Boolean).join('/');}
+function normalizedPath(path){let value;try{value=decodeURIComponent(path);}catch{throw new HttpError(400,'INVALID_PATH');}return value.toLowerCase().split('/').filter(Boolean).join('/');}
 export function requiredPermission(method,path){
  const normalized=normalizedPath(path),parts=normalized.split('/'),[area,,action,detail]=parts;
  if(area==='master')return 'users_manage';
+ if(normalized==='companies'&&method==='POST')return 'companies_manage';
+ if(area==='entries'&&method==='DELETE')return 'entries_delete';
  if(area==='invoices'&&['delete','delete-preview'].includes(action))return 'invoice_delete';
+ if(method==='POST'&&normalized==='tax/vat/settlement-preview')return null;
  if(['GET','HEAD','OPTIONS'].includes(method))return area==='exercises'&&action==='clear'&&detail==='preview'||area==='exercise-clears'&&action==='backup'?'exercise_clear':null;
  if(area==='farms'&&['preview','import'].includes(parts[1]))return 'data_import';
  if(area==='exercises'&&action==='clear')return 'exercise_clear';
@@ -25,15 +28,22 @@ export function accessControl(service){
  const cookie=(req,res,result)=>{res.cookie(cookieName,result.token,{httpOnly:true,sameSite:'strict',secure:req.secure,path:'/api',maxAge:12*60*60*1000});return res.json(result.state);};
  router.use(sameSite);
  router.get('/session',async(req,res)=>res.json(await service.state(token(req))));
- router.post('/switch',async(req,res)=>cookie(req,res,await service.switchTo(req.body?.key,req.body?.password,token(req),req.ip)));
+ router.post('/login',async(req,res)=>cookie(req,res,await service.login(req.body?.username,req.body?.password,token(req),req.ip)));
+ router.post('/switch',async(req,res)=>cookie(req,res,await service.switchTo(req.body?.username||req.body?.key,req.body?.password,token(req),req.ip)));
+ router.post('/logout',async(req,res)=>{const state=await service.logout(token(req));res.clearCookie(cookieName,{httpOnly:true,sameSite:'strict',secure:req.secure,path:'/api'});res.json(state);});
  router.post('/setup-master',async(req,res)=>cookie(req,res,await service.setup(req.body?.password,token(req),req.ip)));
  router.get('/users',async(req,res)=>res.json(await service.users(await service.current(token(req)))));
+ router.post('/users',async(req,res)=>res.status(201).json(await service.create(await service.current(token(req)),req.body)));
  router.patch('/users/:key',async(req,res)=>res.json(await service.update(await service.current(token(req)),req.params.key,req.body)));
+ router.delete('/users/:key',async(req,res)=>res.json(await service.remove(await service.current(token(req)),req.params.key,req.body)));
  router.post('/password',async(req,res)=>cookie(req,res,await service.changePassword(await service.current(token(req)),req.body?.current_password,req.body?.new_password,token(req),req.ip)));
  return {router,async middleware(req,res,next){
   sameSite(req,res,()=>{});
   if(req.path==='/health')return next();
   req.user=await service.current(token(req));
+  if(!req.user)throw new HttpError(401,'ACCESS_LOGIN_REQUIRED');
+  const companyMatch=normalizedPath(req.path).match(/^companies\/(\d+)(?:\/|$)/);
+  if(companyMatch&&req.user.role!=='master'&&!req.user.company_ids.includes(Number(companyMatch[1])))throw new HttpError(403,'ACCESS_COMPANY_DENIED');
   const permission=requiredPermission(req.method,req.path);if(permission)requirePermission(req.user,permission);
   if(req.method==='POST'&&normalizedPath(req.path)==='exercises'&&req.body?.opening_from_exercise_id)requirePermission(req.user,'exercise_operations');
   if(req.method==='POST'&&normalizedPath(req.path)==='data-backups/preview'&&req.query.replace_existing==='1')requirePermission(req.user,'exercise_clear');

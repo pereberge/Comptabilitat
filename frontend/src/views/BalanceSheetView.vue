@@ -39,11 +39,11 @@ async function load(){
 }
 async function consult(){const q=query();if(JSON.stringify(q)===JSON.stringify(route.query))await load();else await router.push({name:'balanceSheet',query:q});}
 async function toggleComparison(event){if(!event.currentTarget.form.reportValidity())return;comparePrevious.value=!comparePrevious.value;await consult();}
-// Explicit links restore their period; a fresh report opens on the latest exercise.
+// Explicit links restore their period; other visits preserve the working exercise.
 watch(()=>route.fullPath,()=>{
  if(route.name!=='balanceSheet')return;
  const q=route.query;
- const exercise=q.company_id===String(company.value.id)&&exercises.value.find(item=>String(item.id)===q.exercise_id)||latestExercise(exercises.value);
+ const exercise=q.company_id===String(company.value.id)&&exercises.value.find(item=>String(item.id)===q.exercise_id)||selectedExercise.value||latestExercise(exercises.value);
  if(exercise)selectExercise(String(exercise.id));
 },{immediate:true});
 watch([()=>route.fullPath,selectedId],()=>{

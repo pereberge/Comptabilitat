@@ -7,12 +7,16 @@ import { withTransaction } from '../db/transaction.js';
 import { readReconciliationLedger, reconciliationLedgerHash } from './bank-reconciliations.js';
 import { bankReconciliationDates } from '../../../shared/bank-reconciliation.js';
 import {farmLotsOverlap} from '../../../shared/farm-lots.js';
-import { TABLES,TABLE_ORDER,SHARED,FARM_TABLES,fail,sha,encodeRow,sealBackup,packBackup,readBackup,binaryValue } from './backup-format.js';
+import { TABLES,TABLE_ORDER,SHARED,OPTIONAL_TABLES,fail,sha,encodeRow,sealBackup,packBackup,readBackup,binaryValue } from './backup-format.js';
 
 const previews=new Map(),lifetime=15*60*1000;
 // Only known additive fields may be absent in older v1 archives.
-const legacyDefaults={companies:{business_format:'general'},company_details:{journal_source_name:''},company_documents:{folder:'general',invoice_extraction:null},journal_imports:{source_format:'libro_diario'},journal_entries:{source_journal_code:null,source_entry_reference:null},journal_lines:{source_line_number:null},farm_cost_lines:{lot_id:null,lot_assignment:'auto',feed_kg:null},farm_lots:{entry_kg_per_pig:null,entry_price_per_pig:null,entry_cost_included:0,feed_opening_kg:null,feed_closing_kg:null}};
+const legacyDefaults={companies:{business_format:'general'},company_details:{journal_source_name:''},company_documents:{folder:'general',invoice_extraction:null},bank_reconciliations:{version:1},journal_imports:{source_format:'libro_diario'},journal_entries:{source_journal_code:null,source_entry_reference:null},journal_lines:{source_line_number:null},farm_cost_lines:{lot_id:null,lot_assignment:'auto',feed_kg:null},farm_lots:{entry_kg_per_pig:null,entry_price_per_pig:null,entry_cost_included:0,feed_opening_kg:null,feed_closing_kg:null}};
 const labels={accounting_exercises:'ejercicios',accounts:'cuentas',journal_entries:'asientos',journal_lines:'apuntes',trade_invoices:'facturas',trade_invoice_lines:'líneas de factura',portfolio_receipts:'recibos',portfolio_settlements:'cobros y pagos',invoice_documents:'documentos y propuestas',bank_reconciliations:'conciliaciones',journal_imports:'libros diarios',exercise_operations:'operaciones de apertura y cierre'};
+legacyDefaults.accounts={party_profile:null,payment_profile:null,sepa_mandate:null};
+legacyDefaults.portfolio_receipts={split_history:null};
+Object.assign(legacyDefaults.company_details,{sepa_creditor_id:'',bank_initiator_id:''});
+legacyDefaults.trade_invoices={party_snapshot:null,payment_snapshot:null};
 const json=value=>typeof value==='string'?JSON.parse(value):value;
 labels.farm_sales='ventas manuales de granjas';
 const identity=row=>row.id??row.company_id;
@@ -44,7 +48,7 @@ async function metadata(db){
 }
 function checkSchema(data,meta){
  for(const table of TABLE_ORDER){
-  if(FARM_TABLES.has(table)&&data.schema[table].length===0&&data.tables[table].length===0&&data.references[table].length===0)continue;
+  if(OPTIONAL_TABLES.has(table)&&data.schema[table].length===0&&data.tables[table].length===0&&data.references[table].length===0)continue;
   const expected=meta[table].map(column=>column.Field).sort();
   const sourceColumns=[...data.schema[table]].sort(),defaults=legacyDefaults[table]||{};
   if(JSON.stringify(sourceColumns)!==JSON.stringify(expected.filter(field=>sourceColumns.includes(field)||!Object.hasOwn(defaults,field))))fail('BACKUP_SCHEMA_MISMATCH');
@@ -242,6 +246,9 @@ export function createDataBackupService(pool,companyId){
     }
     const accounts=[...data.tables.accounts].sort((a,b)=>a.code.length-b.code.length||a.code.localeCompare(b.code));
     for(const account of accounts)if(!maps.accounts.has(account.id))await insert(db,'accounts',account,meta,maps);
+    for(const account of accounts)if(account.party_profile&&maps.accounts.has(account.id))await db.execute('UPDATE accounts SET party_profile=? WHERE company_id=? AND id=? AND party_profile IS NULL',[JSON.stringify(account.party_profile),companyId,maps.accounts.get(account.id)]);
+    for(const account of accounts)if(account.payment_profile&&maps.accounts.has(account.id))await db.execute('UPDATE accounts SET payment_profile=? WHERE company_id=? AND id=? AND payment_profile IS NULL',[JSON.stringify(account.payment_profile),companyId,maps.accounts.get(account.id)]);
+    for(const account of accounts)if(account.sepa_mandate&&maps.accounts.has(account.id))await db.execute('UPDATE accounts SET sepa_mandate=? WHERE company_id=? AND id=? AND sepa_mandate IS NULL',[JSON.stringify(account.sepa_mandate),companyId,maps.accounts.get(account.id)]);
     for(const table of ['company_details','company_logos']){
      const row=data.tables[table][0];if(!row)continue;
      const [[existing]]=await db.execute('SELECT * FROM '+table+' WHERE company_id=?',[companyId]);
@@ -262,6 +269,11 @@ export function createDataBackupService(pool,companyId){
      }
     }
     for(const {table,row,newId}of pending){
+     if(table==='bank_remittances'){
+      const receiptIds=row.receipt_ids.map(value=>maps.portfolio_receipts.get(value)).filter(Boolean),complete=receiptIds.length===row.receipt_ids.length;
+      await db.execute('UPDATE bank_remittances SET receipt_ids=?,snapshot=?,status=? WHERE company_id=? AND id=?',[JSON.stringify(receiptIds),JSON.stringify(remapJson(row.snapshot,maps)),complete?row.status:'archived',companyId,newId]);
+      continue;
+     }
      const columns=meta[table].filter(column=>column.Type==='json'&&row[column.Field]!=null);
      if(!columns.length)continue;
      const values=columns.map(column=>JSON.stringify(remapJson(row[column.Field],maps,table==='trade_invoices'?'company':column.Field==='result'&&table==='exercise_operations'&&row.kind==='create_exercise'?'exercise':'')));

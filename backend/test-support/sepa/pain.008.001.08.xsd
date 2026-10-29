@@ -1,0 +1,984 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+
+(C) Copyright Bank of Ireland
+
+Based on ISO pain.008.001.02 (urn:iso:std:iso:20022:tech:xsd:pain.008.001.02)
+History
+13.03.2013	BOI version 1.0 signed off
+28.06.2013 BOI version 2.0 signed off
+03.07.2013 BOI Version 2.1 Changes to include spaces in Creditor Scheme ID
+10.07.2013 BOI Version 2.2 Change to allow 11 digit creditor agent
+12.09.2013 BOI Version 2.3 Updated for DDO CR102:
+           -Removing spaces from Creditor ID
+           -Removing apostrophe from Message ID
+08.10.2013 BOI Version 2.4 Removing spaces from Creditor ID at file level
+25.06.14   BOI Version 2.5 Changes the xsd as per CR 110
+29.07.2015 BOI Version 2.6 Changes in XSD as part of CR CTO_XSDUpdate and IBAN only change 
+29-06-2016 BOI Version 2.7 Changes made as part of Pain008 EBA Rule book XSD change
+06-07-2017 Updated XSD as part of EPC EBA Rulebook changes 2017
+19-05-2023 Updated XSD as part of EPC EBA Rulebook Changes 2023
+08-08-2023 Updated XSD removing collapsing whitespace from BOIDDMndtID and BOIMax70Text
+17-09-2026 Updated XSD removing pattern from BOIMax70Text 
+-->
+<xs:schema xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.08" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="urn:iso:std:iso:20022:tech:xsd:pain.008.001.08">
+    <xs:element name="Document" type="Document"/>
+	<!-- BOI: changed: GenericAccountIdentification1 -->
+    <xs:complexType name="AccountIdentification4Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="IBAN" type="IBAN2007Identifier"/>
+                <!-- 28.06 DS: removed Othr tag as not valid for SEPA
+                 <xs:element name="Othr" type="GenericAccountIdentification1-BOI"/> -->
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	    <xs:complexType name="AccountIdentification4Choice-BOI_IBAN">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="IBAN" type="IBAN2007Identifier"/>
+                <!-- 23.06.2016 Added "Othr" as part of Pain008 EBA Rule book XSD changes -->
+                <xs:element name="Othr" type="GenericFinancialIdentification1-BOI_SMNDA"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	
+	<!-- BOI: added: SEPA version has fewer digits, uses EUR only -->
+	<xs:simpleType name="ActiveOrHistoricCurrencyAndAmount_SimpleType_BOI">
+		<xs:restriction base="xs:decimal">
+			<xs:minInclusive value="0.01"/>
+			<xs:fractionDigits value="2"/>
+			<xs:totalDigits value="11"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+     <!--BOI: removed: Following tag removed as specified by the business-->
+     <!--xs:maxInclusive value="999999999.99"-->
+	
+	<!-- BOI: added: SEPA version has fewer digits, uses EUR only -->
+	<xs:complexType name="ActiveOrHistoricCurrencyAndAmount-BOI_EUR">
+		<xs:simpleContent>
+			<xs:extension base="ActiveOrHistoricCurrencyAndAmount_SimpleType_BOI">
+				<xs:attribute name="Ccy" type="ActiveOrHistoricCurrencyCode-BOI_EUR" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+    <xs:simpleType name="ActiveOrHistoricCurrencyCode">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{3,3}"/>
+        </xs:restriction>
+    </xs:simpleType>
+	<xs:simpleType name="ActiveOrHistoricCurrencyCode-BOI_EUR">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="EUR"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+    <xs:complexType name="AmendmentInformationDetails6">
+        <xs:sequence>
+            <!-- 28.06 DS: Changed type of OrgnlMndtId to confirm with pacs003 restrictions -->
+            <xs:element maxOccurs="1" minOccurs="0" name="OrgnlMndtId" type="BOIDDMndtID"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="OrgnlCdtrSchmeId" type="PartyIdentification32-BOI_Amd"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="OrgnlDbtrAcct" type="CashAccount16-BOI_Id"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="OrgnlDbtrAgt" type="BranchAndFinancialInstitutionIdentification4-BOI"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="AnyBICIdentifier">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="BICIdentifier">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- BOI: added: replacement type for BranchAndFinancialInstitutionIdentification4 where only element FinInstnIdmay be used -->
+    <xs:simpleType name="BOIBICIdentifier">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="BOFIIE2D"/>
+			<!-- 10.07 DS: Added 11 digit BIC option-->
+			<xs:enumeration value="BOFIIE2DXXX"/>
+		</xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="BatchBookingIndicator">
+        <xs:restriction base="xs:boolean"/>
+    </xs:simpleType>
+	
+	<!-- BOI: added: replacement type for BranchAndFinancialInstitutionIdentification4 where only element FinInstnIdmay be used -->
+	<xs:complexType name="BranchAndFinancialInstitutionIdentification4-BOI_FinId">
+		<xs:sequence>
+			<xs:element name="FinInstnId" type="FinancialInstitutionIdentification7-BOI_Bic_CHOICE"/> <!-- IBAN only change-->
+
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- BOI: added: replacement type for BranchAndFinancialInstitutionIdentification4 where only value 'BOFIIE2D' be used -->
+	<xs:complexType name="BranchAndFinancialInstitutionIdentification4-BOI_BIC">
+		<xs:sequence>
+			<xs:element name="FinInstnId" type="FinancialInstitutionIdentification7-BOFI_CHOICE"/> <!-- IBAN only change-->
+
+		</xs:sequence>
+	</xs:complexType>
+
+
+	<!-- BOI: added: replacement type for BranchAndFinancialInstitutionIdentification4 where only element SMNDA be used -->
+	  <xs:complexType name="BranchAndFinancialInstitutionIdentification4-BOI">
+		<xs:sequence>
+		<!-- 23.06.2016 Changed type into "FinancialInstitutionIdentification7-BOI_Bic" as part of Pain008 EBA Rule book XSD changes -->
+			<xs:element name="FinInstnId" type="FinancialInstitutionIdentification7-BOI_Bic"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- BOI: added: replacement type for CashAccount16 where only elements Id and Ccy may be used -->
+	<xs:complexType name="CashAccount16-BOI_IdAndCurrency">
+		<xs:sequence>
+			<xs:element name="Id" type="AccountIdentification4Choice"/>
+			<xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- BOI: added: replacement type for CashAccount16 where only element Id may be used -->
+	<xs:complexType name="CashAccount16-BOI_Id">
+		<xs:sequence>
+			<xs:element name="Id" type="AccountIdentification4Choice-BOI_IBAN"/>
+		</xs:sequence>
+	</xs:complexType>
+
+    <xs:complexType name="CategoryPurpose1Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="ExternalCategoryPurpose1Code"/>
+                <xs:element name="Prtry" type="BOIDDId35"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="ChargeBearerType1Code">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="SLEV"/>
+		</xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="CountryCode">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2,2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="CreditorReferenceInformation2">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="0" name="Tp" type="CreditorReferenceType2"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Ref" type="Max35Text"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CreditorReferenceType1Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="DocumentType3Code"/>
+               
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CreditorReferenceType2">
+        <xs:sequence>
+            <xs:element name="CdOrPrtry" type="CreditorReferenceType1Choice"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Issr" type="Max35Text"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CustomerDirectDebitInitiationV02">
+        <xs:sequence>
+            <xs:element name="GrpHdr" type="GroupHeader39"/>
+            <xs:element maxOccurs="unbounded" minOccurs="1" name="PmtInf" type="PaymentInstructionInformation4"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DateAndPlaceOfBirth">
+        <xs:sequence>
+            <xs:element name="BirthDt" type="BOIISODate"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="PrvcOfBirth" type="BOIDDId35"/>
+            <xs:element name="CityOfBirth" type="BOIDDId35"/>
+            <xs:element name="CtryOfBirth" type="CountryCode"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="DecimalNumber">
+        <xs:restriction base="xs:decimal">
+            <!-- BOI 2 fraction digits -->
+			<xs:fractionDigits value="2"/>
+            <xs:totalDigits value="18"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="DirectDebitTransaction6">
+        <xs:sequence>
+			<!-- BOI :Make MndtRltdInf Mandatory -->
+            <xs:element name="MndtRltdInf" type="MandateRelatedInformation6"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="CdtrSchmeId" type="PartyIdentification32-BOI_CSID"/>
+            
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DirectDebitTransactionInformation9">
+        <xs:sequence>
+            <xs:element name="PmtId" type="PaymentIdentification1"/>
+            <!--Added PmtTpInf at Transaction level as part of EPC EBA rulebook changes 2017-->
+            <xs:element maxOccurs="1" minOccurs="0" name="PmtTpInf" type="PaymentTypeInformation20"/>
+            <xs:element name="InstdAmt" type="ActiveOrHistoricCurrencyAndAmount-BOI_EUR"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="ChrgBr" type="ChargeBearerType1Code"/>
+			<!-- BOI :Make DrctDbtTx Mandatory -->
+            <xs:element name="DrctDbtTx" type="DirectDebitTransaction6"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="UltmtCdtr" type="PartyIdentification32-BOI_ULT"/>
+            <xs:element name="DbtrAgt" type="BranchAndFinancialInstitutionIdentification4-BOI_FinId"/>
+            <xs:element name="Dbtr" type="PartyIdentification32-BOI_DBTR"/>
+            <xs:element name="DbtrAcct" type="CashAccount16-BOI_Id"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="UltmtDbtr" type="PartyIdentification32-BOI_ULT"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Purp" type="Purpose2Choice"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="RmtInf" type="RemittanceInformation5"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Document">
+        <xs:sequence>
+
+            <xs:element name="CstmrDrctDbtInitn" type="CustomerDirectDebitInitiationV02"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="DocumentType3Code">
+        <xs:restriction base="xs:string">
+           <xs:enumeration value="SCOR"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ExternalCategoryPurpose1Code">
+        <xs:restriction base="xs:string">
+		<!-- BOI: CR CTO_XSDUpdate - Modified the restriction to allow only predefined set of ISO Values  -->
+       <!--BOI: Remove     <xs:minLength value="1"/>
+            <xs:maxLength value="4"/> -->
+				<xs:enumeration value="BONU"/>
+				<xs:enumeration value="CASH"/>
+				<xs:enumeration value="CBLK"/>
+				<xs:enumeration value="CCRD"/>
+				<xs:enumeration value="CORT"/>
+				<xs:enumeration value="DCRD"/>
+				<xs:enumeration value="DIVI"/>
+				<xs:enumeration value="EPAY"/>
+				<xs:enumeration value="FCOL"/>
+				<xs:enumeration value="GOVT"/>
+				<xs:enumeration value="HEDG"/>
+				<xs:enumeration value="ICCP"/>
+				<xs:enumeration value="IDCP"/>
+				<xs:enumeration value="INTC"/>
+				<xs:enumeration value="INTE"/>
+				<xs:enumeration value="LOAN"/>
+				<xs:enumeration value="OTHR"/>
+				<xs:enumeration value="PENS"/>
+				<xs:enumeration value="SALA"/>
+				<xs:enumeration value="SECU"/>
+				<xs:enumeration value="SSBE"/>
+				<xs:enumeration value="SUPP"/>
+				<xs:enumeration value="TAXS"/>
+				<xs:enumeration value="TRAD"/>
+				<xs:enumeration value="TREA"/>
+				<xs:enumeration value="VATX"/>
+				<xs:enumeration value="WHLD"/>
+			<!-- Newly added 16 enumeration values Rulebook 2023 -->	
+				<xs:enumeration value="DVPM"/>
+				<xs:enumeration value="FCIN"/>
+				<xs:enumeration value="GP2P"/>
+				<xs:enumeration value="LBOX"/>
+				<xs:enumeration value="MP2B"/>
+				<xs:enumeration value="MP2P"/>
+				<xs:enumeration value="RPRE"/>
+				<xs:enumeration value="RRCT"/>
+				<xs:enumeration value="RVPM"/>
+				<xs:enumeration value="SWEP"/>
+				<xs:enumeration value="TOPG"/>
+				<xs:enumeration value="ZABA"/>
+				<xs:enumeration value="VOST"/>
+				<xs:enumeration value="FCDT"/>
+				<xs:enumeration value="CIPC"/>
+				<xs:enumeration value="CONC"/>
+				
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ExternalFinancialInstitutionIdentification1Code">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="4"/>
+        </xs:restriction>
+    </xs:simpleType>
+	
+    <xs:simpleType name="ExternalServiceLevel1Code">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="SEPA"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ExternalLocalInstrument1Code">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CORE"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ExternalOrganisationIdentification1Code">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="4"/>
+		</xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ExternalPersonIdentification1Code">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="4"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ExternalPurpose1Code">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="4"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="FinancialIdentificationSchemeName1Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="ExternalFinancialInstitutionIdentification1Code"/>
+                <xs:element name="Prtry" type="Max35Text"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+<!-- Removed as part of IBAN only change
+ BOI: added: replacement type for FinancialInstitutionIdentification7 where only element BIC be used
+      23.06.2016 Using as part of Pain008 EBA Rule book XSD changes -->
+	<xs:complexType name="FinancialInstitutionIdentification7-BOI_Bic">
+		<xs:sequence>
+			<xs:element name="BICFI" type="BICIdentifier"/>
+		</xs:sequence>
+	</xs:complexType> 
+
+
+<!-- Removed as part of IBAN only change
+BOI: added: replacement type for FinancialInstitutionIdentification7 where only value 'BOFIIE2D' be used
+	<xs:complexType name="FinancialInstitutionIdentification7-BOFI">
+		<xs:sequence>
+			<xs:element name="BIC" type="BOIBICIdentifier"/>
+		</xs:sequence>
+	</xs:complexType> -->
+
+	<!-- 23.06.2016 Removed as part of Pain008 EBA Rule book XSD changes
+	BOI: added: replacement type for FinancialInstitutionIdentification7 where only element Other (SMNDA) be used 
+	<xs:complexType name="FinancialInstitutionIdentification7-BOI_SMNDA">
+		<xs:sequence>
+			<xs:element name="Othr" type="GenericFinancialIdentification1-BOI_SMNDA"/>
+		</xs:sequence>
+	</xs:complexType>-->
+    
+    <!-- BOI: changed: only allow ID  -->	
+	<!-- 23.06.2016 removed as part of Pain008 EBA Rule book XSD changes 
+	<xs:complexType name="GenericAccountIdentification1-BOI">
+		<xs:sequence>
+			<xs:element name="Id" type="Max34Text"/>
+		</xs:sequence>
+	</xs:complexType> -->
+	
+    <xs:complexType name="GenericFinancialIdentification1">
+        <xs:sequence>
+            <xs:element name="Id" type="Max35Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="SchmeNm" type="FinancialIdentificationSchemeName1Choice"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Issr" type="Max35Text"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="GenericOrganisationIdentification1">
+        <xs:sequence>
+            <xs:element name="Id" type="BOIDDId35"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="SchmeNm" type="OrganisationIdentificationSchemeName1Choice"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Issr" type="BOIDDId35"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="GenericPersonIdentification1">
+        <xs:sequence>
+            <xs:element name="Id" type="Max35Text"/>
+	
+        </xs:sequence>
+    </xs:complexType>
+	<!--15.10 Added to resolve defect on Creditor Scheme ID at File Level-->
+	<!--Added Person Identification SchmeNm,Issr As part of EPC EBA rulebook changes 2017-->
+    <xs:complexType name="GenericPersonIdentification2">
+        <xs:sequence>
+            <xs:element name="Id" type="BOIDDId7"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="SchmeNm" type="PersonIdentificationSchemeName1Choice-EPC"/>
+            <xs:element name="Issr" type="BOIDDId35" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+	<!-- BOI: added: replacement type where only SMNDA is allowed -->
+	<xs:complexType name="GenericFinancialIdentification1-BOI_SMNDA">
+		<xs:sequence>
+			<xs:element name="Id" type="RestrictedSMNDACodeText"/>
+		</xs:sequence>
+		
+	</xs:complexType>
+		<xs:simpleType name="RestrictedSMNDACodeText">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="SMNDA"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="GenericPersonIdentification1-BOI_Ult">
+        <xs:sequence>
+            <xs:element name="Id" type="BOIDDId35"/>
+			<xs:element maxOccurs="1" minOccurs="0" name="SchmeNm" type="PersonIdentificationSchemeName1Choice-BOI_Ult"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Issr" type="BOIDDId35"/>
+        </xs:sequence>
+    </xs:complexType>
+	<xs:complexType name="GenericPersonIdentification1-BOI_Amd">
+        <xs:sequence>
+            <!-- 28.06 DS: Id type changed to conform with pacs008 -->
+            <!-- 03.07 DS: Id type changed to ID8 to align with 2012 pacs.008 and allow spaces -->
+            <xs:element name="Id" type="BOIDDId7"/>
+		 <xs:element maxOccurs="1" minOccurs="0" name="SchmeNm" type="PersonIdentificationSchemeName1Choice"/>
+        </xs:sequence>
+    </xs:complexType>
+	<xs:complexType name="GenericPersonIdentification1-BOI_CSID">
+        <xs:sequence>
+            <!-- 28.06 DS: Id type changed to conform with pacs008 -->
+            <!-- 03.07 DS: Id type changed to conform with pacs008 update in 2012 to allow spaces -->
+            <!-- 12.09 DS: Id type changes in line with 28.06 update to disallow spaces -->
+            <xs:element name="Id" type="BOIDDId35"/>
+			<!-- BOI: Make SchmeNm mandatory -->
+			<xs:element name="SchmeNm" type="PersonIdentificationSchemeName1Choice"/>
+         </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="GroupHeader39">
+        <xs:sequence>
+            <xs:element name="MsgId" type="BOIDDId35"/>
+            <xs:element name="CreDtTm" type="ISODateTime"/>
+           	<xs:element name="NbOfTxs" type="Max15NumericText"/>
+            <!-- BOI: changed: CtrlSum BOI Mandatory -->
+			<xs:element name="CtrlSum" type="DecimalNumber"/> 
+            <xs:element name="InitgPty" type="PartyIdentification32-BOI_InitPty"/>
+        </xs:sequence>	
+    </xs:complexType>
+    <xs:simpleType name="IBAN2007Identifier">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,30}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ISODate">
+        <xs:restriction base="xs:date"/>
+    </xs:simpleType>
+    <xs:simpleType name="BOIISODate">
+        <xs:restriction base="xs:date">
+            <xs:pattern value="[0-9]{4,4}-[0-9][0-9]-[0-9][0-9]"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ISODateTime">
+        <xs:restriction base="xs:dateTime"/>
+    </xs:simpleType>
+    <xs:complexType name="LocalInstrument2Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="ExternalLocalInstrument1Code"/>
+                <!--BOI: Remove <xs:element name="Prtry" type="Max35Text"/> -->
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	    <xs:complexType name="ServiceLevel8Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="ExternalServiceLevel1Code"/>
+              <!--BOI: Remove  <xs:element name="Prtry" type="Max35Text"/> -->
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="MandateRelatedInformation6">
+        <xs:sequence>
+		<!-- BOI :Make MndtId Mandatory -->
+           <!-- 28.06 DS: Change type of MndtId to conform with pacs003 restrictions -->
+            <xs:element name="MndtId" type="BOIDDMndtID"/>
+			<!-- BOI :Make DtOfSgntr Mandatory -->
+            <xs:element name="DtOfSgntr" type="BOIISODate"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="AmdmntInd" type="TrueFalseIndicator"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="AmdmntInfDtls" type="AmendmentInformationDetails6"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="ElctrncSgntr" type="Max1025Text"/>
+           
+        </xs:sequence>
+    </xs:complexType>
+		<!-- BOI IBAN only change :added: replacement type for FinancialInstitutionIdentification7-BOFI where either BIC or Othr/Id is expected -->
+	<xs:complexType name="FinancialInstitutionIdentification7-BOFI_CHOICE">
+      <xs:choice>
+			<xs:element  name="BICFI" type="BOIBICIdentifier"/>
+			<xs:element  name="Othr" type="GenericFinancialIdentification1_CHOICE"/>
+      </xs:choice>
+	</xs:complexType>
+
+    
+    	<!-- BOI IBAN only change: added: to allow Id value under FinInstId -->
+	<xs:complexType name="GenericFinancialIdentification1_CHOICE">
+        <xs:sequence>
+            <xs:element name="Id" type="IdentificationNotProvided"/>
+        </xs:sequence>
+    </xs:complexType>
+	<!-- BOI IBAN only change: Added New simple type for value NOTPROVIDED-->
+	<xs:simpleType name="IdentificationNotProvided">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NOTPROVIDED"/>
+        </xs:restriction>
+    </xs:simpleType>
+	<!-- BOI IBAN only change: added: replacement type for FinancialInstitutionIdentification7-BOI_Bic where either BIC or Othr/Id is expected -->
+	<xs:complexType name="FinancialInstitutionIdentification7-BOI_Bic_CHOICE">
+        <xs:choice>
+			<xs:element  name="BICFI" type="BICIdentifier"/>
+			<xs:element  name="Othr" type="GenericFinancialIdentification1_CHOICE"/>
+        </xs:choice>
+    </xs:complexType>
+	
+    <xs:simpleType name="Max1025Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="1025"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max140Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="140"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max15NumericText">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{1,15}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max34Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="34"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max35Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="35"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max4Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="4"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max70Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="70"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="BOIMax70Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="70"/>
+		   <!-- removing collapsing whitespace from BOIDDMndtID and BOIMax70Text  -->
+           <!-- <xs:whiteSpace value="collapse"/> -->
+           <!-- <xs:pattern value="\S+.*"/> -->
+        </xs:restriction>
+    </xs:simpleType>
+    
+     <!--  Added Simples 16 and 34 Kiran -->
+    
+   <xs:simpleType name="Max16Text">
+      <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="16"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+    <xs:simpleType name="AnyBICDec2014Identifier">
+        <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]{4,4}[A-Z]{2,2}[A-Z0-9]{2,2}([A-Z0-9]{3,3}){0,1}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LEIIdentifier">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]{18,18}[0-9]{2,2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  
+  
+  <xs:simpleType name="BICFIDec2014Identifier">
+     <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z0-9]{4,4}[A-Z]{2,2}[A-Z0-9]{2,2}([A-Z0-9]{3,3}){0,1}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  
+            <!--  EBA Rulebook changes 2023 LEI added and AnyBIC updated -->
+    <xs:complexType name="OrganisationIdentification4">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="0" name="AnyBIC" type="AnyBICIdentifier"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="LEI" type="LEIIdentifier"/>
+            <!-- BOI 1 occurrence -->
+			<xs:element maxOccurs="1" minOccurs="0" name="Othr" type="GenericOrganisationIdentification1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="OrganisationIdentificationSchemeName1Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="BOIDDId04"/>
+                <xs:element name="Prtry" type="BOIDDId35"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    
+	<xs:complexType name="Party6Choice-BOI_InitPty">
+		<xs:sequence>
+			<xs:choice>
+				 <xs:element name="OrgId" type="OrganisationIdentification4_EPC130-08_SDD_Core_C2B_2017_V1.0"/>
+				<xs:element name="PrvtId" type="PersonIdentification5-BOI"/>
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+    <xs:complexType name="Party6Choice-BOI_Amd">
+        <xs:sequence>
+            <xs:choice>
+                
+                <xs:element name="PrvtId" type="PersonIdentification5-BOI_Amd"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	
+	<xs:complexType name="Party6Choice-BOI_DBTR">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="OrgId" type="OrganisationIdentification4"/> 
+                <xs:element name="PrvtId" type="PersonIdentification5-BOI_DBTR"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	<xs:complexType name="Party6Choice-BOI_CSID">
+        <xs:sequence>
+            <xs:choice>
+                
+                <xs:element name="PrvtId" type="PersonIdentification5-BOI_CSID"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    
+	<xs:complexType name="PartyIdentification32-BOI_InitPty">
+		<xs:sequence>
+			<xs:element name="Nm" type="Max140Text" minOccurs="0"/>
+			<xs:element name="Id" type="Party6Choice-BOI_InitPty" minOccurs="0"/>
+			
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PartyIdentification32-BOI_Amd">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="0" name="Nm" type="Max140Text"/>
+            
+			<xs:element maxOccurs="1" minOccurs="0" name="Id" type="Party6Choice-BOI_Amd"/>
+            
+        </xs:sequence>
+    </xs:complexType>
+	    <xs:complexType name="PartyIdentification32-BOI_DBTR">
+        <xs:sequence>
+            <!--BOI:Changed name length to 70, make mandatory -->
+			<xs:element name="Nm" type="BOIMax70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="PstlAdr" type="PostalAddress6"/>
+			<xs:element maxOccurs="1" minOccurs="0" name="Id" type="Party6Choice-BOI_DBTR"/>
+            
+        </xs:sequence>
+    </xs:complexType>
+	    <xs:complexType name="PartyIdentification32-BOICRDTR">
+        <xs:sequence>
+			<!--BOI: Make Nm Mandatory, Change Name length to 70   -->
+            <xs:element name="Nm" type="BOIMax70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="PstlAdr" type="PostalAddress6"/>
+			
+        </xs:sequence>
+    </xs:complexType>
+	<xs:complexType name="PartyIdentification32-BOI_ULT">
+        <xs:sequence>
+		<!--BOI:Change length to 70 -->
+			<xs:element maxOccurs="1" minOccurs="0" name="Nm" type="BOIMax70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Id" type="Party6Choice-BOI_DBTR"/>  
+            
+        </xs:sequence>
+    </xs:complexType>
+	<xs:complexType name="PartyIdentification32-BOI_CSID">
+        <xs:sequence>
+			
+			 <xs:element maxOccurs="1" minOccurs="0" name="Id" type="Party6Choice-BOI_CSID"/>  
+            
+        </xs:sequence>
+    </xs:complexType>
+	
+	
+    <xs:complexType name="PaymentIdentification1">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="0" name="InstrId" type="BOIDDId35"/>
+            <xs:element name="EndToEndId" type="BOIDDId35"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="PaymentInstructionInformation4">
+        <xs:sequence>
+            <xs:element name="PmtInfId" type="BOIDDId35"/>
+            <xs:element name="PmtMtd" type="PaymentMethod2Code"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="BtchBookg" type="BatchBookingIndicator"/>
+            <!--BOI: make NbOfTxs mandatory -->
+			<xs:element name="NbOfTxs" type="Max15NumericText"/>
+			<!--BOI: make CtrlSum mandatory -->
+            <xs:element name="CtrlSum" type="DecimalNumber"/>
+			<!--BOI: make PmtTpInf mandatory -->
+			<!--PmtTpInf make it as Option as part of EPC EBA rulebook changes 2017-->
+            <xs:element maxOccurs="1" minOccurs="0" name="PmtTpInf" type="PaymentTypeInformation20"/>
+            <xs:element name="ReqdColltnDt" type="BOIISODate"/>
+            <xs:element name="Cdtr" type="PartyIdentification32-BOICRDTR"/>
+            <xs:element name="CdtrAcct" type="CashAccount16-BOI_IdAndCurrency"/>
+            <xs:element name="CdtrAgt" type="BranchAndFinancialInstitutionIdentification4-BOI_BIC"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="UltmtCdtr" type="PartyIdentification32-BOI_ULT"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="ChrgBr" type="ChargeBearerType1Code"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="CdtrSchmeId" type="PartyIdentification32-BOI_CSID"/>
+            <xs:element maxOccurs="unbounded" minOccurs="1" name="DrctDbtTxInf" type="DirectDebitTransactionInformation9"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="PaymentMethod2Code">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="DD"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="PaymentTypeInformation20">
+        <xs:sequence>
+		
+	<!--BOI: make SvcLvl mandatory -->
+            <xs:element name="SvcLvl" type="ServiceLevel8Choice"/>
+	<!--BOI: make LclInstrm mandatory -->
+            <xs:element name="LclInstrm" type="LocalInstrument2Choice"/>
+	<!--BOI: make SeqTp mandatory -->
+            <xs:element name="SeqTp" type="SequenceType1Code"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="CtgyPurp" type="CategoryPurpose1Choice"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PersonIdentification5">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="0" name="DtAndPlcOfBirth" type="DateAndPlaceOfBirth"/>
+			<!-- BOI :change make Othr mandatory-->
+            <xs:element maxOccurs="unbounded" minOccurs="1" name="Othr" type="GenericPersonIdentification1"/>
+        </xs:sequence>
+    </xs:complexType>
+	<xs:complexType name="PersonIdentification5-BOI">
+		<xs:sequence>
+			<xs:element name="DtAndPlcOfBirth" type="DateAndPlaceOfBirth" minOccurs="0"/>
+			<xs:element name="Othr" type="GenericPersonIdentification2" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PersonIdentification5-BOI_Amd">
+        <xs:sequence>
+            <!-- BOI :change make Othr mandatory, 1 occurrence-->
+            <xs:element name="Othr" type="GenericPersonIdentification1-BOI_Amd"/>
+        </xs:sequence>
+    </xs:complexType>
+	
+	    <xs:complexType name="PersonIdentification5-BOI_DBTR">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="0" name="DtAndPlcOfBirth" type="DateAndPlaceOfBirth"/>
+			<!-- BOI 1 occurrence -->
+			<xs:element maxOccurs="1" minOccurs="0" name="Othr" type="GenericPersonIdentification1-BOI_Ult"/>
+        </xs:sequence>
+    </xs:complexType>
+	
+	<xs:complexType name="PersonIdentification5-BOI_CSID">
+        <xs:sequence>
+            <!-- BOI :change make Othr mandatory, 1 occurrence -->
+            <xs:element name="Othr" type="GenericPersonIdentification1-BOI_CSID"/>
+        </xs:sequence>
+    </xs:complexType>
+	
+    <xs:complexType name="PersonIdentificationSchemeName1Choice">
+        <xs:sequence>
+            <xs:choice>
+               
+                <xs:element name="Prtry" type="PrtryChoice1"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	
+	<xs:complexType name="PersonIdentificationSchemeName1Choice-BOI_Ult">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="BOIDDId04"/>
+                <xs:element name="Prtry" type="PrtryChoice1"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	
+	<xs:simpleType name="PrtryChoice1">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="SEPA"/>
+        </xs:restriction>
+    </xs:simpleType>
+	
+    <xs:simpleType name="PhoneNumber">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="\+[0-9]{1,3}-[0-9()+\-]{1,30}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="PostalAddress6">
+        <xs:sequence>
+              	<!-- Added new tags EBA 2023 Changes Kiran -->
+        
+            <xs:element maxOccurs="1" minOccurs="0" name="Dept" type="Max70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="SubDept" type="Max70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="StrtNm" type="Max70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="BldgNb" type="Max16Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="BldgNm" type="Max35Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Flr" type="Max70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="PstBx" type="Max16Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Room" type="Max70Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="PstCd" type="Max16Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="TwnNm" type="Max35Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="TwnLctnNm" type="Max35Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="DstrctNm" type="Max35Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="CtrySubDvsn" type="Max35Text"/>
+              	<!-- End of Added new tags EBA 2023 Changes Kiran -->
+            <xs:element maxOccurs="1" minOccurs="0" name="Ctry" type="CountryCode"/>
+			<!-- BOI :Make max 2 -->
+            <xs:element maxOccurs="2" minOccurs="0" name="AdrLine" type="BOIMax70Text"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Purpose2Choice">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cd" type="BOIDDId04"/>
+              
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="RemittanceInformation5">
+        <xs:sequence>
+			<!-- BOI :Only one occurrence of Ustrd & Strd allowed -->
+            <xs:element maxOccurs="1" minOccurs="0" name="Ustrd" type="Max140Text"/>
+            <xs:element maxOccurs="1" minOccurs="0" name="Strd" type="StructuredRemittanceInformation7"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:simpleType name="SequenceType1Code">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="FRST"/>
+            <xs:enumeration value="RCUR"/>
+            <xs:enumeration value="FNAL"/>
+            <xs:enumeration value="OOFF"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+	<xs:complexType name="ServiceLevel8">
+		<xs:sequence>
+			<xs:choice>
+                     <xs:element name="Cd" type="ExternalServiceLevel1Code"/>
+				<!-- BOI: removes Prtry tag to align with SEPA rules 
+				<xs:element name="Prtry" type="Max35Text"/> -->
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+
+    <xs:complexType name="StructuredRemittanceInformation7">
+        <xs:sequence>
+<xs:element maxOccurs="1" minOccurs="0" name="CdtrRefInf" type="CreditorReferenceInformation2"/>
+
+        </xs:sequence>
+    </xs:complexType>
+    
+     <!-- 28.06 DS: Added BOIDDId7 to restrict InstrID in line with pacs008-->
+	<xs:simpleType name="BOIDDId7">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="([A-Za-z0-9]|[+|\?|/|\-|:|\(|\)|\.|,|']){1,35}"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- 28.06 DS: Added BOIDDId8 to restrict MndtId in line with pacs008-->
+	<xs:simpleType name="BOIDDId8">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="([A-Za-z0-9]|[+|\?|/|\-|:|\(|\)|\.|,|'|\s]){1,35}"/>
+			<xs:whiteSpace value="collapse"/>
+            <xs:pattern value="\S+.*"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- 12.09 DS: Added BOIDDMsgID to restrict MsgID in line with CR102-->
+	<xs:simpleType name="BOIDDMsgID">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="([A-Za-z0-9]|[+|\?|/|\-|:|\(|\)|\.|,|\s]){1,35}"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+		<xs:simpleType name="BOIDDId35">
+		<xs:restriction base="xs:string">
+		    <xs:minLength value="1"/>
+                    <xs:maxLength value="35"/>
+			    <xs:pattern value="([a-zA-Z0-9+?&amp;&lt;&gt;&quot;:().,' -]|[a-zA-Z0-9+?&amp;&lt;&gt;&quot;:().,' -](/?[a-zA-Z0-9+?&amp;&lt;&gt;&quot;:().,' -]){1,35})"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+			<xs:simpleType name="BOIDDMndtID">
+		<xs:restriction base="xs:string">
+		    <xs:minLength value="1"/>
+                    <xs:maxLength value="35"/>
+			    <xs:pattern value="([a-zA-Z0-9+?:().,'-]|[a-zA-Z0-9+?:().,' -](/?[a-zA-Z0-9+?:().,' -]){1,35})"/>
+		<!-- removing collapsing whitespace from BOIDDMndtID and BOIMax70Text -->
+		<!--	<xs:whiteSpace value="collapse"/> -->
+		</xs:restriction>
+	</xs:simpleType>
+	
+	    <xs:simpleType name="BOIDDId04">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="4"/>
+		<xs:pattern value="([a-zA-Z0-9+?&amp;&lt;&gt;&quot;:().,' -]|[a-zA-Z0-9+?&amp;&lt;&gt;&quot;:().,' -](/?[a-zA-Z0-9+?&amp;&lt;&gt;&quot;:().,' -]){1,4})"/>	
+        </xs:restriction>
+    </xs:simpleType>
+	
+    <xs:simpleType name="TrueFalseIndicator">
+        <xs:restriction base="xs:boolean"/>
+    </xs:simpleType>
+
+    <!--  Added Organisation Identification as part of EBA rulebook 2017-->
+     <xs:complexType name="OrganisationIdentification4_EPC130-08_SDD_Core_C2B_2017_V1.0">
+       <xs:sequence>
+         <xs:element maxOccurs="1" minOccurs="0" name="Othr" type="GenericOrganisationIdentification1-EPC"/>
+        </xs:sequence>
+     </xs:complexType>
+     
+    <!--Added Organisation Identification Id,SchmeNm and Issr as part of EPC EBA rulebook 2017-->
+     
+  <xs:complexType name="GenericOrganisationIdentification1-EPC">
+      <xs:sequence>
+          <xs:element name="Id" type="BOIDDId7"/>
+          <xs:element maxOccurs="1" minOccurs="0" name="SchmeNm" type="OrganisationIdentificationSchemeName1Choice-EPC"/>
+          <xs:element name="Issr" type="BOIDDId35" minOccurs="0"/>
+       </xs:sequence>
+  </xs:complexType>
+
+  <!--Added Organisation Identification Cd and Prtry as part of EPC EBA rulebook 2017-->
+  <xs:complexType name="OrganisationIdentificationSchemeName1Choice-EPC">
+
+    <xs:sequence>
+        <xs:choice>
+            <xs:element name="Cd" type="ExternalOrganisationIdentification1Code"/>
+            <xs:element name="Prtry" type="BOIDDId35"/>
+        </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  
+    <!--Added Organisation Identification Cd and Prtry as part of EPC EBA rulebook 2017-->
+
+  <xs:complexType name="PersonIdentificationSchemeName1Choice-EPC">
+     <xs:sequence>
+       <xs:choice>
+          <xs:element name="Cd" type="ExternalPersonIdentification1Code"/>
+          <xs:element name="Prtry" type="BOIDDId35"/>
+       </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  
+</xs:schema>
+
+
+
+
+
+
+

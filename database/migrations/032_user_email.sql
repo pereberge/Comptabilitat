@@ -1,0 +1,1 @@
+ALTER TABLE app_users ADD COLUMN email VARCHAR(254) NULL AFTER username;

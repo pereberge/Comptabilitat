@@ -2,12 +2,13 @@
 import { ref } from 'vue';
 import { reportMoney as money,reportDate as date } from '../services/report-format.js';
 import EntryDetail from './EntryDetail.vue';
+import InvoiceFiscalIdentity from './InvoiceFiscalIdentity.vue';
 defineProps({proposal:Object,extraction:Object});
 const entry=ref(null);
 </script>
 <template>
  <template v-if="proposal">
-  <div class="invoice-proposal-facts"><p><strong>{{ proposal.form.reference || 'Referencia pendiente' }}</strong><br>{{ proposal.form.party.name || 'Tercero pendiente' }}<br>{{ proposal.form.party.tax_id }}</p><p>Factura: {{ date(proposal.form.invoice_date) }}<br>Contabilización: {{ date(proposal.form.posting_date) }}<br><strong>Total: {{ proposal.totals ? money(proposal.totals.total_amount)+' €' : 'Pendiente' }}</strong></p></div>
+  <div class="invoice-proposal-facts"><div><p><strong>{{ proposal.form.reference || 'Referencia pendiente' }}</strong></p><InvoiceFiscalIdentity :person="proposal.form.party" :label="proposal.form.direction==='issued'?'Datos fiscales del cliente':'Datos fiscales del proveedor'" /></div><p>Factura: {{ date(proposal.form.invoice_date) }}<br>Contabilización: {{ date(proposal.form.posting_date) }}<br><strong>Total: {{ proposal.totals ? money(proposal.totals.total_amount)+' €' : 'Pendiente' }}</strong></p></div>
   <p class="muted">{{ proposal.basis }}</p>
   <ul v-if="proposal.warnings.length" class="invoice-proposal-warnings"><li v-for="warning in proposal.warnings" :key="warning">{{ warning }}</li></ul>
   <p v-if="proposal.needs_amount_review" class="notice">Comprueba las bases, los tipos de IVA y las retenciones con el original. Los importes impresos no han quedado completamente verificados.</p>

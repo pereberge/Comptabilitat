@@ -3,6 +3,8 @@ import { decimal } from '../../../shared/money.js';
 import { normalizeBankText } from './bank-statement.js';
 import { BANK_BALANCE_MAX_DAYS,BANK_BALANCE_TOLERANCE_CENTS,bankDayNumber,addBankDays,bankLedgerReadThrough } from '../../../shared/bank-reconciliation.js';
 import {matchPendingInvoices} from './bank-invoice-matches.js';
+import {findReconciliationRule,reconciliationProposal} from '../../../shared/reconciliation-proposals.js';
+import {bankHistorySuggestions} from './bank-history-suggestions.js';
 
 const sum = rows => rows.reduce((total,row)=>total+amount(row.debit)-amount(row.credit),0n);
 const net = row => amount(row.debit)-amount(row.credit);
@@ -40,7 +42,7 @@ function balanceAnchor(rows,lines) {
   return anchor;
 }
 
-export function buildBankAnalysis({company,exercise,account,statement,lines,history,accounts,sourceName,sourceHash,pendingInvoices=[]}) {
+export function buildBankAnalysis({company,exercise,account,statement,lines,history,accounts,sourceName,sourceHash,pendingInvoices=[],rules=[],manualProposals=[]}) {
   const rows=statement.rows.filter(row=>row.date>=exercise.start_date&&row.date<=exercise.end_date);
   if(!rows.length)throw Object.assign(new Error('Period'),{code:'BANK_STATEMENT_PERIOD_MISMATCH',status:409});
   const from=rows[0].date,through=rows.at(-1).date;
@@ -63,27 +65,28 @@ export function buildBankAnalysis({company,exercise,account,statement,lines,hist
     else pending.push(row);
   }
   const bookUnmatched=candidates.filter(row=>row.entry_date<=bookThrough&&!used.has(key(row))).map(row=>({...row,amount:decimal(net(row))}));
-  const byCode=new Map(accounts.map(row=>[row.code,row]));
+  const historySuggestion=bankHistorySuggestions(history,account,accounts);
   const invoiceMatches=matchPendingInvoices(after,pendingInvoices),invoiceMatchIds=new Set(invoiceMatches.map(row=>row.movement_id));
   const proposals=[],unresolved=[];
   for(const row of pending){
     const normalized=normalizeBankText(row.concept), value=amount(row.amount);
     const unresolvedRow=reason=>unresolved.push({movement_id:row.id,date:row.date,concept:row.concept,amount:row.amount,reason});
+    const manual=manualProposals.find(item=>String(item.movement_id)===String(row.id));
+    const selection=findReconciliationRule(rules,row.concept,row.amount),template=manual||selection.rule;
+    if(template){
+      const proposal=reconciliationProposal(row,manual||{...template,concept:row.concept},account,accounts);
+      if(proposal){proposals.push({id:'P'+(proposals.length+1),...proposal,source:manual?'manual':'saved_rule',rule_concept:manual?manual.rule_concept||null:selection.rule.concept,basis:manual?'Propuesta introducida manualmente para este movimiento.':'Criterio guardado para «'+selection.rule.concept+'» en este banco y sentido.'+(selection.rule.counter_lines.length>1?' Reparto proporcional al ejemplo guardado; revisar los importes.':''),confidence:manual?'Manual · pendiente de validar':'Criterio guardado · pendiente de validar'});continue;}
+      unresolvedRow('La propuesta manual o el criterio guardado necesita revisar sus cuentas e importes.');continue;
+    }
+    if(selection.ambiguous){unresolvedRow('Hay varios criterios guardados igualmente específicos. Indica la contrapartida manualmente.');continue;}
     if(invoiceMatchIds.has(row.id)){unresolvedRow('Posible factura pendiente en Documentación: revisar la coincidencia y pasarla a Facturas antes de preparar el pago o cobro.');continue;}
     if(/PRES\d|PRESTAM|PRESTEC|HIPOTEC/.test(normalized)){
       unresolvedRow('Cuota de préstamo: hace falta el recibo con el desglose de capital, intereses y comisiones, y la cuenta del préstamo. No se supone que toda la cuota sea gasto.');continue;
     }
+    const idea=historySuggestion(row);
+    if(idea){proposals.push({id:'P'+(proposals.length+1),...idea});continue;}
     let counterpart=null,basis='',confidence='Pendiente de validar';
-    const historyCandidates=[];
-    for(const entry of history.filter(line=>line.status==='posted'&&line.code===account.code&&line.entry_date<row.date&&line.entry_type==='normal'&&((net(line)>0n)===(value>0n)))){
-      if(similarity(row.concept,entry.description)<0.65)continue;
-      const other=history.filter(line=>line.entry_id===entry.entry_id&&line.code!==account.code&&line.status==='posted');
-      if(other.length===1&&byCode.has(other[0].code))historyCandidates.push({bank:entry,other:other[0]});
-    }
-    if(historyCandidates.length&&new Set(historyCandidates.map(candidate=>candidate.other.code)).size===1){
-      const previous=historyCandidates.at(-1);counterpart=byCode.get(previous.other.code);
-      basis='Según tus datos: mismo concepto y sentido que el asiento '+previous.bank.number+' del '+previous.bank.entry_date+', con una sola contrapartida. Revisar que no exista ya una factura o un acreedor pendiente.';
-    }else if(/MANTENIMENT|MANTENIMIENTO|COMISION/.test(normalized)){
+    if(/MANTENIMENT|MANTENIMIENTO|COMISION/.test(normalized)){
       const eligible=accounts.filter(candidate=>candidate.code.startsWith('626')&&candidate.kind==='subaccount');
       if(eligible.length===1){counterpart=eligible[0];basis='Propuesta de clasificación: servicio bancario (grupo 626 del PGC). Un abono de mantenimiento se trata como devolución del mismo gasto. Validar el justificante.';}
       else{unresolvedRow('Servicio bancario o devolución: revisar el justificante y seleccionar una subcuenta 626. No se crea una contrapartida automáticamente.');continue;}
@@ -108,7 +111,7 @@ export function buildBankAnalysis({company,exercise,account,statement,lines,hist
       last_matching_book_balance:anchor?decimal(anchor.book_balance):null,balance_match_difference:anchor?decimal(anchor.book_balance-amount(anchor.balance)):null,balance_match_tolerance:decimal(BANK_BALANCE_TOLERANCE_CENTS),
       initial_balance_matches:initial===bookInitial,analysis_start_date:start,bank_pending:pending,matched_movements:matched,
       period_opening_balance:decimal(initial),book_opening_balance:decimal(bookInitial),opening_difference_bank_minus_book:decimal(openingGap)},
-    bank_rows:rows,pending_invoice_matches:invoiceMatches,book_unmatched:bookUnmatched,current_book_balance:decimal(book),bank_balance:decimal(final),difference_book_minus_bank:decimal(book-final),
+    bank_rows:rows,manual_proposals:manualProposals,pending_invoice_matches:invoiceMatches,book_unmatched:bookUnmatched,current_book_balance:decimal(book),bank_balance:decimal(final),difference_book_minus_bank:decimal(book-final),
     projected_balance:decimal(book+proposed),unresolved_difference_book_minus_bank:decimal(book+proposed-final),proposals,unresolved,
     reconciliation_status:unresolved.length||bookUnmatched.length||(book+proposed-final> BANK_BALANCE_TOLERANCE_CENTS||book+proposed-final< -BANK_BALANCE_TOLERANCE_CENTS)?'needs_review':proposals.length?'proposals_ready':book===final?'matched':'matched_with_tolerance',
     posted:false,review_notes:[

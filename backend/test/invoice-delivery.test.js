@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {getDocument} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {invoiceHtml,invoiceFilename,validateEmailDraft,validateDeliveryOptions,emailDraftMessage} from '../src/services/invoice-delivery-format.js';
-import {renderInvoicePdf} from '../src/services/invoice-pdf-renderer.js';
+import {renderInvoicePdf,closeInvoicePdfRenderer} from '../src/services/invoice-pdf-renderer.js';
 import {fiscalInvoice} from '../test-support/verifactu-fixture.js';
 import {invoicePdf} from '../test-support/invoice-fixture.js';
 const invoice=()=>fiscalInvoice({withholding_rate:'15.00',payment_method:'transfer',party_address:'Carrer del Client, 10',party_email:'client@example.com',issuer_snapshot:{name:'Emissor & Àngels SL',tax_id:'B12345674',address:'Carrer Major, 1',iban:'ES9121000418450200051332',invoice_notes:'Gràcies per la confiança'},receipts:[{due_date:'2026-11-21',amount:'106.00',account_id:999}],offset_code:'7000.0001',party_code:'4300.0001'});
@@ -31,7 +31,8 @@ test('unsafe email headers, attachment names and ambiguous document sources are 
  assert.throws(()=>emailDraftMessage(body,invoicePdf(),'bad\r\nname.pdf'),error=>error.code==='INVOICE_EMAIL_INVALID');
  assert.match(invoiceFilename({...invoice(),reference:'../CON: 1\r\nInjected'}),/^[A-Za-z0-9._-]+\.pdf$/);
 });
-test('Edge PDF contains Unicode, exact totals and the final lines across multiple A4 pages',{skip:process.env.TEST_INVOICE_PDF!=='1'},async()=>{
+test('Edge PDF contains Unicode, exact totals and the final lines across multiple A4 pages',{skip:process.env.TEST_INVOICE_PDF!=='1'},async t=>{
+ t.after(closeInvoicePdfRenderer);
  const data=invoice();data.lines=Array.from({length:65},(_,index)=>({...data.lines[0],description:'Línia '+(index+1)+' · assessorament comptable'}));
  const file=await renderInvoicePdf(invoiceHtml(data));assert.equal(file.subarray(0,5).toString(),'%PDF-');const task=getDocument({data:new Uint8Array(file),useSystemFonts:true,disableFontFace:true});
  try{const pdf=await task.promise;assert.ok(pdf.numPages>1);let text='';for(let page=1;page<=pdf.numPages;page++)text+=(await(await pdf.getPage(page)).getTextContent()).items.map(item=>item.str).join(' ')+' ';assert.match(text,/Emissor & Àngels SL/);assert.match(text,/Línia 65/);assert.match(text,/121,00/);assert.match(text,/106,00/);assert.match(text,/21\/11\/2026/);assert.doesNotMatch(text,/7000\.0001|4300\.0001/);}finally{await task.destroy();}

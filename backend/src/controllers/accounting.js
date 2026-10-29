@@ -7,7 +7,7 @@ export function accountingController(service) {
   nextCode:async(req,res)=>res.json(await (req.accounting || service).nextCode(req.params.id)),
   entries:async(req,res)=>res.json(await (req.accounting || service).listEntries(req.query)),
   entry:async(req,res)=>res.json(await (req.accounting || service).getEntry(req.params.id)),
-  updateEntry:async(req,res)=>res.json(await (req.accounting || service).updateEntry(req.params.id,req.body)),
+  updateEntry:async(req,res)=>res.json(await (req.accounting || service).updateEntry(req.params.id,req.body,{canRemoveLines:!req.user||req.user.role==='master'})),
   createEntry:async(req,res)=>res.status(201).json(await (req.accounting || service).createEntry(req.body)),
  };
 }

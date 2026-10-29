@@ -33,7 +33,7 @@ window.addEventListener('beforeunload',unload);onBeforeUnmount(()=>{disposed=tru
    <td><SubaccountInput v-model="line.account_id" :accounts="accounts" :label="t.subaccount+' '+(index+1)" :disabled="busy||loading" /><small>{{ accountName(line.account_id) }}</small></td>
    <td><input v-model="line.description" :aria-label="t.concept+' '+(index+1)" maxlength="200" required :disabled="busy"></td>
    <td><input v-model="line.debit" :aria-label="t.debit+' '+(index+1)" inputmode="decimal" :disabled="busy"></td><td><input v-model="line.credit" :aria-label="t.credit+' '+(index+1)" inputmode="decimal" :disabled="busy"></td>
-   <td><button v-if="form.lines.length>2" type="button" class="button" :disabled="busy" :aria-label="t.remove+' '+(index+1)" @click="form.lines.splice(index,1)">×</button></td>
+   <td><button v-if="form.lines.length>2" type="button" class="button" :disabled="busy||(line.id&&!can('entries_delete'))" :aria-label="t.remove+' '+(index+1)" @click="form.lines.splice(index,1)">×</button></td>
   </tr></tbody></table></div>
   <button type="button" class="button" :disabled="busy||form.lines.length>=100" @click="addLine">{{ t.addLine }}</button>
   <div class="entry-totals" aria-live="polite"><template v-if="totals.valid"><span>{{ t.debit }}<strong>{{ displayMoney(totals.debit) }}</strong></span><span>{{ t.credit }}<strong>{{ displayMoney(totals.credit) }}</strong></span><span>{{ t.difference }}<strong>{{ displayMoney(totals.difference) }}</strong></span><span>{{ totals.difference===0n&&totals.debit>0n?t.balanced:t.unbalanced }}</span></template><span v-else role="alert">{{ t.invalidTotals }}</span></div>

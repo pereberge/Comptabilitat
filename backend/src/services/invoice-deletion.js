@@ -23,6 +23,8 @@ export function createInvoiceDeletionService(pool,companyId){
   const [exercises]=await db.execute('SELECT * FROM accounting_exercises WHERE company_id=? AND id IN ('+placeholders(exerciseIds)+') ORDER BY id FOR UPDATE',[companyId,...exerciseIds]);
   const [[company]]=await db.execute('SELECT id,name FROM companies WHERE id=?',[companyId]);
   const blockers=[];
+  const [[remittance]]=await db.execute("SELECT m.id FROM bank_remittances m JOIN portfolio_receipts r ON r.company_id=m.company_id AND JSON_CONTAINS(m.receipt_ids,CAST(r.id AS JSON)) WHERE m.company_id=? AND m.status='prepared' AND r.invoice_id=? LIMIT 1",[companyId,invoice.id]);
+  if(remittance)blockers.push({code:'bank_remittance',message:'Cancela primero la remesa bancaria '+remittance.id+' que contiene recibos de esta factura.'});
   const [[fiscal]]=await db.execute('SELECT id FROM verifactu_records WHERE company_id=? AND invoice_id=? LIMIT 1',[companyId,invoice.id]);
   if(fiscal)blockers.push({code:'verifactu',message:'Esta factura tiene un registro VERI*FACTU. Se conserva con su trazabilidad; utiliza la anulación cuando corresponda.'});
   for(const exercise of exercises)if(exercise.status!=='open')blockers.push({message:'El ejercicio '+exercise.name+' está cerrado. Ábrelo antes de borrar.',exercise_id:exercise.id});

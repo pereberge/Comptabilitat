@@ -1,5 +1,5 @@
 import {extractInvoiceDocument} from './invoice-documents.js';
-import {invoiceIdentity} from './invoice-pdf.js';
+import {invoiceCompanyMatches} from './document-company.js';
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
 export async function readDocumentInvoice(buffer){
  if(!Buffer.isBuffer(buffer)||buffer.subarray(0,5).toString()!=='%PDF-')return null;
@@ -10,7 +10,7 @@ export async function readPendingDocumentInvoices(db,companyId){
  const [[company]]=await db.execute('SELECT c.name,d.tax_id FROM companies c LEFT JOIN company_details d ON d.company_id=c.id WHERE c.id=?',[companyId]);
  const [rows]=await db.execute("SELECT id,version,title,description,source_name,invoice_extraction,CASE WHEN invoice_extraction IS NULL THEN content ELSE NULL END AS original FROM company_documents WHERE company_id=? AND folder='pending_invoices' ORDER BY id",[companyId]);
  const results=[];
- const owner=party=>!!(party?.name&&invoiceIdentity(party.name)===invoiceIdentity(company.name)||party?.tax_id&&company.tax_id&&invoiceIdentity(party.tax_id)===invoiceIdentity(company.tax_id));
+ const owner=party=>!!invoiceCompanyMatches(party,company);
  for(const row of rows){
   const extraction=parse(row.invoice_extraction)||await readDocumentInvoice(row.original);
   if(!extraction||extraction.error)continue;

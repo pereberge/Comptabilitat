@@ -35,12 +35,13 @@ async function commit() {
     <section v-if="preview" class="journal-preview" aria-live="polite">
       <h3>{{ preview.source_company }}</h3>
       <p>{{ date(preview.start_date) }} — {{ date(preview.end_date) }} · {{ preview.pages }} {{ t.pages.toLowerCase() }}</p>
-      <p>{{ t.sourceFormat }}: {{ t.sourceFormats[preview.source_format]||preview.source_format }}</p>
+      <p>{{ t.sourceFormat }}: {{ preview.source_layout==='listado_diario'?'LISTADO DEL DIARIO':t.sourceFormats[preview.source_format]||preview.source_format }}</p>
       <p v-if="preview.period_inferred" class="notice">{{ t.calendarPeriod }} {{ date(preview.covered_from) }} — {{ date(preview.covered_to) }}.</p>
       <p v-if="preview.numbering==='sequential'" class="notice">{{ t.sequentialNumbering }}</p>
       <p>{{ preview.totals.entries }} {{ t.entries }} · {{ preview.totals.lines }} {{ t.lines }} · {{ preview.totals.accounts }} {{ t.accounts }}</p>
       <dl class="import-totals"><div><dt>{{ t.debit }}</dt><dd>{{ money(preview.totals.debit) }} €</dd></div><div><dt>{{ t.credit }}</dt><dd>{{ money(preview.totals.credit) }} €</dd></div></dl>
       <p v-if="preview.totals.negative_lines || preview.totals.zero_lines" class="notice">{{ t.signed }} {{ t.negative }}: {{ preview.totals.negative_lines }}. {{ t.zero }}: {{ preview.totals.zero_lines }}.</p>
+      <p v-if="preview.totals.ignored_empty_lines" class="notice">{{ preview.totals.ignored_empty_lines }} filas vacías sin cuenta y con Debe/Haber a cero se omiten. Se conserva el PDF original y la posición de las líneas restantes.</p>
       <p v-if="preview.has_closing" class="notice">{{ t.closing }}</p>
       <p v-if="preview.already_imported" class="notice">{{ t.already }}</p>
       <h3>{{ t.firstLast }}</h3>
