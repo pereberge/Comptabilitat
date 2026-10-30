@@ -12,6 +12,11 @@ export function apiRouter(service, accounting) {
  router.post('/tax/vat/settlement-preview',async(req,res)=>res.json(await req.vat.settlementPreview(req.query,req.body)));
  router.put('/tax/vat/draft',async(req,res)=>res.json(await req.vat.save(req.query,req.body)));
  router.post('/tax/vat/filing',async(req,res)=>{const file=await req.vat.filing(req.query,req.body);res.set('Content-Type','application/octet-stream').set('X-Content-Type-Options','nosniff').set('Content-Disposition','attachment; filename="'+file.filename+'"').send(file.file);});
+ router.get('/integration-invoices',async(req,res)=>res.json(await req.importedInvoices.list(req.query)));
+ router.get('/integration-invoices/:id',async(req,res)=>res.json(await req.importedInvoices.get(req.params.id)));
+ router.post('/integration-invoices/:id/post',async(req,res)=>res.json(await req.importedInvoices.post(req.params.id,req.body,req.user?.key||'local')));
+ router.post('/integration-invoices/:id/cancel',async(req,res)=>res.json(await req.importedInvoices.cancel(req.params.id,req.body,req.user?.key||'local')));
+ router.post('/integration-invoices/:id/expense-account',async(req,res)=>res.json(await req.importedInvoices.changeExpense(req.params.id,req.body,req.user?.key||'local')));
  router.get('/farms',async(req,res)=>res.json(await req.farms.list(req.query)));
  router.post('/farms',async(req,res)=>res.status(201).json(await req.farms.saveFarm(req.body)));
  router.patch('/farms/:id',async(req,res)=>res.json(await req.farms.saveFarm(req.body,req.params.id)));

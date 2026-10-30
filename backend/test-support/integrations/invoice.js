@@ -1,0 +1,1 @@
+export const sample=()=>({sourceSystem:'gestio',externalId:'FAC-987',companyExternalId:'piensos-arb',supplier:{name:'Supplier SL',taxId:'B12345678'},invoiceNumber:'2026-125',invoiceDate:'2026-10-26',dueDate:'2026-11-26',currency:'EUR',description:'Compra de mercaderías',taxBreakdown:[{taxRate:21,taxableBase:1000,taxAmount:210}],total:1210,documentExternalId:'DOC-456'});

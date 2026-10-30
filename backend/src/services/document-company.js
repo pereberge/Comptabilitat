@@ -29,10 +29,22 @@ export function assessInvoiceCompany(extraction,companies,companyId){
  const status=currentMatch&&!conflictingTax?'current':matches.length===1?'other':matches.length>1?'ambiguous':identified(extraction.customer)&&identified(extraction.supplier)?'mismatch':'unknown';
  return {...base,matches,status,suggested_company_id:status==='other'?matches[0].id:status==='ambiguous'?null:companyId,reason:status==='unknown'?'no_identity':null};
 }
-export function createDocumentCompanyChecker(pool,companyId,{companyIds=[companyId],actorKey=''}={}){
+export function createDocumentCompanyChecker(pool,companyId,{companyIds=[companyId],actorKey='',companyDatabases:optionsRegistry}={}){
  const allowed=companyIds===null?null:[...new Set([...companyIds.map(id),companyId])];
  function allow(target){if(allowed&&!allowed.includes(target))throw new HttpError(403,'ACCESS_COMPANY_DENIED');}
- async function companies(db=pool){const [rows]=await db.execute('SELECT c.id,c.name,d.tax_id,d.trade_name,d.journal_source_name FROM companies c LEFT JOIN company_details d ON d.company_id=c.id'+(allowed?' WHERE c.id IN ('+allowed.map(()=>'?').join(',')+')':'')+' ORDER BY c.id',allowed||[]);return rows;}
+ async function registryCompanies(){
+  const rows=[];
+  for(const route of await optionsRegistry.list()){
+   if(allowed&&!allowed.includes(route.company_id))continue;
+   const db=await optionsRegistry.forCompany(route.company_id);
+   const [found]=await db.execute('SELECT c.id,c.name,d.tax_id,d.trade_name,d.journal_source_name FROM companies c LEFT JOIN company_details d ON d.company_id=c.id WHERE c.id=?',[route.company_id]);rows.push(...found);
+  }
+  return rows;
+ }
+ async function companies(db=pool){
+  if(optionsRegistry)return registryCompanies();
+  const [rows]=await db.execute('SELECT c.id,c.name,d.tax_id,d.trade_name,d.journal_source_name FROM companies c LEFT JOIN company_details d ON d.company_id=c.id'+(allowed?' WHERE c.id IN ('+allowed.map(()=>'?').join(',')+')':'')+' ORDER BY c.id',allowed||[]);return rows;
+ }
  function assess(extraction,sourceHash,visible){const result=assessInvoiceCompany(json(extraction),visible,companyId);return {...result,preview_hash:createHash('sha256').update(JSON.stringify({sourceHash,result})).digest('hex')};}
  async function read(buffer,token,stored){
   const sourceHash=createHash('sha256').update(buffer).digest('hex'),cached=cache.get(token);

@@ -36,7 +36,7 @@ BEGIN
   SELECT id INTO locked_company FROM companies WHERE id = NEW.company_id FOR UPDATE;
   SELECT id INTO overlapping_id FROM accounting_exercises
     WHERE company_id = NEW.company_id AND start_date <= NEW.end_date AND end_date >= NEW.start_date
-    LIMIT 1 FOR SHARE;
+    LIMIT 1 LOCK IN SHARE MODE;
   IF overlapping_id IS NOT NULL THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'EXERCISE_PERIOD_OVERLAP';
   END IF;
@@ -53,7 +53,7 @@ BEGIN
   SELECT id INTO overlapping_id FROM accounting_exercises
     WHERE company_id = NEW.company_id AND id <> OLD.id
       AND start_date <= NEW.end_date AND end_date >= NEW.start_date
-    LIMIT 1 FOR SHARE;
+    LIMIT 1 LOCK IN SHARE MODE;
   IF overlapping_id IS NOT NULL THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'EXERCISE_PERIOD_OVERLAP';
   END IF;

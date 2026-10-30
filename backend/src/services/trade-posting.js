@@ -5,6 +5,7 @@ import { fail,id } from './validation.js';
 import { HttpError } from '../middleware/errors.js';
 import { postJournalEntry } from './accounting.js';
 import { normalizePartyProfile } from '../../../shared/account-party.js';
+import {findPartyAccount} from './party-identification.js';
 
 export async function requireAccount(db,companyId,accountId,prefixes,error='INVALID_INVOICE_ACCOUNT'){
  const [[row]]=await db.execute('SELECT id,code,kind,party_profile,payment_profile FROM accounts WHERE company_id=? AND id=?',[companyId,id(accountId)]);
@@ -22,12 +23,10 @@ export async function standardAccount(db,companyId,settings,parentCode){
 export async function partyAccount(db,companyId,settings,data){
  const prefixes=data.direction==='issued'?['430','440']:['400','410'];
  if(data.party_account_id)return requireAccount(db,companyId,data.party_account_id,prefixes,'INVALID_PARTY_ACCOUNT');
- if(data.party.tax_id){
-  const [profiles]=await db.execute("SELECT id FROM accounts WHERE company_id=? AND kind='subaccount' AND LEFT(code,3) IN (?,?) AND party_profile->>'$.tax_id'=? ORDER BY code LIMIT 2",[companyId,...prefixes,data.party.tax_id]);
-  if(profiles.length===1)return requireAccount(db,companyId,profiles[0].id,prefixes,'INVALID_PARTY_ACCOUNT');
-  if(profiles.length>1)fail('AMBIGUOUS_PARTY_ACCOUNT');
-  const [[known]]=await db.execute('SELECT party_account_id FROM trade_invoices WHERE company_id=? AND direction=? AND party_tax_id=? ORDER BY id DESC LIMIT 1',[companyId,data.direction,data.party.tax_id]);
-  if(known)return requireAccount(db,companyId,known.party_account_id,prefixes,'INVALID_PARTY_ACCOUNT');
+ if(data.party.tax_id||data.party.name){
+  const known=await findPartyAccount(db,companyId,data.direction,data.party.tax_id,data.party.name);
+  if(known.ambiguous)throw new HttpError(409,known.matchedBy==='name'?'PARTY_NAME_AMBIGUOUS':'PARTY_TAX_ID_AMBIGUOUS');
+  if(known.accountId)return requireAccount(db,companyId,known.accountId,prefixes,'INVALID_PARTY_ACCOUNT');
  }
  const parent=await ensureAccount(db,companyId,data.party_parent),code=await nextSubaccountCode(db,companyId,parent,settings.subaccount_length);
  const profile=normalizePartyProfile(data.party);

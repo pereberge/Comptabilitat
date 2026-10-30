@@ -1,0 +1,867 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Comptabilitat ? recepci? de factures de Gesti?",
+    "version": "1.0.0",
+    "description": "Contracte del receptor implementat. Nom?s recepci? de dades estructurades, sense PDF ni assentaments autom?tics. La guia README.md completa les regles aritm?tiques i els reintents."
+  },
+  "servers": [
+    {
+      "url": "https://comptabilitat.example.com",
+      "description": "Exemple: substituir per la URL real de producci?."
+    },
+    {
+      "url": "http://127.0.0.1:3000",
+      "description": "Desenvolupament local a la mateixa m?quina."
+    }
+  ],
+  "security": [
+    {
+      "ServiceBearer": []
+    }
+  ],
+  "paths": {
+    "/api/v1/integrations/invoices/received": {
+      "post": {
+        "operationId": "receiveSupplierInvoice",
+        "summary": "Rebre una factura de prove?dor validada a Gesti?",
+        "description": "?mbit invoices:received:write. Empresa autoritzada per a la credencial i sourceSystem. Identitat idempotent: empresa interna + sourceSystem + externalId. M?xim 128 KiB. Una factura per petici?. Els camps desconeguts es rebutgen. Les regles de coher?ncia monet?ria es validen al servidor.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceivedInvoice"
+              },
+              "examples": {
+                "normal": {
+                  "value": {
+                    "sourceSystem": "gestio",
+                    "externalId": "FAC-DEMO-001",
+                    "companyExternalId": "piensos-arb",
+                    "supplier": {
+                      "name": "Prove?dor Exemple SL",
+                      "taxId": "B12345678"
+                    },
+                    "invoiceNumber": "DEMO-2026-001",
+                    "invoiceDate": "2026-10-26",
+                    "dueDate": "2026-11-26",
+                    "currency": "EUR",
+                    "invoiceType": "standard",
+                    "description": "Compra de mercaderies",
+                    "taxBreakdown": [
+                      {
+                        "taxType": "vat",
+                        "taxRate": "21.00",
+                        "taxableBase": "1000.00",
+                        "taxAmount": "210.00"
+                      }
+                    ],
+                    "total": "1210.00",
+                    "documentExternalId": "DOC-DEMO-001"
+                  }
+                },
+                "mixedVat": {
+                  "value": {
+                    "sourceSystem": "gestio",
+                    "externalId": "FAC-DEMO-002",
+                    "companyExternalId": "piensos-arb",
+                    "supplier": {
+                      "name": "Prove?dor Exemple SL",
+                      "taxId": "B12345678"
+                    },
+                    "invoiceNumber": "DEMO-2026-002",
+                    "invoiceDate": "2026-10-26",
+                    "dueDate": "2026-11-26",
+                    "currency": "EUR",
+                    "invoiceType": "standard",
+                    "description": "Factura amb IVA mixt, exempci? i retenci?",
+                    "taxBreakdown": [
+                      {
+                        "taxType": "vat",
+                        "taxRate": "21.00",
+                        "taxableBase": "1000.00",
+                        "taxAmount": "210.00"
+                      },
+                      {
+                        "taxType": "vat",
+                        "taxRate": "10.00",
+                        "taxableBase": "500.00",
+                        "taxAmount": "50.00"
+                      },
+                      {
+                        "taxType": "exempt",
+                        "taxRate": "0.00",
+                        "taxableBase": "100.00",
+                        "taxAmount": "0.00",
+                        "exemptionReason": "Exempci? indicada pel prove?dor; revisar el sup?sit aplicable"
+                      }
+                    ],
+                    "total": "1620.00",
+                    "documentExternalId": "DOC-DEMO-002",
+                    "withholdings": [
+                      {
+                        "rate": "15.00",
+                        "base": "1600.00",
+                        "amount": "240.00"
+                      }
+                    ]
+                  }
+                },
+                "creditNote": {
+                  "value": {
+                    "sourceSystem": "gestio",
+                    "externalId": "FAC-DEMO-003",
+                    "companyExternalId": "piensos-arb",
+                    "supplier": {
+                      "name": "Prove?dor Exemple SL",
+                      "taxId": "B12345678"
+                    },
+                    "invoiceNumber": "DEMO-AB-2026-001",
+                    "invoiceDate": "2026-10-26",
+                    "dueDate": "2026-11-26",
+                    "currency": "EUR",
+                    "invoiceType": "credit_note",
+                    "description": "Abonament per devoluci? de mercaderia",
+                    "taxBreakdown": [
+                      {
+                        "taxType": "vat",
+                        "taxRate": "21.00",
+                        "taxableBase": "-1000.00",
+                        "taxAmount": "-210.00"
+                      }
+                    ],
+                    "total": "-1210.00",
+                    "documentExternalId": "DOC-DEMO-003",
+                    "rectification": {
+                      "reason": "Devoluci? de mercaderia",
+                      "originalInvoiceNumber": "DEMO-2026-001"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Repetici? equivalent, mateix ID i replayed=true.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceptionResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Recepci? creada, replayed=false. Pot tenir incid?ncies; no significa comptabilitzada.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INTEGRATION_INVALID_JSON: JSON mal format.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "INTEGRATION_UNAUTHORIZED: token absent o incorrecte.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer realm=\"integrations\""
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "INTEGRATION_SCOPE_REQUIRED, INTEGRATION_SOURCE_FORBIDDEN o INTEGRATION_COMPANY_FORBIDDEN.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "INTEGRATION_ENDPOINT_NOT_FOUND: ruta no disponible.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INTEGRATION_IDEMPOTENCY_CONFLICT: mateixa identitat externa amb altres dades.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "INTEGRATION_PAYLOAD_TOO_LARGE: m?xim 128 KiB.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "INTEGRATION_JSON_REQUIRED: cal application/json.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Camps, dates, impostos, l?nies o imports incoherents; veure error.code i error.field.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "426": {
+            "description": "INTEGRATION_HTTPS_REQUIRED en producci?.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "INTEGRATION_RATE_LIMIT: respectar Retry-After.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "60"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "INTEGRATION_NOT_CONFIGURED o INTEGRATION_DATABASE_UNAVAILABLE.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Identificador de seguiment, tamb? retornat al cos JSON.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ServiceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Opaque service token",
+        "description": "Token de servei de 32 bytes aleatoris codificat base64url. Configurat pr?viament; no hi ha endpoint OAuth de token. No enviar la huella SHA-256."
+      }
+    },
+    "schemas": {
+      "Money": {
+        "description": "Import signat en unitats monet?ries, m?xim 13 d?gits enters i 2 decimals. Preferir cadenes amb punt decimal.",
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^-?[0-9]{1,13}(\\.[0-9]{1,2})?$"
+          },
+          {
+            "type": "number",
+            "minimum": -9999999999999.99,
+            "maximum": 9999999999999.99,
+            "multipleOf": 0.01
+          }
+        ]
+      },
+      "Percentage": {
+        "description": "Percentatge entre 0 i 100 amb un m?xim de 2 decimals; 21.00 significa 21%.",
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^(?:[0-9]{1,2}(?:\\.[0-9]{1,2})?|100(?:\\.0{1,2})?)$"
+          },
+          {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "multipleOf": 0.01
+          }
+        ]
+      },
+      "Supplier": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "taxId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "Es normalitzen espais, punts, guions i maj?scules; el resultat ha de ser alfanum?ric de 3 a 32 car?cters."
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "description": "Correu amb format v?lid o cadena buida."
+          }
+        },
+        "required": [
+          "name",
+          "taxId"
+        ]
+      },
+      "TaxGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "taxType": {
+            "type": "string",
+            "enum": [
+              "vat",
+              "exempt",
+              "not_subject",
+              "reverse_charge"
+            ],
+            "default": "vat"
+          },
+          "taxRate": {
+            "$ref": "#/components/schemas/Percentage"
+          },
+          "taxableBase": {
+            "$ref": "#/components/schemas/Money",
+            "description": "Base signada; no pot ser zero."
+          },
+          "taxAmount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "exemptionReason": {
+            "type": "string",
+            "maxLength": 250,
+            "description": "Obligatori i no buit en exempcions."
+          }
+        },
+        "required": [
+          "taxRate",
+          "taxableBase",
+          "taxAmount"
+        ],
+        "description": "Quota coherent amb base ? tipus, amb toler?ncia m?xima d?un c?ntim. Per a exempt, not_subject i reverse_charge, tipus i quota han de ser zero. Exempt requereix exemptionReason."
+      },
+      "Withholding": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rate": {
+            "$ref": "#/components/schemas/Percentage"
+          },
+          "base": {
+            "$ref": "#/components/schemas/Money",
+            "description": "Base no nul?la de la retenci?."
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          }
+        },
+        "required": [
+          "rate",
+          "base",
+          "amount"
+        ]
+      },
+      "InvoiceLine": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "taxType": {
+            "type": "string",
+            "enum": [
+              "vat",
+              "exempt",
+              "not_subject",
+              "reverse_charge"
+            ],
+            "default": "vat"
+          },
+          "taxRate": {
+            "$ref": "#/components/schemas/Percentage"
+          },
+          "taxableBase": {
+            "$ref": "#/components/schemas/Money",
+            "description": "Base signada; no pot ser zero."
+          },
+          "taxAmount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "exemptionReason": {
+            "type": "string",
+            "maxLength": 250,
+            "description": "Obligatori i no buit en exempcions."
+          }
+        },
+        "required": [
+          "description",
+          "taxRate",
+          "taxableBase",
+          "taxAmount"
+        ]
+      },
+      "Rectification": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "originalInvoiceNumber": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        },
+        "required": [
+          "reason",
+          "originalInvoiceNumber"
+        ]
+      },
+      "ReceivedInvoice": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sourceSystem": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Origen autoritzat de la credencial.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Identificador estable de la factura a Gesti?; es conserva en reintents.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          },
+          "companyExternalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "?lies d?empresa autoritzat en el receptor.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+          },
+          "supplier": {
+            "$ref": "#/components/schemas/Supplier"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "description": "N?mero del prove?dor. Tamb? ha de cabre en 60 car?cters despr?s de normalitzar-lo."
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[1-9][0-9]{3}-[0-9]{2}-[0-9]{2}$"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[1-9][0-9]{3}-[0-9]{2}-[0-9]{2}$",
+            "description": "Igual o posterior a invoiceDate."
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{3}$",
+            "description": "Es normalitza a maj?scules; altres monedes diferents d?EUR requereixen revisi?."
+          },
+          "invoiceType": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "credit_note",
+              "rectifying"
+            ],
+            "default": "standard"
+          },
+          "rectification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Rectification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "taxBreakdown": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 40,
+            "items": {
+              "$ref": "#/components/schemas/TaxGroup"
+            }
+          },
+          "withholdings": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "$ref": "#/components/schemas/Withholding"
+            },
+            "default": []
+          },
+          "total": {
+            "$ref": "#/components/schemas/Money",
+            "description": "No pot ser zero. Exactament suma de bases + quotes ? retencions. Standard positiu; credit_note negatiu."
+          },
+          "documentExternalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Refer?ncia opaca del PDF a Gesti?. No es consulta com una URL."
+          },
+          "lines": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLine"
+            },
+            "default": [],
+            "description": "Si hi ha l?nies, han de reconciliar exactament per tractament i tipus amb taxBreakdown."
+          }
+        },
+        "required": [
+          "sourceSystem",
+          "externalId",
+          "companyExternalId",
+          "supplier",
+          "invoiceNumber",
+          "invoiceDate",
+          "dueDate",
+          "currency",
+          "description",
+          "taxBreakdown",
+          "total",
+          "documentExternalId"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "invoiceType": {
+                  "enum": [
+                    "credit_note",
+                    "rectifying"
+                  ]
+                }
+              },
+              "required": [
+                "invoiceType"
+              ]
+            },
+            "then": {
+              "required": [
+                "rectification"
+              ],
+              "properties": {
+                "rectification": {
+                  "$ref": "#/components/schemas/Rectification"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "rectification": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "InvoiceStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "posted",
+          "issues",
+          "cancelled",
+          "rectified"
+        ]
+      },
+      "ReceptionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "companyId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sourceSystem": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "status": {
+            "$ref": "#/components/schemas/InvoiceStatus"
+          },
+          "possibleDuplicate": {
+            "type": "boolean"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Codis d?observaci?. Conservar tamb? codis desconeguts."
+          },
+          "replayed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "sourceSystem",
+          "externalId",
+          "status",
+          "possibleDuplicate",
+          "issues",
+          "replayed"
+        ]
+      },
+      "ReceptionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReceptionResult"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "data",
+          "requestId"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "error",
+          "requestId"
+        ]
+      }
+    }
+  }
+}

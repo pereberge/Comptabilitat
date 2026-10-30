@@ -1,0 +1,25 @@
+{
+  "sourceSystem": "gestio",
+  "externalId": "FAC-DEMO-001",
+  "companyExternalId": "piensos-arb",
+  "supplier": {
+    "name": "Prove?dor Exemple SL",
+    "taxId": "B12345678"
+  },
+  "invoiceNumber": "DEMO-2026-001",
+  "invoiceDate": "2026-10-26",
+  "dueDate": "2026-11-26",
+  "currency": "EUR",
+  "invoiceType": "standard",
+  "description": "Compra de mercaderies",
+  "taxBreakdown": [
+    {
+      "taxType": "vat",
+      "taxRate": "21.00",
+      "taxableBase": "1000.00",
+      "taxAmount": "210.00"
+    }
+  ],
+  "total": "1210.00",
+  "documentExternalId": "DOC-DEMO-001"
+}

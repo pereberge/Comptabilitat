@@ -7,6 +7,8 @@
     "start": "node src/server.js",
     "db:migrate": "node scripts/database.js migrate",
     "db:seed": "node scripts/database.js seed",
+    "db:split-companies": "node scripts/company-databases.js",
+    "db:migrate-companies": "node scripts/migrate-companies.js",
     "test": "node --test --test-concurrency=1"
   },
   "dependencies": {

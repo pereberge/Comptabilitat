@@ -22,12 +22,16 @@ function encodedBuffer(body){
 }
 export function createDocumentationService(pool,companyId,options={}){
  const checker=createDocumentCompanyChecker(pool,companyId,options);
- async function find(db,documentId,source=false,target=companyId){const [[row]]=await db.execute('SELECT '+fields+(source?',content':'')+' FROM company_documents WHERE company_id=? AND id=?',[target,id(documentId)]);if(!row)throw new HttpError(404,'DOCUMENTATION_NOT_FOUND');return row;}
+ const table=async(target,name)=>options.companyDatabases?options.companyDatabases.table(target,name):name;
+ async function find(db,documentId,source=false,target=companyId){const [[row]]=await db.execute('SELECT '+fields+(source?',content':'')+' FROM '+await table(target,'company_documents')+' WHERE company_id=? AND id=?',[target,id(documentId)]);if(!row)throw new HttpError(404,'DOCUMENTATION_NOT_FOUND');return row;}
  const targetId=body=>{const target=body?.target_company_id==null?companyId:id(body.target_company_id);checker.allow(target);return target;};
- async function lockBoth(db,target){for(const value of [...new Set([companyId,target])].sort((a,b)=>a-b))await lockCompany(db,value);}
+ async function lockBoth(db,target){for(const value of [...new Set([companyId,target])].sort((a,b)=>a-b)){
+  if(options.companyDatabases){const [[row]]=await db.execute('SELECT id FROM '+await table(value,'companies')+' WHERE id=? FOR UPDATE',[value]);if(!row)throw new HttpError(404,'COMPANY_NOT_FOUND');}
+  else await lockCompany(db,value);
+ }}
  async function described(row,db=pool,visible){if(row.folder!=='pending_invoices')return row;return {...row,company_check:checker.assess(row.invoice_extraction,row.source_sha256,visible||await checker.companies(db))};}
  function routed(row,visible,target,replayed=false){return {...row,destination_company:visible.find(item=>item.id===target),reassigned:target!==companyId,replayed};}
- async function duplicate(db,target,sha,except=0){const [[row]]=await db.execute('SELECT id FROM company_documents WHERE company_id=? AND source_sha256=? AND id<>? LIMIT 1',[target,sha,except]);if(row)throw new HttpError(409,'DOCUMENTATION_COMPANY_DUPLICATE');}
+ async function duplicate(db,target,sha,except=0){const [[row]]=await db.execute('SELECT id FROM '+await table(target,'company_documents')+' WHERE company_id=? AND source_sha256=? AND id<>? LIMIT 1',[target,sha,except]);if(row)throw new HttpError(409,'DOCUMENTATION_COMPANY_DUPLICATE');}
  async function movedReplay(db,documentId,body,data,target){
   const row=await find(db,documentId,false,target),selected=folder(body.folder,'pending_invoices');
   if(row.version!==body.version+1||row.title!==data.title||row.description!==data.description||row.folder!==selected)throw new HttpError(409,'DOCUMENTATION_CHANGED');
@@ -62,11 +66,11 @@ export function createDocumentationService(pool,companyId,options={}){
    return withTransaction(pool,async db=>{
     await lockBoth(db,target);
     const visible=await checker.companies(db),requestHash=target===companyId?digest:hash({digest,source_company_id:companyId,target_company_id:target});
-    const [[replay]]=await db.execute('SELECT id,request_hash FROM company_documents WHERE company_id=? AND request_id=?',[target,request]);
+    const [[replay]]=await db.execute('SELECT id,request_hash FROM '+await table(target,'company_documents')+' WHERE company_id=? AND request_id=?',[target,request]);
     if(replay){if(replay.request_hash!==requestHash)throw new HttpError(409,'REQUEST_CONFLICT');return routed(await find(db,replay.id,false,target),visible,target,true);}
     if(selected==='pending_invoices')checker.destination(body,checker.assess(extraction,sha,visible));
     if(target!==companyId)await duplicate(db,target,sha);
-    const [saved]=await db.execute('INSERT INTO company_documents(company_id,title,description,folder,invoice_extraction,source_name,source_mime,source_sha256,source_size,content,request_id,request_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[target,data.title,data.description,selected,extraction?JSON.stringify(extraction):null,name,mime,sha,buffer.length,buffer,request,requestHash]);
+    const [saved]=await db.execute('INSERT INTO '+await table(target,'company_documents')+'(company_id,title,description,folder,invoice_extraction,source_name,source_mime,source_sha256,source_size,content,request_id,request_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[target,data.title,data.description,selected,extraction?JSON.stringify(extraction):null,name,mime,sha,buffer.length,buffer,request,requestHash]);
     return routed(await find(db,saved.insertId,false,target),visible,target);
    });
   },
@@ -87,7 +91,13 @@ export function createDocumentationService(pool,companyId,options={}){
      if(linked)throw new HttpError(409,'DOCUMENTATION_COMPANY_LINKED');
      await duplicate(db,target,row.source_sha256,row.id);
     }
-    await db.execute('UPDATE company_documents SET company_id=?,title=?,description=?,folder=?,invoice_extraction=COALESCE(?,invoice_extraction),version=version+1 WHERE company_id=? AND id=?',[target,data.title,data.description,selected,extraction?JSON.stringify(extraction):null,companyId,row.id]);
+    if(options.companyDatabases&&target!==companyId){
+     const columns='id,company_id,title,description,folder,invoice_extraction,source_name,source_mime,source_sha256,source_size,content,request_id,request_hash,version,created_at,updated_at';
+     const selection=columns.split(',').map(column=>column==='company_id'?'?':column).join(',');
+     await db.execute('INSERT INTO '+await table(target,'company_documents')+' ('+columns+') SELECT '+selection+' FROM '+await table(companyId,'company_documents')+' WHERE company_id=? AND id=?',[target,companyId,row.id]);
+     await db.execute('DELETE FROM '+await table(companyId,'company_documents')+' WHERE company_id=? AND id=?',[companyId,row.id]);
+    }
+    await db.execute('UPDATE '+await table(target,'company_documents')+' SET company_id=?,title=?,description=?,folder=?,invoice_extraction=COALESCE(?,invoice_extraction),version=version+1 WHERE company_id=? AND id=?',[target,data.title,data.description,selected,extraction?JSON.stringify(extraction):null,options.companyDatabases?target:companyId,row.id]);
     return routed(await find(db,row.id,false,target),visible,target);
    });
   },

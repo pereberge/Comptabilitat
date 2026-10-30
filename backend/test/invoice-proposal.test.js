@@ -47,3 +47,20 @@ test('unknown supplier, invalid schedule, invalid account and out of year postin
  const corrected=build({offset_account_id:2,vat_account_id:3,lines:[{description:'Correction',base:'100.00',tax_rate:'21'}],receipts:[{due_date:'2026-10-22',amount:'121.00'}]});assert.equal(corrected.ready,true);assert.equal(corrected.needs_amount_review,true);assert.match(corrected.warnings.join(' '),/difiere/);
 });
 
+test('proposal chooses the CIF match before a matching name, including known suppliers outside the current exercise',()=>{
+ const alternative={id:4,code:'41000004',description:form.party.name,kind:'subaccount'};
+ const changed={...form,party:{...form.party,name:'Another commercial brand SL'}};
+ const knownParties=[{account_id:1,direction:'received',tax_id:'b-11111111'},{account_id:4,direction:'received',tax_id:'B22222222'}];
+ const proposal=buildInvoiceProposal({form:changed,extraction:parseInvoicePages(invoicePages()),accounts:[...accounts,alternative],knownParties,journal,exercise});
+ assert.equal(proposal.form.party_account_id,1);assert.equal(proposal.ready,true);assert.equal(proposal.form.party.name,'Another commercial brand SL');
+ const sameName=buildInvoiceProposal({form,extraction:parseInvoicePages(invoicePages()),accounts:[...accounts,alternative],knownParties,journal,exercise});assert.equal(sameName.form.party_account_id,1);
+});
+test('a conflicting CIF never wins by name and an ambiguous CIF requires explicit account selection',()=>{
+ const make=(input,knownParties,extra=[])=>buildInvoiceProposal({form:{...form,offset_account_id:2,vat_account_id:3,...input},extraction:parseInvoicePages(invoicePages()),accounts:[...accounts,...extra],knownParties,journal:[],exercise});
+ const conflicting=[{account_id:1,direction:'received',tax_id:'B22222222'}];
+ assert.equal(make({},conflicting).form.party_account_id,undefined);
+ const selected=make({party_account_id:1},conflicting);assert.equal(selected.ready,false);assert.ok(selected.warnings.some(warning=>warning.includes('CIF / NIF no coincide')));
+ const other={id:4,code:'41000004',description:'Another name',kind:'subaccount'},ambiguous=[{account_id:1,direction:'received',tax_id:'B11111111'},{account_id:4,direction:'received',tax_id:'B11111111'}];
+ assert.equal(make({},ambiguous,[other]).ready,false);assert.equal(make({},ambiguous,[other]).form.party_account_id,undefined);assert.equal(make({party_account_id:4},ambiguous,[other]).ready,true);
+});
+
