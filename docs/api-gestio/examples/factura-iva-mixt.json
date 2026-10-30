@@ -1,0 +1,45 @@
+{
+  "sourceSystem": "gestio",
+  "externalId": "FAC-DEMO-002",
+  "companyExternalId": "piensos-arb",
+  "supplier": {
+    "name": "Prove?dor Exemple SL",
+    "taxId": "B12345678"
+  },
+  "invoiceNumber": "DEMO-2026-002",
+  "invoiceDate": "2026-10-26",
+  "dueDate": "2026-11-26",
+  "currency": "EUR",
+  "invoiceType": "standard",
+  "description": "Factura amb IVA mixt, exempci? i retenci?",
+  "taxBreakdown": [
+    {
+      "taxType": "vat",
+      "taxRate": "21.00",
+      "taxableBase": "1000.00",
+      "taxAmount": "210.00"
+    },
+    {
+      "taxType": "vat",
+      "taxRate": "10.00",
+      "taxableBase": "500.00",
+      "taxAmount": "50.00"
+    },
+    {
+      "taxType": "exempt",
+      "taxRate": "0.00",
+      "taxableBase": "100.00",
+      "taxAmount": "0.00",
+      "exemptionReason": "Exempci? indicada pel prove?dor; revisar el sup?sit aplicable"
+    }
+  ],
+  "total": "1620.00",
+  "documentExternalId": "DOC-DEMO-002",
+  "withholdings": [
+    {
+      "rate": "15.00",
+      "base": "1600.00",
+      "amount": "240.00"
+    }
+  ]
+}

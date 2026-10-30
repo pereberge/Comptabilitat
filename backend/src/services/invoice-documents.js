@@ -8,6 +8,7 @@ import { buildInvoiceProposal } from './invoice-proposal.js';
 import { validateInvoice } from './invoice-validation.js';
 import { createInvoiceService } from './invoices.js';
 import {invoiceCompanyMatches} from './document-company.js';
+import {knownPartyTaxIds} from './party-identification.js';
 
 const previews=new Map(),lifetime=15*60*1000;let active=0;
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
@@ -29,7 +30,7 @@ export function createInvoiceDocumentService(pool,companyId){
    FROM journal_entries e JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id
    WHERE e.company_id=? AND e.exercise_id=? ORDER BY e.entry_date,e.number,l.position`,[companyId,exercise.id]);
   const [invoices]=await db.execute('SELECT id,entry_id,direction,reference,party_account_id,party_tax_id,invoice_date,posting_date,base_total,tax_total,withholding_total,total_amount,status FROM trade_invoices WHERE company_id=? AND exercise_id=?',[companyId,exercise.id]);
-  return {company,exercise,accounts,journal,invoices};
+  return {company,exercise,accounts,journal,invoices,knownParties:await knownPartyTaxIds(db,companyId)};
  }
  function owner(extraction,company){
   const match=party=>!!invoiceCompanyMatches(party,company);

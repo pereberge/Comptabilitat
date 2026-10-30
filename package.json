@@ -17,6 +17,9 @@
     "start": "npm run start -w backend",
     "db:migrate": "npm run db:migrate -w backend",
     "db:seed": "npm run db:seed -w backend",
+    "db:split-companies": "node backend/scripts/company-databases.js",
+    "db:migrate-companies": "node backend/scripts/migrate-companies.js",
+    "integration:company": "node backend/scripts/integration-company.js",
     "test": "npm run test -w backend"
   }
 }

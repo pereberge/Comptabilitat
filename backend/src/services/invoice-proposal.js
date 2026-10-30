@@ -4,14 +4,21 @@ import { validateInvoice } from './invoice-validation.js';
 import { invoiceIdentity } from './invoice-pdf.js';
 import {completeFiscalProfile} from '../../../shared/account-party.js';
 import {partyPaymentReceipts,normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
+import {partyTaxId,partyAccountsByTaxId,partyAccountsByName} from '../../../shared/party-identity.js';
 
-const stop=new Set(['DE','DEL','LA','SL','SLU','SA','S','L','U','UNIPERSONAL','COMERCIALIZADORA','COMERCIALITZADORA','REFERENCIA']);
-function partyScore(name,description){const tokens=String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().split(/[^A-Z0-9]+/).filter(token=>token.length>=3&&!stop.has(token));return tokens.length&&tokens.every(token=>invoiceIdentity(description).includes(token))?tokens.length:0;}
-export function buildInvoiceProposal({form:input,extraction,accounts,journal,invoices=[],exercise}){
+export function buildInvoiceProposal({form:input,extraction,accounts,journal,invoices=[],knownParties=[],exercise}){
  const form=structuredClone(input),received=form.direction==='received',warnings=[...extraction.warnings],byId=new Map(accounts.map(account=>[account.id,account]));
  const parties=accounts.filter(account=>account.kind==='subaccount'&&(received?/^(400|410)/:/^(430|440)/).test(account.code));
- if(!form.party_account_id&&form.party?.tax_id){const tax=invoiceIdentity(form.party.tax_id),matches=parties.filter(account=>account.party_profile?.tax_id&&invoiceIdentity(account.party_profile.tax_id)===tax);if(matches.length===1)form.party_account_id=matches[0].id;}
- if(!form.party_account_id){const named=parties.filter(account=>partyScore(form.party?.name,account.description)>0);if(named.length===1)form.party_account_id=named[0].id;}
+ const identities=[...parties.filter(row=>row.party_profile?.tax_id).map(row=>({account_id:row.id,direction:form.direction,tax_id:row.party_profile.tax_id})),...knownParties,...invoices.map(row=>({account_id:row.party_account_id,direction:row.direction,tax_id:row.party_tax_id})),...parties.filter(row=>row.tax_id).map(row=>({account_id:row.id,direction:form.direction,tax_id:row.tax_id}))];
+ const taxId=partyTaxId(form.party?.tax_id),matched=partyAccountsByTaxId(identities,form.direction,taxId).filter(accountId=>parties.some(account=>account.id===accountId));
+ if(!form.party_account_id){
+  if(matched.length===1)form.party_account_id=matched[0];
+  else if(matched.length>1)warnings.push('Hay varias subcuentas con el mismo CIF / NIF. Selecciona la correcta antes de contabilizar.');
+  else{const named=partyAccountsByName(parties,identities,form.direction,form.party?.name,taxId);if(named.length===1)form.party_account_id=named[0].id;else if(named.length>1)warnings.push('Hay varios proveedores o clientes con nombres similares. Selecciona la subcuenta correcta.');}
+ }
+ const selectedIdentities=identities.filter(row=>Number(row.account_id)===Number(form.party_account_id)&&row.direction===form.direction&&partyTaxId(row.tax_id));
+ const taxConflict=!!(taxId&&selectedIdentities.length&&!selectedIdentities.some(row=>partyTaxId(row.tax_id)===taxId));
+ if(taxConflict)warnings.push('El CIF / NIF no coincide con el de la subcuenta seleccionada. Revisa el proveedor o cliente.');
  const party=parties.find(account=>account.id===Number(form.party_account_id));
  if(party?.party_profile)form.party=completeFiscalProfile(form.party,party.party_profile);
  const grouped=new Map();for(const row of journal){if(!grouped.has(row.entry_id))grouped.set(row.entry_id,[]);grouped.get(row.entry_id).push(row);}
@@ -74,5 +81,5 @@ export function buildInvoiceProposal({form:input,extraction,accounts,journal,inv
   (amount(totals.tax_total)===0n||form.vat_account_id)&&(amount(totals.withholding_total)===0n||form.withholding_account_id)&&
   form.posting_date>=exercise.start_date&&form.posting_date<=exercise.end_date&&form.posting_date>=form.invoice_date);
  return {form,totals,journal:lines,candidates:matches.slice(0,12),existing_invoice:existing?{id:existing.id,entry_id:existing.entry_id,reference:existing.reference,total_amount:existing.total_amount}:null,
-  basis,alternatives,warnings:[...new Set(warnings)],ready:complete&&valid&&accountsValid&&!paymentError&&extraction.currency==='EUR'&&!extraction.multiple_invoices,needs_amount_review:!extraction.totals_verified||!!extraction.withholding_review||printedDifference};
+  basis,alternatives,warnings:[...new Set(warnings)],ready:complete&&valid&&accountsValid&&!paymentError&&!taxConflict&&!(matched.length>1&&!form.party_account_id)&&extraction.currency==='EUR'&&!extraction.multiple_invoices,needs_amount_review:!extraction.totals_verified||!!extraction.withholding_review||printedDifference};
 }

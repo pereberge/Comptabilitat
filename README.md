@@ -1,5 +1,7 @@
 # Contabilidad — Mantenimiento de subcuentas y asientos
 
+**Bases per empresa:** mode opcional amb usuaris centrals i dades comptables en bases separades. Inclou trasllat verificat, encaminament de Gestió i còpies per empresa. [Activació, migració i recuperació](docs/bases-per-empresa.md).
+
 **Clientes y proveedores:** las subcuentas 430/440 y 400/410 incluyen una ficha de datos fiscales que se carga en las facturas y se conserva en su impresión y PDF. Requiere la migración 034. [Uso y conservación de los datos](docs/clientes-proveedores.md).
 
 **Cartera y remesas:** permite cambiar vencimientos, dividir el pendiente de un recibo y generar ficheros XML de cobros 19 SEPA CORE y pagos 34 SEPA desde **Cartera → Remesas de clientes / Remesas de proveedores**. Los IBAN y mandatos se guardan en las fichas de clientes/proveedores. Requiere la migración 036. [Uso y validaciones](docs/cartera-remesas.md).
@@ -9,6 +11,7 @@
 **Facturas pendientes y empresa:** al añadir una factura en Documentación, se avisa si sus datos corresponden a otra empresa y se ofrece guardarla en la empresa correcta del programa. **Revisar empresa** permite trasladar las que ya estaban mal archivadas, conservando el original y respetando los accesos de cada usuario. [Comprobación y traslado](docs/documentacion-y-borrado.md).
 
 Al refrescar o cerrar y volver a abrir el programa se recuperan la última pantalla, empresa y ejercicio de cada usuario, así como la factura que estuviera abierta. La selección se conserva también después de cerrar sesión y volver a entrar con el mismo usuario. Si no hay una selección guardada, se abre el ejercicio más reciente. Cambiar de empresa abre su último ejercicio. Al elegir otro ejercicio se muestran sus últimos movimientos. Inicio sitúa el diario al final y Asientos contables muestra primero los más recientes.
+**Integración con Gestió**: API segura `POST /api/v1/integrations/invoices/received` para recibir facturas de proveedor con referencia documental externa y estado pendiente de contabilizar. Consulta y revisión en **Facturas → Recibidas de Gestió**. Requiere la migración 031. [Contrato, credenciales, autorización por empresa y ejemplos](docs/integracio-gestio.md).
 
 La ficha de empresa incluye **Formato de empresa: General / Producción porcina**. Producción porcina admite también el PDF **DIARI** con diarios y referencias originales. Aplicar la migración 021. Uso, validaciones y archivo facilitado: [docs/produccion-porcina.md](docs/produccion-porcina.md).
 

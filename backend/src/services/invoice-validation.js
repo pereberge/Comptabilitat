@@ -5,6 +5,7 @@ import { paymentMethods } from '../../../shared/company-profile.js';
 import { normalizePartyProfile,partyProfileFields } from '../../../shared/account-party.js';
 import {normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
 import { date,description,fail,id } from './validation.js';
+import {partyTaxId} from '../../../shared/party-identity.js';
 export const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export function requestId(value){if(typeof value!=='string'||!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))fail('INVALID_REQUEST');return value.toLowerCase();}
 export function text(value,max,required=false){if(value===undefined&&!required)return '';if(typeof value!=='string'||value.trim().length>max||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)||(required&&!value.trim()))fail('INVALID_INVOICE');return value.trim();}
@@ -19,7 +20,7 @@ export function validateInvoice(body){
  const invoiceDate=date(body.invoice_date),postingDate=date(body.posting_date||body.invoice_date);
  if(postingDate<invoiceDate)fail('INVALID_INVOICE_DATE');
  object(body.party);
- const party={name:text(body.party.name,200,true),tax_id:text(body.party.tax_id,32).replace(/\s/g,'').toUpperCase(),address:text(body.party.address,250),email:text(body.party.email,254)};
+ const party={name:text(body.party.name,200,true),tax_id:partyTaxId(text(body.party.tax_id,32)),address:text(body.party.address,250),email:text(body.party.email,254)};
  if(party.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(party.email))fail('INVALID_COMPANY_EMAIL');
  try{
   const profile=normalizePartyProfile({...body.party,...party});

@@ -1,0 +1,23 @@
+[Unit]
+Description=Comptabilitat Coop Bellcaire
+After=network.target
+
+[Service]
+Type=simple
+User=comptabilitat
+Group=comptabilitat
+WorkingDirectory=/opt/comptabilitat
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node backend/src/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+StateDirectory=comptabilitat
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
