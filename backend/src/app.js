@@ -3,10 +3,14 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { apiRouter } from './routes/api.js';
 import { errorHandler } from './middleware/errors.js';
-export function createApp(service, accounting, companyScope, access) {
+export function createApp(service, accounting, companyScope, access, integrations) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api/tax/vat', express.json({ limit: '2mb' }));
+  if(integrations){
+    if(integrations.trustedProxies?.length)app.set('trust proxy',integrations.trustedProxies);
+    app.use('/api/v1/integrations',integrations.router);
+  }
   app.use('/api/companies', express.json({ limit: '3mb' }));
   app.post(['/api/documentation','/api/documentation/preview'], express.json({ limit: '15mb' }));
   app.post('/api/data-backups/preview', express.raw({ type: 'application/octet-stream', limit: '100mb' }));

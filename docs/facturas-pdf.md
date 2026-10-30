@@ -8,6 +8,10 @@ En **Facturas**, selecciona la empresa y el ejercicio y pulsa **Subir factura PD
 
 **Editar propuesta y recibos** permite corregir el número, las fechas, el tercero, sus datos fiscales, las bases, el IVA, las retenciones, las cuentas y uno o varios vencimientos. Los importes de los recibos deben sumar el total de la factura. La propuesta requiere seleccionar la cuenta de gasto o ingreso; no asigna automáticamente cualquier gasto desconocido a compras.
 
+El proveedor o cliente se identifica primero por **CIF / NIF**, normalizando mayúsculas, espacios, puntos y guiones. Una diferencia en el nombre comercial no impide reutilizar la misma subcuenta. Se consultan las fichas de proveedores y las facturas de todos los ejercicios de la empresa; el nombre se usa como alternativa cuando no hay identificación fiscal registrada que lo contradiga. Si varias subcuentas comparten CIF, se requiere selección explícita. Al seleccionar una subcuenta sin historial se conserva el CIF recibido de Gestió o de la propuesta PDF.
+
+Cuando el proveedor no tiene CIF guardado, se busca también por **nombre similar** en las subcuentas: se ignoran acentos, puntuación y formas jurídicas como SL/SLU, y se toleran cambios de orden y pequeñas erratas. Solo se propone automáticamente una coincidencia clara y única; si hay varios candidatos, hay que seleccionar la subcuenta. Esta propuesta por nombre puede corregirse antes de contabilizar.
+
 Después de revisar el original y marcar la casilla de confirmación:
 
 - **Contabilizar y crear recibos** crea un asiento equilibrado, una ficha de factura y todos sus recibos pendientes en una transacción. Un fallo revierte la operación completa.

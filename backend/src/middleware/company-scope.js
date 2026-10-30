@@ -19,13 +19,20 @@ import { createDocumentationService } from '../services/documentation.js';
 import { createVerifactuService } from '../services/verifactu.js';
 import {createAutomaticBackupManager} from '../services/automatic-backups.js';
 import { createDataBackupService } from '../services/data-backup.js';
-import { createCompanyEvolutionService } from '../services/company-evolution.js';
+import { createCompanyEvolutionService,evolutionCompanyIds } from '../services/company-evolution.js';
 import {createFarmService} from '../services/farms.js';
 import { createVatService } from '../services/vat.js';
+import {createImportedInvoiceService} from '../integrations/received-invoices.js';
+import {date} from '../services/validation.js';
 
 // Scope belongs to the request, never to global server state.
-export function companyScope(db, defaultCompanyId, {automaticBackups=createAutomaticBackupManager(db)}={}) {
-  const evolution=createCompanyEvolutionService(db);
+export function companyScope(central, defaultCompanyId, {automaticBackups=createAutomaticBackupManager(central),companyDatabases}={}) {
+  const evolution=companyDatabases?{async get(query){
+    const asOf=date(query?.as_of||new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date()));
+    const registered=await companyDatabases.list(),reports=[];
+    for(const row of registered.filter(row=>evolutionCompanyIds.includes(row.company_id)))reports.push(await createCompanyEvolutionService(await companyDatabases.forCompany(row.company_id),{companyIds:[row.company_id]}).get({...query,as_of:asOf}));
+    return {as_of:asOf,companies:reports.flatMap(report=>report.companies).sort((a,b)=>a.name.localeCompare(b.name))};
+  }}:createCompanyEvolutionService(central);
   return async (req, res, next) => {
     if(req.path.toLowerCase().replace(/\/+$/,'')==='/master/company-evolution'){req.companyEvolution=evolution;return next();}
     if (req.path === '/health' || /^\/companies(?:\/|$)/.test(req.path)) return next();
@@ -34,10 +41,12 @@ export function companyScope(db, defaultCompanyId, {automaticBackups=createAutom
     if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value))) throw new HttpError(400, 'INVALID_COMPANY');
     const companyId = Number(value);
     if(req.user?.role==='user'&&!req.user.company_ids.includes(companyId))throw new HttpError(403,'ACCESS_COMPANY_DENIED');
+    const db=companyDatabases?await companyDatabases.forCompany(companyId):central;
     const [[company]] = await db.execute('SELECT id FROM companies WHERE id=?', [companyId]);
     if (!company) throw new HttpError(404, 'COMPANY_NOT_FOUND');
     req.companyId = companyId;
     req.vat = createVatService(db,companyId);
+    req.importedInvoices=createImportedInvoiceService(db,companyId);
     req.farms = createFarmService(db,companyId);
     req.exercises = createExerciseService(db, companyId);
     req.exerciseClear = createExerciseClearService(db,companyId);
@@ -55,10 +64,10 @@ export function companyScope(db, defaultCompanyId, {automaticBackups=createAutom
     req.accountingReview = createAccountingReviewService(db, companyId);
     req.invoiceDocuments = createInvoiceDocumentService(db, companyId);
     req.invoiceDeletion = createInvoiceDeletionService(db,companyId);
-    req.documentation = createDocumentationService(db,companyId,{companyIds:req.user?.role==='master'?null:req.user?.company_ids||[companyId],actorKey:req.user?.key||''});
+    req.documentation = createDocumentationService(db,companyId,{companyIds:req.user?.role==='master'?null:req.user?.company_ids||[companyId],actorKey:req.user?.key||'',companyDatabases});
     req.verifactu = createVerifactuService(db,companyId);
     req.dataBackup = createDataBackupService(db,companyId);
-    req.automaticBackups = automaticBackups.forCompany(companyId);
+    req.automaticBackups = companyDatabases?(await automaticBackups.forCompany(companyId)):automaticBackups.forCompany(companyId);
     next();
   };
 }

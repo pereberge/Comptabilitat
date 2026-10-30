@@ -117,6 +117,7 @@ export function createDataBackupService(pool,companyId){
   const [banks]=await db.execute('SELECT * FROM bank_connections WHERE company_id=? ORDER BY id',[companyId]);
   const [suppliers]=await db.execute('SELECT id,code,account_id,tax_id FROM suppliers WHERE company_id=? ORDER BY id',[companyId]);
   const [documents]=await db.execute('SELECT id,request_id,source_sha256,version FROM company_documents WHERE company_id=? ORDER BY id',[companyId]);
+  const [integrations]=await db.execute('SELECT id,source_system,external_id,payload_hash,version FROM integration_received_invoices WHERE company_id=? ORDER BY id',[companyId]);
   const [farms]=await db.execute('SELECT * FROM pig_farms WHERE company_id=? ORDER BY id',[companyId]);
   const [farmDocuments]=await db.execute('SELECT id,source_sha256 FROM farm_documents WHERE company_id=? ORDER BY id',[companyId]);
   const [farmLots]=await db.execute('SELECT * FROM farm_lots WHERE company_id=? ORDER BY id',[companyId]);
@@ -179,6 +180,7 @@ export function createDataBackupService(pool,companyId){
   for(const row of data.tables.bank_connections){const found=banks.find(item=>item.iban===row.iban);if(found&&found.account_id!==maps.accounts.get(row.account_id))add('bank','El IBAN '+row.iban+' está asociado a otra subcuenta.');}
   for(const row of data.tables.suppliers){const found=suppliers.find(item=>item.code===row.code);if(found&&(found.account_id!==maps.accounts.get(row.account_id)||normalize(found.tax_id)!==normalize(row.tax_id)))add('supplier','El proveedor '+row.code+' tiene datos incompatibles.');}
   for(const row of data.tables.company_documents){const found=documents.find(item=>item.request_id===row.request_id);if(found&&found.source_sha256!==row.source_sha256)add('document','Un documento común coincide con otro archivo diferente.');}
+  for(const row of data.tables.integration_received_invoices){const found=integrations.find(item=>item.source_system===row.source_system&&item.external_id===row.external_id);if(found&&found.payload_hash!==row.payload_hash)add('integration','Una recepción de integración ya existe con otros datos.');}
   if(data.fiscal_archive){
    const fiscalInvoiceIds=new Set(data.tables.trade_invoices.map(row=>row.id));
    const [[existingFiscal]]=await db.execute('SELECT COUNT(*) AS total FROM verifactu_records WHERE company_id=?',[companyId]);
@@ -187,7 +189,7 @@ export function createDataBackupService(pool,companyId){
   }
   const replacement=replaceExisting?await clearService.replacementPreview(db,affectedIds):null;
   if(replacement)blockers.push(...replacement.blockers);
-  const state={company,details,periods,accounts,banks,suppliers,documents,farms,farmDocuments,farmLots,logo,blockers,existingCounts,replacement_hash:replacement?.state_hash};
+  const state={company,details,periods,accounts,banks,suppliers,documents,integrations,farms,farmDocuments,farmLots,logo,blockers,existingCounts,replacement_hash:replacement?.state_hash};
   return {company,periods,maps,blockers,existingCounts,affectedIds,replacement,ready:!blockers.length,state_hash:sha(state)};
  }
  async function insert(db,table,row,meta,maps){

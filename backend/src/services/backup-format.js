@@ -10,6 +10,7 @@ import { normalizeVatInput,vatPeriod } from '../../../shared/vat-model.js';
 import {accountPartyType,normalizePartyProfile} from '../../../shared/account-party.js';
 import {normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
 import {normalizeSepaMandate} from '../../../shared/sepa.js';
+import {normalizeReceivedInvoice} from '../integrations/invoice-contract.js';
 
 export const MAX_BACKUP_FILE = 100 * 1024 * 1024;
 export const MAX_BACKUP_JSON = 256 * 1024 * 1024;
@@ -44,11 +45,13 @@ export const TABLES = {
  bank_remittances:{key:['request_id'],refs:{}},
  invoice_documents: { key: ['exercise_id','source_sha256'], refs: { exercise_id:'accounting_exercises',invoice_id:'trade_invoices',entry_id:'journal_entries' } },
  bank_reconciliations: { key: ['exercise_id','account_id','source_sha256'], refs: { exercise_id:'accounting_exercises',account_id:'accounts' } },
+ integration_received_invoices: { key: ['source_system','external_id'], refs: {exercise_id:'accounting_exercises',supplier_account_id:'accounts',invoice_id:'trade_invoices',entry_id:'journal_entries'} },
+ supplier_expense_preferences: {key:['supplier_tax_id'],refs:{expense_account_id:'accounts'}},
 };
 export const TABLE_ORDER = Object.keys(TABLES);
-export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents']);
+export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents','integration_received_invoices','supplier_expense_preferences']);
 export const FARM_TABLES = new Set(['pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
-export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'bank_reconciliation_rules','vat_drafts','bank_remittances']);
+export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'integration_received_invoices','supplier_expense_preferences','bank_reconciliation_rules','vat_drafts','bank_remittances']);
 export const fail = (code, status=400) => { throw new HttpError(status, code); };
 export const sha = value => createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 export const encodeRow = row => Object.fromEntries(Object.entries(row).map(([key,value])=>[key,Buffer.isBuffer(value)?{$binary_base64:value.toString('base64')}:value]));
@@ -107,6 +110,13 @@ export function validateBackup(data) {
    if(Object.keys(row).some(key=>!data.schema[table].includes(key)||['__proto__','constructor','prototype'].includes(key)))fail('BACKUP_INVALID_FILE');
    index.set(identity(row),row);if(++total>300000)fail('BACKUP_TOO_LARGE',413);
   }
+ }
+ for(const row of data.tables.integration_received_invoices){
+  let normalized;try{normalized=normalizeReceivedInvoice(row.payload);}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+  const {companyExternalId,...canonical}=normalized.payload;
+  if(sha(canonical)!==row.payload_hash)fail('BACKUP_CHECKSUM');
+  const fields={source_system:canonical.sourceSystem,external_id:canonical.externalId,supplier_name:canonical.supplier.name,supplier_tax_id:canonical.supplier.taxId,invoice_number:canonical.invoiceNumber,fiscal_number:normalized.fiscalNumber,invoice_date:canonical.invoiceDate,due_date:canonical.dueDate,currency:canonical.currency,invoice_type:canonical.invoiceType,base_total:normalized.baseTotal,tax_total:normalized.taxTotal,withholding_total:normalized.withholdingTotal,total_amount:canonical.total,document_external_id:canonical.documentExternalId};
+  if(Object.entries(fields).some(([field,value])=>row[field]!==value))fail('BACKUP_INVALID_ACCOUNTING');
  }
  if(!data.tables.accounting_exercises.length||data.scope.kind==='exercise'&&(data.tables.accounting_exercises.length!==1||data.scope.exercise_id!==data.tables.accounting_exercises[0].id))fail('BACKUP_INVALID_FILE');
  if(data.scope.kind==='exercises'){
