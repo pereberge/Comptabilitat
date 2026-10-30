@@ -10,6 +10,8 @@ import { normalizeVatInput,vatPeriod } from '../../../shared/vat-model.js';
 import {accountPartyType,normalizePartyProfile} from '../../../shared/account-party.js';
 import {normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
 import {normalizeSepaMandate} from '../../../shared/sepa.js';
+import {normalizeCorporateTaxInput} from '../../../shared/corporate-tax.js';
+import {installmentPeriod,normalizeInstallmentTaxInput} from '../../../shared/installment-tax.js';
 
 export const MAX_BACKUP_FILE = 100 * 1024 * 1024;
 export const MAX_BACKUP_JSON = 256 * 1024 * 1024;
@@ -19,6 +21,8 @@ export const TABLES = {
  company_logos: { key: ['company_id'], refs: {} },
  vat_drafts: { key: ['tax_year','frequency','period'], refs: {} },
  accounting_exercises: { key: ['start_date','end_date'], refs: {} },
+ corporate_tax_drafts: {key:['exercise_id'],refs:{exercise_id:'accounting_exercises'}},
+ installment_tax_drafts:{key:['exercise_id','tax_year','period'],refs:{exercise_id:'accounting_exercises'}},
  accounts: { key: ['code'], refs: { parent_id:'accounts' } },
  bank_connections: { key: ['iban'], refs: { account_id:'accounts' } },
  bank_reconciliation_rules: {key:['bank_account_id','concept_key','direction'],refs:{bank_account_id:'accounts'}},
@@ -48,7 +52,7 @@ export const TABLES = {
 export const TABLE_ORDER = Object.keys(TABLES);
 export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents']);
 export const FARM_TABLES = new Set(['pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
-export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'bank_reconciliation_rules','vat_drafts','bank_remittances']);
+export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'bank_reconciliation_rules','vat_drafts','bank_remittances','corporate_tax_drafts','installment_tax_drafts']);
 export const fail = (code, status=400) => { throw new HttpError(status, code); };
 export const sha = value => createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 export const encodeRow = row => Object.fromEntries(Object.entries(row).map(([key,value])=>[key,Buffer.isBuffer(value)?{$binary_base64:value.toString('base64')}:value]));
@@ -145,6 +149,12 @@ export function validateBackup(data) {
  }
  for(const draft of data.tables.vat_drafts){
   try{vatPeriod({year:draft.tax_year,frequency:draft.frequency,period:draft.period});normalizeVatInput(draft.payload);if(!Number.isSafeInteger(draft.version)||draft.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+ }
+ for(const draft of data.tables.corporate_tax_drafts){
+  try{normalizeCorporateTaxInput(draft.payload);if(!Number.isSafeInteger(draft.version)||draft.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}
+ }
+ for(const draft of data.tables.installment_tax_drafts){
+  try{installmentPeriod(periods.get(draft.exercise_id),{year:draft.tax_year,period:draft.period});normalizeInstallmentTaxInput(draft.payload);if(!Number.isSafeInteger(draft.version)||draft.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}
  }
  for(const rule of data.tables.bank_reconciliation_rules){
   if(typeof rule.concept!=='string'||rule.concept.length>200||rule.concept_key!==reconciliationConcept(rule.concept)||rule.concept_key.length<3||!['in','out'].includes(rule.direction)||indexes.accounts.get(rule.bank_account_id)?.kind!=='subaccount')fail('BACKUP_INVALID_ACCOUNTING');

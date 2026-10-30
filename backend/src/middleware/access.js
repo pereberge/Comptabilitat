@@ -12,6 +12,8 @@ export function requiredPermission(method,path){
  if(area==='entries'&&method==='DELETE')return 'entries_delete';
  if(area==='invoices'&&['delete','delete-preview'].includes(action))return 'invoice_delete';
  if(method==='POST'&&normalized==='tax/vat/settlement-preview')return null;
+ if(method==='POST'&&normalized==='tax/corporate/preview')return null;
+ if(method==='POST'&&normalized==='tax/installments/preview')return null;
  if(['GET','HEAD','OPTIONS'].includes(method))return area==='exercises'&&action==='clear'&&detail==='preview'||area==='exercise-clears'&&action==='backup'?'exercise_clear':null;
  if(area==='farms'&&['preview','import'].includes(parts[1]))return 'data_import';
  if(area==='exercises'&&action==='clear')return 'exercise_clear';

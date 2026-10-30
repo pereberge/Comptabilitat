@@ -16,6 +16,8 @@ function datasets(exerciseId){
  const farmInvoices='SELECT i.id FROM farm_invoices i WHERE i.company_id=r.company_id AND i.exercise_id=?';
  const operations='SELECT o.id FROM exercise_operations o WHERE o.company_id=r.company_id AND o.exercise_id=?';
  return [
+  ['installment_drafts','installment_tax_drafts','r.exercise_id=?'],
+  ['corporate_drafts','corporate_tax_drafts','r.exercise_id=?'],
   ['farm_care_costs','farm_care_costs','r.exercise_id=?'],
   ['farm_deaths','farm_deaths','r.exercise_id=?'],
   ['farm_feed_transfers','farm_feed_transfers','r.exercise_id=?'],

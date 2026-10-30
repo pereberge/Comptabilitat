@@ -18,6 +18,7 @@ import TaxFiscalLines from '../components/TaxFiscalLines.vue';
 import TaxSettlementProposal from '../components/TaxSettlementProposal.vue';
 import {appendVatDetailCsv} from '../services/vat-details.js';
 import '../assets/tax.css';
+import TaxTabs from '../components/TaxTabs.vue';
 
 const {company,exercises,selectedExercise}=useContext(),{can}=useAccess(),route=useRoute(),router=useRouter();
 const current=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit'}).formatToParts(new Date());
@@ -92,6 +93,7 @@ onBeforeUnmount(()=>generation++);
 
 <template>
  <div class="tax-page">
+  <TaxTabs />
   <div class="page-heading tax-controls"><div><p class="eyebrow">{{ company?.name }}</p><h1>{{ t.title }}</h1><p class="muted">{{ t.model }} · {{ t.subtitle }}</p></div><div class="actions"><button v-if="can('accounting_write')" class="button primary" :disabled="!ready||calculationDirty||!result?.filing?.ready" @click="filingOpen=true">Archivo de presentación .303</button><button class="button" :disabled="!ready||calculationDirty" @click="exportCsv">Descargar CSV</button><button class="button" :disabled="!ready||calculationDirty" @click="print">Imprimir / guardar PDF</button></div></div>
   <form class="filters tax-controls tax-filters" @submit.prevent="consult">
    <label>Año natural<select v-model="filters.year" aria-label="Año natural" :disabled="busy||loading"><option v-for="year in years" :key="year" :value="String(year)">{{ year }}</option></select></label>

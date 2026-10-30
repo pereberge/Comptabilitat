@@ -25,6 +25,8 @@ export const router = createRouter({
 });
 router.addRoute({path:'/granjas',name:'farms',component:()=>import('../views/FarmManagementView.vue')});
 router.addRoute({path:'/hacienda',name:'tax',component:()=>import('../views/TaxView.vue')});
+router.addRoute({path:'/hacienda/sociedades',name:'corporateTax',component:()=>import('../views/CorporateTaxView.vue')});
+router.addRoute({path:'/hacienda/pagos-fraccionados',name:'installmentTax',component:()=>import('../views/InstallmentTaxView.vue')});
 router.addRoute({path:'/cartera/remesas/:party(clientes|proveedores)',name:'bankRemittances',component:()=>import('../views/BankRemittancesView.vue'),props:route=>({direction:route.params.party==='proveedores'?'received':'issued'})});
 router.addRoute({path:'/cartera/remesas',redirect:route=>({path:'/cartera/remesas/clientes',query:route.query,hash:route.hash})});
 router.addRoute({path:'/remesas',redirect:route=>({path:route.query.direction==='received'?'/cartera/remesas/proveedores':'/cartera/remesas/clientes',query:route.query,hash:route.hash})});

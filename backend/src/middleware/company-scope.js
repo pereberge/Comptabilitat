@@ -22,6 +22,8 @@ import { createDataBackupService } from '../services/data-backup.js';
 import { createCompanyEvolutionService } from '../services/company-evolution.js';
 import {createFarmService} from '../services/farms.js';
 import { createVatService } from '../services/vat.js';
+import {createCorporateTaxService} from '../services/corporate-tax.js';
+import {createInstallmentTaxService} from '../services/installment-tax.js';
 
 // Scope belongs to the request, never to global server state.
 export function companyScope(db, defaultCompanyId, {automaticBackups=createAutomaticBackupManager(db)}={}) {
@@ -38,6 +40,8 @@ export function companyScope(db, defaultCompanyId, {automaticBackups=createAutom
     if (!company) throw new HttpError(404, 'COMPANY_NOT_FOUND');
     req.companyId = companyId;
     req.vat = createVatService(db,companyId);
+    req.corporateTax = createCorporateTaxService(db,companyId);
+    req.installmentTax = createInstallmentTaxService(db,companyId);
     req.farms = createFarmService(db,companyId);
     req.exercises = createExerciseService(db, companyId);
     req.exerciseClear = createExerciseClearService(db,companyId);

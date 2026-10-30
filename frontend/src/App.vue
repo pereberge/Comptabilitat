@@ -73,7 +73,7 @@ function changeCompany(event) { switchCompany(event.target.value); }
       <RouterLink class="nav-item" to="/cuentas" @click="menuOpen=false"><AppIcon name="list" />{{ es.accounts }}</RouterLink>
       <RouterLink class="nav-item" to="/asientos" @click="menuOpen=false"><AppIcon name="book" />{{ es.entries }}</RouterLink>
       <RouterLink class="nav-item" to="/facturas" @click="menuOpen=false"><AppIcon name="list" />{{ es.invoices }}</RouterLink>
-      <RouterLink class="nav-item" to="/hacienda" @click="menuOpen=false"><AppIcon name="building" />{{ es.tax }}</RouterLink>
+      <RouterLink class="nav-item" :class="{'router-link-exact-active':['corporateTax','installmentTax'].includes(route.name)}" to="/hacienda" @click="menuOpen=false"><AppIcon name="building" />{{ es.tax }}</RouterLink>
       <RouterLink v-if="companyHasCapability(company,'pig_production')" class="nav-item" to="/granjas" @click="menuOpen=false"><AppIcon name="building" />Gestión de granjas</RouterLink>
       <RouterLink class="nav-item" to="/verifactu" @click="menuOpen=false"><AppIcon name="check" />VERI*FACTU</RouterLink>
       <RouterLink class="nav-item" :class="{'router-link-active':route.name==='bankRemittances','router-link-exact-active':route.name==='bankRemittances'}" to="/cartera" @click="menuOpen=false"><AppIcon name="calendar" />{{ es.portfolio }}</RouterLink>

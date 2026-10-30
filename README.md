@@ -18,7 +18,7 @@ La ficha de empresa incluye **Formato de empresa: General / Producción porcina*
 
 En **Copias de seguridad** (`/copias-seguridad`), selecciona la empresa y marca uno, varios o todos sus ejercicios. **Hacer copia de seguridad** descarga sus datos y originales; **Importar datos** revisa el archivo y recupera los movimientos en ejercicios vacíos. Incluye facturas, cartera, PDF, conciliaciones y documentos comunes. También permite programar copias completas diarias, semanales y mensuales en el servidor, descargarlas y borrar las antiguas por fecha y tipo con revisión previa. Aplicar la migración 020. Uso, límites y pruebas: [docs/copias-seguridad.md](docs/copias-seguridad.md).
 
-Aplicación local con Vue 3 (Composition API), Vite, JavaScript, Vue Router, Express y MySQL. Interfaz en español, textos centralizados y datos persistentes reales. El apartado de Hacienda prepara borradores del modelo 303 para el régimen general; la presentación se realiza en la Sede de la AEAT.
+Aplicación local con Vue 3 (Composition API), Vite, JavaScript, Vue Router, Express y MySQL. Interfaz en español, textos centralizados y datos persistentes reales. Hacienda prepara los modelos 303 (IVA), [200 (Sociedades)](docs/impuesto-sociedades.md) y [202 (pagos fraccionados)](docs/modelo-202.md), con borradores guardados y exportación CSV/PDF; la presentación se completa en la Sede de la AEAT. Sociedades y pagos fraccionados requieren las migraciones 037 y 038.
 
 ## Mantenimiento de subcuentas
 

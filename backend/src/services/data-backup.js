@@ -19,6 +19,8 @@ Object.assign(legacyDefaults.company_details,{sepa_creditor_id:'',bank_initiator
 legacyDefaults.trade_invoices={party_snapshot:null,payment_snapshot:null};
 const json=value=>typeof value==='string'?JSON.parse(value):value;
 labels.farm_sales='ventas manuales de granjas';
+labels.corporate_tax_drafts='borradores del Impuesto sobre Sociedades';
+labels.installment_tax_drafts='borradores de pagos fraccionados · Modelo 202';
 const identity=row=>row.id??row.company_id;
 const normalize=value=>String(value||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const marks=rows=>rows.map(()=>'?').join(',');

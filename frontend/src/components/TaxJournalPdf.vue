@@ -3,7 +3,7 @@ import {computed,onBeforeUnmount,onMounted,ref} from 'vue';
 import {companyHeaders} from '../services/company.js';
 import {errorText} from '../locales/accounting.js';
 import FormDialog from './FormDialog.vue';
-const props=defineProps({entryId:[String,Number],page:Number}),emit=defineEmits(['close']);
+const props=defineProps({entryId:[String,Number],page:Number,title:{type:String,default:'Diario original · IVA'}}),emit=defineEmits(['close']);
 const url=ref(''),error=ref(''),controller=new AbortController();let disposed=false;
 const frameUrl=computed(()=>url.value+(props.page?'#page='+props.page:''));
 onMounted(async()=>{
@@ -17,4 +17,4 @@ onMounted(async()=>{
 });
 onBeforeUnmount(()=>{disposed=true;controller.abort();if(url.value)URL.revokeObjectURL(url.value);});
 </script>
-<template><FormDialog class="invoice-pdf-dialog" title="Diario original · IVA" @close="emit('close')"><p v-if="error" class="notice error-notice" role="alert">{{ error }}</p><template v-else-if="url"><p><a class="button" :href="url" download="diario-original.pdf">Descargar diario original</a></p><iframe class="invoice-pdf-frame" :src="frameUrl" title="Diario original en PDF"></iframe></template><p v-else role="status">Cargando diario original…</p></FormDialog></template>
+<template><FormDialog class="invoice-pdf-dialog" :title="title" @close="emit('close')"><p v-if="error" class="notice error-notice" role="alert">{{ error }}</p><template v-else-if="url"><p><a class="button" :href="url" download="diario-original.pdf">Descargar diario original</a></p><iframe class="invoice-pdf-frame" :src="frameUrl" title="Diario original en PDF"></iframe></template><p v-else role="status">Cargando diario original…</p></FormDialog></template>

@@ -7,6 +7,8 @@ export function createApp(service, accounting, companyScope, access) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api/tax/vat', express.json({ limit: '2mb' }));
+  app.use('/api/tax/corporate', express.json({ limit: '2mb' }));
+  app.use('/api/tax/installments', express.json({ limit: '2mb' }));
   app.use('/api/companies', express.json({ limit: '3mb' }));
   app.post(['/api/documentation','/api/documentation/preview'], express.json({ limit: '15mb' }));
   app.post('/api/data-backups/preview', express.raw({ type: 'application/octet-stream', limit: '100mb' }));

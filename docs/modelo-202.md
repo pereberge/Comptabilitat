@@ -1,0 +1,14 @@
+# Pagos fraccionados · Modelo 202
+
+Hacienda → Pagos fraccionados ofrece los pagos 1/P (abril), 2/P (octubre) y 3/P (diciembre), con borradores independientes por empresa, ejercicio contable, año de presentación y período. Incluye CSV, PDF y una propuesta del asiento 473 a 572 que se registra por separado con la fecha y banco reales.
+
+- **40.2:** el usuario confirma la base de la declaración cuyo plazo había vencido al comenzar el mes del pago. Aplica el 18 %, sin volver a restar los pagos 202 anteriores. La declaración de referencia puede ser distinta en abril y octubre. Los períodos base cortos requieren revisar la agregación de declaraciones anteriores.
+- **40.3:** toma la contabilidad desde el inicio del ejercicio hasta el 31 de marzo, 30 de septiembre o 30 de noviembre. Admite ejercicios distintos del año natural. Corrige automáticamente el IS contabilizado, permite otros ajustes acumulados, BIN, capitalización pendiente de años anteriores y nivelación. El porcentaje se obtiene del tipo del período fiscal, con 5/7 redondeado por defecto o 19/20 por exceso cuando corresponde. Contempla los tramos de microempresa y agrupa porcentajes iguales.
+- Bonificaciones, retenciones y pagos anteriores ingresados se introducen tras comprobarlos. Los borradores previos y el saldo conjunto de 473 no prueban por sí solos el ingreso.
+- En el supuesto ordinario de INCN desde 10 millones compara el resultado con el mínimo del 23 % del resultado contable positivo después del IS, menos pagos anteriores ingresados. Las exclusiones y regímenes especiales requieren preparación específica.
+
+Las reglas y casillas se contrastan con las [instrucciones oficiales del modelo 202](https://sede.agenciatributaria.gob.es/Sede/todas-gestiones/impuestos-tasas/impuesto-sobre-sociedades/modelo-202-is-i_____resencia-territorio-fraccionado_/instrucciones.html) y los [tipos publicados por la AEAT](https://sede.agenciatributaria.gob.es/Sede/impuesto-sobre-sociedades/que-base-imponible-se-determina-sociedades/tipo-impositivo.html). El cálculo ordinario soporta tipos de períodos iniciados en 2024–2026; otros años se marcan provisionales. Consolidación (modelo 222), foralidad, exenciones, complementarias y supuestos especiales requieren completar la liquidación específica.
+
+La pantalla exporta documentos de trabajo. La presentación oficial y el ingreso se completan en la [sede de la AEAT](https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GE00.shtml). Guardar el borrador no presenta ni paga la declaración.
+
+La migración 038 crea `installment_tax_drafts`. Las copias completas y por ejercicio conservan los borradores; las copias antiguas sin esa tabla siguen siendo compatibles. Vaciar o reemplazar un ejercicio archiva y retira sus borradores 202. Las versiones evitan sobrescrituras y las huellas detectan cambios en la contabilidad acumulada revisada.

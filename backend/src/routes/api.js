@@ -6,6 +6,12 @@ import { accountingController } from '../controllers/accounting.js';
 import { requireMaster } from '../middleware/access.js';
 export function apiRouter(service, accounting) {
  const router=Router(), controller=contextController(service);
+ router.get('/tax/installments',async(req,res)=>res.json(await req.installmentTax.get(req.query)));
+ router.post('/tax/installments/preview',async(req,res)=>res.json(await req.installmentTax.preview(req.query,req.body)));
+ router.put('/tax/installments/draft',async(req,res)=>res.json(await req.installmentTax.save(req.query,req.body)));
+ router.get('/tax/corporate',async(req,res)=>res.json(await req.corporateTax.get(req.query)));
+ router.post('/tax/corporate/preview',async(req,res)=>res.json(await req.corporateTax.preview(req.query,req.body)));
+ router.put('/tax/corporate/draft',async(req,res)=>res.json(await req.corporateTax.save(req.query,req.body)));
  router.get('/tax/vat',async(req,res)=>res.json(await req.vat.get(req.query)));
  router.get('/tax/vat/entries/:id/source',async(req,res)=>{const source=await req.vat.source(req.params.id);res.set('Content-Type','application/pdf').set('X-Content-Type-Options','nosniff').set('Content-Disposition',"inline; filename*=UTF-8''"+encodeURIComponent(source.source_name)).send(source.source_pdf);});
  router.post('/tax/vat/preview',async(req,res)=>res.json(await req.vat.preview(req.query,req.body)));

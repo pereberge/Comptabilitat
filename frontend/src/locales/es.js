@@ -1,5 +1,7 @@
 export const es = {
   tax:'Hacienda',
+  corporateTax:'Hacienda · Sociedades',
+  installmentTax:'Hacienda · Modelo 202',
   farms:'Gestión de granjas',
   users:'Usuarios y permisos',
   companyEvolution:'Patrimonio y beneficio',
