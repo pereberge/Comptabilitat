@@ -44,7 +44,7 @@ export function createInvoiceDocumentService(pool,companyId){
    lines:extraction.lines.length?extraction.lines:[{description:'',base:'',tax_rate:'21'}],receipts:[{due_date:extraction.due_date||extraction.invoice_date||'',amount:extraction.total_amount||'0.00'}],request_id:randomUUID()};
  }
  async function find(db,documentId){
-  const [[row]]=await db.execute('SELECT id,company_id,exercise_id,source_name,source_sha256,pages,extraction,form,proposal,status,invoice_id,entry_id,version,created_at,updated_at FROM invoice_documents WHERE company_id=? AND id=?',[companyId,id(documentId)]);
+  const [[row]]=await db.execute('SELECT id,company_id,exercise_id,source_name,source_sha256,pages,extraction,form,proposal,status,invoice_id,entry_id,version,created_at,updated_at,supplier_draft,review_kind,reception_id FROM invoice_documents WHERE company_id=? AND id=?',[companyId,id(documentId)]);
   if(!row)fail('INVOICE_DOCUMENT_NOT_FOUND',404);return {...row,extraction:parse(row.extraction),form:parse(row.form),proposal:parse(row.proposal)};
  }
  async function proposal(db,row){const meta=await context(db,row.exercise_id);return {meta,proposal:buildInvoiceProposal({...meta,form:row.form,extraction:row.extraction})};}
@@ -55,7 +55,7 @@ export function createInvoiceDocumentService(pool,companyId){
   async list(query){
    const exerciseId=id(query.exercise_id);const [[exercise]]=await pool.execute('SELECT id FROM accounting_exercises WHERE company_id=? AND id=?',[companyId,exerciseId]);if(!exercise)fail('EXERCISE_NOT_FOUND',404);
    const search=typeof query.search==='string'?query.search.trim():'';if(search.length>200)fail('INVALID_SEARCH');
-   let where='company_id=? AND exercise_id=?';const params=[companyId,exerciseId];
+   let where="company_id=? AND exercise_id=? AND supplier_draft IS NULL AND review_kind='invoice'";const params=[companyId,exerciseId];
    if(query.direction&&query.direction!=='all'){if(!['issued','received'].includes(query.direction))fail('INVALID_INVOICE');where+=' AND direction=?';params.push(query.direction);}
    if(search){where+=' AND (LOCATE(?,reference)>0 OR LOCATE(?,party_name)>0 OR LOCATE(?,party_tax_id)>0 OR LOCATE(?,source_name)>0 OR LOCATE(?,CAST(total_amount AS CHAR))>0)';params.push(search,search,search,search,search.replace(',','.'));}
    const [rows]=await pool.execute('SELECT id,source_name,direction,reference,party_name,party_tax_id,invoice_date,total_amount,status,invoice_id,entry_id,version FROM invoice_documents WHERE '+where+' ORDER BY created_at DESC,id DESC',params);return rows;
@@ -83,8 +83,9 @@ export function createInvoiceDocumentService(pool,companyId){
   },
   async remove(documentId,body){return withTransaction(pool,async db=>{
    await lockCompany(db,companyId);const row=await find(db,documentId);
-   if(row.status!=='draft'||row.invoice_id||row.entry_id)fail('INVOICE_DOCUMENT_ALREADY_POSTED',409);
+   if(row.reception_id||row.supplier_draft||row.status!=='draft'||row.invoice_id||row.entry_id)fail('INVOICE_DOCUMENT_ALREADY_POSTED',409);
    if(row.version!==body?.version)fail('INVOICE_DOCUMENT_CHANGED',409);
+   await db.execute('DELETE FROM farm_expense_assignments WHERE company_id=? AND document_id=?',[companyId,row.id]);
    await db.execute('DELETE FROM invoice_documents WHERE company_id=? AND id=?',[companyId,row.id]);return {id:row.id,deleted:true};
   });},
   async source(documentId){const [[row]]=await pool.execute('SELECT source_name,source_pdf FROM invoice_documents WHERE company_id=? AND id=?',[companyId,id(documentId)]);if(!row)fail('INVOICE_DOCUMENT_NOT_FOUND',404);return row;},
@@ -117,7 +118,7 @@ export function createInvoiceDocumentService(pool,companyId){
   },
   async update(documentId,body){
    return withTransaction(pool,async db=>{
-    await lockCompany(db,companyId);const row=await find(db,documentId);if(row.status!=='draft')fail('INVOICE_DOCUMENT_ALREADY_POSTED',409);if(row.version!==body?.version)fail('INVOICE_DOCUMENT_CHANGED',409);
+    await lockCompany(db,companyId);const row=await find(db,documentId);if(row.supplier_draft||row.review_kind==='not_invoice'||row.reception_id)fail('SUPPLIER_DOCUMENT_LOCKED',409);if(row.status!=='draft')fail('INVOICE_DOCUMENT_ALREADY_POSTED',409);if(row.version!==body?.version)fail('INVOICE_DOCUMENT_CHANGED',409);
     const data=validateInvoice(body.form);if(data.exercise_id!==row.exercise_id||data.direction!==row.form.direction)fail('INVOICE_DOCUMENT_CONTEXT_MISMATCH');
     const meta=await context(db,row.exercise_id),proposed=buildInvoiceProposal({...meta,extraction:row.extraction,form:data});
     for(const field of ['party_account_id','offset_account_id','vat_account_id','withholding_account_id'])if(data[field]&&!meta.accounts.some(account=>account.id===data[field]&&account.kind==='subaccount'))fail('ACCOUNT_NOT_FOUND',404);
@@ -127,7 +128,7 @@ export function createInvoiceDocumentService(pool,companyId){
   },
   async post(documentId,body){
    return withTransaction(pool,async db=>{
-    await lockCompany(db,companyId);const row=await find(db,documentId);if(row.invoice_id)return {id:row.invoice_id,document_id:row.id,replayed:true};
+    await lockCompany(db,companyId);const row=await find(db,documentId);if(row.supplier_draft||row.review_kind==='not_invoice'||row.reception_id)fail('SUPPLIER_DOCUMENT_LOCKED',409);if(row.invoice_id)return {id:row.invoice_id,document_id:row.id,replayed:true};
     if(body?.confirm!==true)fail('INVOICE_DOCUMENT_CONFIRM_REQUIRED');if(row.version!==body.version)fail('INVOICE_DOCUMENT_CHANGED',409);
     await db.execute('SELECT id FROM accounting_exercises WHERE company_id=? AND id=? FOR UPDATE',[companyId,row.exercise_id]);
     const result=await proposal(db,row),current=result.proposal;if(!current.ready)fail('INVOICE_DOCUMENT_INCOMPLETE');

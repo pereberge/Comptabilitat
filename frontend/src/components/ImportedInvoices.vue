@@ -1,4 +1,5 @@
 <script setup>
+import FarmExpenseClassification from './FarmExpenseClassification.vue';
 import {onBeforeUnmount,ref,watch} from 'vue';
 import {useContext} from '../composables/context.js';
 import {useAccess} from '../composables/access.js';
@@ -52,10 +53,11 @@ onBeforeUnmount(()=>generation++);
     </template>
    </section>
    <details v-if="detail.payload.lines.length"><summary>Líneas originales</summary><ul><li v-for="(line,index) in detail.payload.lines" :key="index">{{ line.description }} · {{ money(line.taxableBase) }} · IVA {{ line.taxRate }} % · cuota {{ money(line.taxAmount) }}</li></ul></details>
+   <FarmExpenseClassification source-kind="integration" :source-id="detail.id"/>
    <section class="imported-invoice-section" aria-label="Origen e importación"><h3>Origen e importación</h3><table class="imported-invoice-facts"><tbody><tr><th scope="row">Sistema de origen</th><td>{{ detail.source_system }}</td></tr><tr><th scope="row">Referencia externa</th><td>{{ detail.external_id }}</td></tr><tr><th scope="row">Importada (UTC)</th><td>{{ date(String(detail.imported_at).slice(0,10)) }} · {{ String(detail.imported_at).slice(11,19) }}</td></tr><tr><th scope="row">Documento original</th><td><strong>{{ detail.document_external_id }}</strong></td></tr></tbody></table></section><p class="muted">La referencia no es una URL pública. La consulta del PDF estará disponible cuando Gestió disponga de su API documental autenticada.</p>
    <ul v-if="detail.issues.length" class="notice"><li v-for="issue in detail.issues" :key="issue">{{ integrationIssues[issue]||issue }}</li></ul>
    <div class="actions"><button v-if="can('accounting_write')&&detail.can_post" class="button primary" :disabled="busy" @click="beginPosting">Revisar y contabilizar</button><button v-if="detail.accounting_status==='posted'&&detail.invoice_id" class="button" @click="emit('posted',detail.invoice_id);detail=null">Abrir factura contabilizada</button><button v-if="can('accounting_write')&&['pending','issues'].includes(detail.accounting_status)" class="button" :disabled="busy" @click="cancel">Anular recepción</button></div>
   </FormDialog>
-  <InvoiceForm v-if="posting" direction="received" :initial-value="posting.form" :integration-id="posting.id" :integration-version="posting.version" :expense-suggestion="posting.expense_suggestion" @close="posting=null" @saved="posted" />
+  <InvoiceForm v-if="posting" direction="received" :initial-value="posting.form" :integration-id="posting.id" :integration-version="posting.version" :entry-candidates="posting.entry_candidates" :expense-suggestion="posting.expense_suggestion" @close="posting=null" @saved="posted" />
  </section>
 </template>

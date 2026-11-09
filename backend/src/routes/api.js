@@ -6,6 +6,31 @@ import { accountingController } from '../controllers/accounting.js';
 import { requireMaster } from '../middleware/access.js';
 export function apiRouter(service, accounting) {
  const router=Router(), controller=contextController(service);
+ router.get('/farm-organization',async(req,res)=>res.json(await req.farmOrganization.catalog()));
+ router.get('/farm-organization/expenses',async(req,res)=>res.json(await req.farmOrganization.expenses(req.query)));
+ router.post('/farm-organization/farms',async(req,res)=>res.json(await req.farmOrganization.saveFarm(req.body)));
+ router.patch('/farm-organization/farms/:id',async(req,res)=>res.json(await req.farmOrganization.saveFarm(req.body,req.params.id)));
+ router.post('/farm-organization/farms/:id/groups',async(req,res)=>res.json(await req.farmOrganization.saveGroup(req.params.id,req.body)));
+ router.patch('/farm-organization/farms/:id/groups/:groupId',async(req,res)=>res.json(await req.farmOrganization.saveGroup(req.params.id,req.body,req.params.groupId)));
+ router.get('/farm-organization/assignments/:kind/:id',async(req,res)=>res.json(await req.farmOrganization.getAssignment(req.params.kind,req.params.id)));
+ router.put('/farm-organization/assignments/:kind/:id',async(req,res)=>res.json(await req.farmOrganization.assign(req.params.kind,req.params.id,req.body)));
+ router.get('/supplier-invoices',async(req,res)=>res.json(await req.supplierInvoices.list(req.query)));
+ router.get('/supplier-invoices/errors',async(req,res)=>res.json(await req.supplierInvoices.errors()));
+ router.post('/supplier-invoices/import',raw({type:'application/pdf',limit:'10mb'}),async(req,res)=>{
+  let filename='factura.pdf';try{filename=decodeURIComponent(req.get('X-File-Name')||filename);}catch{}
+  res.status(201).json(await req.supplierInvoices.import(req.body,req.query.exercise_id,filename));
+ });
+ router.get('/supplier-invoices/mailboxes',async(req,res)=>res.json(await req.supplierGmail.list()));
+ router.post('/supplier-invoices/mailboxes',async(req,res)=>res.json(await req.supplierGmail.save(req.body)));
+ router.post('/supplier-invoices/oauth/complete',async(req,res)=>res.json(await req.supplierGmail.complete(req.body)));
+ router.post('/supplier-invoices/mailboxes/:id/authorize',async(req,res)=>res.json(await req.supplierGmail.authorize(req.params.id)));
+ router.post('/supplier-invoices/mailboxes/:id/sync',async(req,res)=>res.json(await req.supplierGmail.sync(req.params.id,req.body?.exercise_id)));
+ router.delete('/supplier-invoices/mailboxes/:id/authorization',async(req,res)=>res.json(await req.supplierGmail.disconnect(req.params.id)));
+ router.get('/supplier-invoices/:id',async(req,res)=>res.json(await req.supplierInvoices.get(req.params.id)));
+ router.put('/supplier-invoices/:id',async(req,res)=>res.json(await req.supplierInvoices.save(req.params.id,req.body)));
+ router.post('/supplier-invoices/:id/classification',async(req,res)=>res.json(await req.supplierInvoices.classify(req.params.id,req.body)));
+ router.post('/supplier-invoices/:id/validate',async(req,res)=>res.json(await req.supplierInvoices.validate(req.params.id,req.body)));
+ router.get('/supplier-invoices/:id/source',async(req,res)=>{const source=await req.supplierInvoices.source(req.params.id);res.set('Content-Type','application/pdf').set('X-Content-Type-Options','nosniff').set('Content-Disposition',"inline; filename*=UTF-8''"+encodeURIComponent(source.source_name)).send(source.source_pdf);});
  router.get('/tax/vat',async(req,res)=>res.json(await req.vat.get(req.query)));
  router.get('/tax/vat/entries/:id/source',async(req,res)=>{const source=await req.vat.source(req.params.id);res.set('Content-Type','application/pdf').set('X-Content-Type-Options','nosniff').set('Content-Disposition',"inline; filename*=UTF-8''"+encodeURIComponent(source.source_name)).send(source.source_pdf);});
  router.post('/tax/vat/preview',async(req,res)=>res.json(await req.vat.preview(req.query,req.body)));

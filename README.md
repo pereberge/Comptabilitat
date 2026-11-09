@@ -310,3 +310,11 @@ VERI*FACTU: preparación por empresa en el portal de pruebas, con registros, XML
 Las facturas incluyen **Imprimir**, **Descargar PDF** y **Preparar correo** con un borrador .eml y su PDF adjunto. El usuario revisa y envía el borrador desde su programa de correo. Uso y requisitos del generador en [docs/facturas-correo.md](docs/facturas-correo.md).
 
 Dos perfiles intercambiables desde la barra superior: **Máster**, protegido con contraseña, y **Usuario**, con permisos configurables. Solo el máster puede borrar la contabilidad de ejercicios y sustituir datos al restaurar. Aplicar la migración 019. Uso y pruebas: [docs/usuarios-permisos.md](docs/usuarios-permisos.md).
+
+## Factures de proveïdors
+
+Importació manual i Gmail, revisió amb PDF, esborranys, classificació i recepció interna: [configuració i límits](docs/factures-proveidors.md).
+
+## Organització de granges
+
+Granges, grups lliures i classificació de despeses des de la factura: [funcionament i abast](docs/organitzacio-granges.md).

@@ -22,6 +22,8 @@ function datasets(exerciseId){
   ['farm_sales','farm_sales','r.exercise_id=?'],
   ['farm_costs','farm_cost_lines',`r.invoice_id IN (${farmInvoices})`],
   ['farm_invoices','farm_invoices','r.exercise_id=?'],
+  ['farm_classifications','farm_expense_assignments','COALESCE((SELECT exercise_id FROM invoice_documents d WHERE d.company_id=r.company_id AND d.id=r.document_id),(SELECT exercise_id FROM integration_received_invoices i WHERE i.company_id=r.company_id AND i.id=r.integration_id),(SELECT exercise_id FROM trade_invoices i WHERE i.company_id=r.company_id AND i.id=r.invoice_id))=?'],
+  ['supplier_revisions','supplier_invoice_revisions','r.document_id IN (SELECT d.id FROM invoice_documents d WHERE d.company_id=r.company_id AND d.exercise_id=?)'],
   ['documents','invoice_documents','r.exercise_id=?'],
   ['bank_reports','bank_reconciliations','r.exercise_id=?'],
   ['settlements','portfolio_settlements','r.exercise_id=?'],

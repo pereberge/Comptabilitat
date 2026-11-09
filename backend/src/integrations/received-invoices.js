@@ -10,6 +10,7 @@ import {findPartyAccount} from '../services/party-identification.js';
 import {supplierExpensePreference,rememberSupplierExpense} from '../services/supplier-expenses.js';
 import {requireAccount} from '../services/trade-posting.js';
 import {cents} from '../../../shared/money.js';
+import {buildInvoiceProposal} from '../services/invoice-proposal.js';
 
 const json=value=>typeof value==='string'?JSON.parse(value):value;
 const conflict=code=>{throw new HttpError(409,code);};
@@ -29,17 +30,17 @@ async function fiscalDuplicates(db,companyId,taxId,number,excludeId=0){
  return {queued,posted,duplicate:!!(queued.length||posted.length)};
 }
 export function createIntegrationReceptionService(pool,{companyDatabases}={}){return {
- async receive(client,body,requestId){
+ async receive(client,body,requestId,internal){
   const normalized=normalizeReceivedInvoice(body),{payload}=normalized;
   if(payload.sourceSystem!==client.sourceSystem)throw new HttpError(403,'INTEGRATION_SOURCE_FORBIDDEN');
   // The caller never selects an internal company ID or bypasses this server mapping.
-  const [[link]]=await pool.execute('SELECT company_id,enabled FROM integration_company_links WHERE client_id=? AND source_system=? AND external_company_id=?',[client.clientId,client.sourceSystem,payload.companyExternalId]);
+  const [[link]]=internal?[[{company_id:internal.companyId,enabled:true}]]:await pool.execute('SELECT company_id,enabled FROM integration_company_links WHERE client_id=? AND source_system=? AND external_company_id=?',[client.clientId,client.sourceSystem,payload.companyExternalId]);
   if(!link?.enabled)throw new HttpError(403,'INTEGRATION_COMPANY_FORBIDDEN');
   const {companyExternalId,...canonical}=payload,digest=createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
   const companyPool=companyDatabases?await companyDatabases.forCompany(link.company_id):pool;
-  return withTransaction(companyPool,async db=>{
+  const write=async db=>{
    await lockCompany(db,link.company_id);
-   const [[authorized]]=await (companyDatabases?pool:db).execute('SELECT enabled FROM integration_company_links WHERE client_id=? AND source_system=? AND external_company_id=? AND company_id=? LOCK IN SHARE MODE',[client.clientId,client.sourceSystem,companyExternalId,link.company_id]);
+   const [[authorized]]=internal?[[{enabled:true}]]:await (companyDatabases?pool:db).execute('SELECT enabled FROM integration_company_links WHERE client_id=? AND source_system=? AND external_company_id=? AND company_id=? LOCK IN SHARE MODE',[client.clientId,client.sourceSystem,companyExternalId,link.company_id]);
    if(!authorized?.enabled)throw new HttpError(403,'INTEGRATION_COMPANY_FORBIDDEN');
    const [[existing]]=await db.execute(`SELECT r.id,r.payload_hash,${effectiveStatus} AS status,r.possible_duplicate,r.issues FROM integration_received_invoices r LEFT JOIN trade_invoices i ON i.company_id=r.company_id AND i.id=r.invoice_id WHERE r.company_id=? AND r.source_system=? AND r.external_id=?`,[link.company_id,payload.sourceSystem,payload.externalId]);
    if(existing){if(existing.payload_hash!==digest)conflict('INTEGRATION_IDEMPOTENCY_CONFLICT');await integrationEvent(db,{requestId,clientId:client.clientId,companyId:link.company_id,invoiceId:existing.id,action:'invoice_replayed',status:200});return {id:existing.id,companyId:link.company_id,sourceSystem:payload.sourceSystem,externalId:payload.externalId,status:existing.status,possibleDuplicate:!!existing.possible_duplicate,issues:json(existing.issues),replayed:true};}
@@ -52,8 +53,10 @@ export function createIntegrationReceptionService(pool,{companyDatabases}={}){re
    if(duplicates.queued.length)await db.execute("UPDATE integration_received_invoices SET possible_duplicate=TRUE,version=version+1 WHERE company_id=? AND supplier_tax_id=? AND fiscal_number=? AND id<>? AND status NOT IN ('cancelled','rectified')",[link.company_id,payload.supplier.taxId,normalized.fiscalNumber,created.insertId]);
    await integrationEvent(db,{requestId,clientId:client.clientId,companyId:link.company_id,invoiceId:created.insertId,action:'invoice_received',status:201});
    return {id:created.insertId,companyId:link.company_id,sourceSystem:payload.sourceSystem,externalId:payload.externalId,status,possibleDuplicate:duplicates.duplicate,issues,replayed:false};
-  });
+  };
+  return internal?.db?write(internal.db):withTransaction(companyPool,write);
  },
+ async receiveInternal(companyId,body,db){return this.receive({clientId:'comptabilitat',sourceSystem:'comptabilitat'},body,randomUUID(),{companyId,db});},
  async linkCompany({clientId,sourceSystem,externalCompanyId,companyId,enabled=true}){
   if(typeof enabled!=='boolean')invalid('INTEGRATION_INVALID_FIELD','enabled');
   identifier(clientId,'clientId',64);identifier(sourceSystem,'sourceSystem',64);identifier(externalCompanyId,'externalCompanyId');id(companyId);
@@ -73,7 +76,15 @@ export function createImportedInvoiceService(pool,companyId){
   const form={exercise_id:period?.id||null,direction:'received',reference:p.invoiceNumber,invoice_date:p.invoiceDate,posting_date:p.invoiceDate,party:{name:p.supplier.name,tax_id:p.supplier.taxId,address:p.supplier.address,email:p.supplier.email},party_account_id:supplier.accountId||'',party_parent:'4000',offset_account_id:'',vat_account_id:'',withholding_account_id:'',withholding_rate:p.withholdings[0]?.rate||'0',payment_method:'transfer',notes:p.description.slice(0,1000),lines:p.taxBreakdown.map(t=>({description:p.description.slice(0,200),base:t.taxableBase,tax_rate:t.taxRate})),receipts:[{due_date:p.dueDate,amount:p.total}],request_id:createHash('sha256').update('integration-invoice:'+companyId+':'+row.id).digest('hex').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12}).*$/,'$1-$2-$3-$4-$5')};
   const issues=[...compatibility,...(supplier.issue?[supplier.issue]:[]),...(!period?['EXERCISE_REVIEW_REQUIRED']:period.status!=='open'?['EXERCISE_CLOSED']:[]),...(duplicates.duplicate?['POSSIBLE_FISCAL_DUPLICATE']:[]),...(row.status==='posted'&&!row.invoice_id?['POSTED_INVOICE_REMOVED']:[])];
   form.offset_account_id=expenseSuggestion?.account_id||'';
-  return {...row,issues,expense_suggestion:expenseSuggestion,current_expense_account:currentExpense||null,can_change_expense:row.accounting_status==='posted'&&currentExpense?.exercise_status==='open',possible_duplicate:duplicates.duplicate,can_post:['pending','issues'].includes(row.accounting_status)&&!!period&&period.status==='open'&&!compatibility.length&&!duplicates.duplicate,form};
+  let entryCandidates=[];
+  if(p.sourceSystem==='comptabilitat'&&period&&!compatibility.length&&['pending','issues'].includes(row.accounting_status)){
+   const [accounts]=await db.execute('SELECT id,code,description,kind,party_profile,payment_profile FROM accounts WHERE company_id=?',[companyId]);
+   const [journal]=await db.execute(`SELECT e.id AS entry_id,e.number,e.entry_date,e.description AS entry_description,e.status,e.entry_type,l.account_id,a.code,l.debit,l.credit FROM journal_entries e JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id WHERE e.company_id=? AND e.exercise_id=? AND NOT EXISTS(SELECT 1 FROM trade_invoices i WHERE i.company_id=e.company_id AND i.entry_id=e.id)`,[companyId,period.id]);
+   const [[exercise]]=await db.execute('SELECT start_date,end_date FROM accounting_exercises WHERE company_id=? AND id=?',[companyId,period.id]);
+   const proposed=buildInvoiceProposal({form,accounts,journal,exercise,extraction:{warnings:[],currency:p.currency}});
+   entryCandidates=proposed.candidates;Object.assign(form,proposed.form);
+  }
+  return {...row,issues,entry_candidates:entryCandidates,expense_suggestion:expenseSuggestion,current_expense_account:currentExpense||null,can_change_expense:row.accounting_status==='posted'&&currentExpense?.exercise_status==='open',possible_duplicate:duplicates.duplicate,can_post:['pending','issues'].includes(row.accounting_status)&&!!period&&period.status==='open'&&!compatibility.length&&!duplicates.duplicate,form};
  }
  return {
   async list(query={}){
@@ -99,8 +110,12 @@ export function createImportedInvoiceService(pool,companyId){
    if(supplier.matchedBy==='tax_id'&&supplier.accountId&&form.party_account_id&&form.party_account_id!==supplier.accountId)conflict('INTEGRATION_SUPPLIER_ACCOUNT_CONFLICT');
    if(form.party_account_id){const [[wrong]]=await db.execute(`SELECT id FROM trade_invoices WHERE company_id=? AND direction='received' AND party_account_id=? AND party_tax_id<>'' AND ${taxSql('party_tax_id')}<>? UNION SELECT id FROM suppliers WHERE company_id=? AND account_id=? AND tax_id<>'' AND ${taxSql('tax_id')}<>? LIMIT 1`,[companyId,form.party_account_id,row.supplier_tax_id,companyId,form.party_account_id,row.supplier_tax_id]);if(wrong)conflict('INTEGRATION_SUPPLIER_ACCOUNT_CONFLICT');}
    const [[period]]=await db.execute('SELECT id FROM accounting_exercises WHERE company_id=? AND id=?',[companyId,form.exercise_id]);if(!period)throw new HttpError(404,'EXERCISE_NOT_FOUND');
-   const invoice=await createInvoiceService(pool,companyId).create(form,{db,accounting_only:true});
+   let existingEntryId;
+   if(row.entry_candidates.length){if(!row.entry_candidates.some(entry=>entry.entry_id===Number(body.entry_id)))conflict('INVOICE_DOCUMENT_DUPLICATE_CANDIDATE');existingEntryId=id(body.entry_id);}
+   else if(body.entry_id)conflict('INVOICE_DOCUMENT_ENTRY_CHANGED');
+   const invoice=await createInvoiceService(pool,companyId).create(form,{db,accounting_only:true,existing_entry_id:existingEntryId});
    await db.execute("UPDATE integration_received_invoices SET status='posted',exercise_id=?,supplier_account_id=?,invoice_id=?,entry_id=?,issues=JSON_ARRAY(),version=version+1 WHERE company_id=? AND id=?",[invoice.exercise_id,invoice.party_account_id,invoice.id,invoice.entry_id,companyId,row.id]);
+   await db.execute("UPDATE invoice_documents SET status='posted',invoice_id=?,entry_id=?,version=version+1 WHERE company_id=? AND reception_id=?",[invoice.id,invoice.entry_id,companyId,row.id]);
    if(body.remember_expense!==false)await rememberSupplierExpense(db,companyId,{taxId:row.supplier_tax_id,name:row.supplier_name,accountId:invoice.offset_account_id},actor);
    await integrationEvent(db,{companyId,invoiceId:row.id,actor,action:'invoice_posted'});return {id:invoice.id,integrationId:row.id,replayed:false};
   });},

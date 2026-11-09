@@ -14,6 +14,7 @@ const previews=new Map(),lifetime=15*60*1000;
 const legacyDefaults={companies:{business_format:'general'},company_details:{journal_source_name:''},company_documents:{folder:'general',invoice_extraction:null},bank_reconciliations:{version:1},journal_imports:{source_format:'libro_diario'},journal_entries:{source_journal_code:null,source_entry_reference:null},journal_lines:{source_line_number:null},farm_cost_lines:{lot_id:null,lot_assignment:'auto',feed_kg:null},farm_lots:{entry_kg_per_pig:null,entry_price_per_pig:null,entry_cost_included:0,feed_opening_kg:null,feed_closing_kg:null}};
 const labels={accounting_exercises:'ejercicios',accounts:'cuentas',journal_entries:'asientos',journal_lines:'apuntes',trade_invoices:'facturas',trade_invoice_lines:'líneas de factura',portfolio_receipts:'recibos',portfolio_settlements:'cobros y pagos',invoice_documents:'documentos y propuestas',bank_reconciliations:'conciliaciones',journal_imports:'libros diarios',exercise_operations:'operaciones de apertura y cierre'};
 legacyDefaults.accounts={party_profile:null,payment_profile:null,sepa_mandate:null};
+legacyDefaults.invoice_documents={supplier_draft:null,review_kind:'invoice',reception_id:null,validated_by:null,validated_at:null};
 legacyDefaults.portfolio_receipts={split_history:null};
 Object.assign(legacyDefaults.company_details,{sepa_creditor_id:'',bank_initiator_id:''});
 legacyDefaults.trade_invoices={party_snapshot:null,payment_snapshot:null};
@@ -33,6 +34,8 @@ function filter(table,exerciseId){
  if(SHARED.has(table)||exerciseId==='all')return {sql:'1=1',params:[]};
  const ids=Array.isArray(exerciseId)?exerciseId:[exerciseId],clause=' IN ('+marks(ids)+')';
  if(table==='accounting_exercises')return {sql:'r.id'+clause,params:ids};
+ if(table==='farm_expense_assignments')return {sql:'COALESCE((SELECT exercise_id FROM invoice_documents d WHERE d.company_id=r.company_id AND d.id=r.document_id),(SELECT exercise_id FROM integration_received_invoices i WHERE i.company_id=r.company_id AND i.id=r.integration_id),(SELECT exercise_id FROM trade_invoices i WHERE i.company_id=r.company_id AND i.id=r.invoice_id))'+clause,params:ids};
+ if(table==='supplier_invoice_revisions')return {sql:'r.document_id IN (SELECT id FROM invoice_documents WHERE company_id=r.company_id AND exercise_id'+clause+')',params:ids};
  if(table==='journal_lines')return {sql:'r.entry_id IN (SELECT id FROM journal_entries WHERE company_id=r.company_id AND exercise_id'+clause+')',params:ids};
  if(table==='farm_cost_lines')return {sql:'r.invoice_id IN (SELECT id FROM farm_invoices WHERE company_id=r.company_id AND exercise_id'+clause+')',params:ids};
  if(['trade_invoice_lines','portfolio_receipts'].includes(table))return {sql:'r.invoice_id IN (SELECT id FROM trade_invoices WHERE company_id=r.company_id AND exercise_id'+clause+')',params:ids};

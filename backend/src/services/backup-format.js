@@ -43,15 +43,19 @@ export const TABLES = {
  portfolio_receipts: { key: ['invoice_id','position'], refs: { invoice_id:'trade_invoices' } },
  portfolio_settlements: { key: ['request_id'], refs: { exercise_id:'accounting_exercises',receipt_id:'portfolio_receipts',bank_account_id:'accounts',entry_id:'journal_entries',reversal_entry_id:'journal_entries' } },
  bank_remittances:{key:['request_id'],refs:{}},
- invoice_documents: { key: ['exercise_id','source_sha256'], refs: { exercise_id:'accounting_exercises',invoice_id:'trade_invoices',entry_id:'journal_entries' } },
- bank_reconciliations: { key: ['exercise_id','account_id','source_sha256'], refs: { exercise_id:'accounting_exercises',account_id:'accounts' } },
  integration_received_invoices: { key: ['source_system','external_id'], refs: {exercise_id:'accounting_exercises',supplier_account_id:'accounts',invoice_id:'trade_invoices',entry_id:'journal_entries'} },
+ invoice_documents: { key: ['exercise_id','source_sha256'], refs: { exercise_id:'accounting_exercises',invoice_id:'trade_invoices',entry_id:'journal_entries',reception_id:'integration_received_invoices' } },
+ bank_reconciliations: { key: ['exercise_id','account_id','source_sha256'], refs: { exercise_id:'accounting_exercises',account_id:'accounts' } },
+ supplier_invoice_templates:{key:['tax_id'],refs:{}},
+ supplier_invoice_revisions:{key:['id'],refs:{document_id:'invoice_documents'}},
+ farm_expense_groups:{key:['farm_id','name'],refs:{farm_id:'pig_farms'}},
+ farm_expense_assignments:{key:['id'],refs:{farm_id:'pig_farms',group_id:'farm_expense_groups',document_id:'invoice_documents',integration_id:'integration_received_invoices',invoice_id:'trade_invoices'}},
  supplier_expense_preferences: {key:['supplier_tax_id'],refs:{expense_account_id:'accounts'}},
 };
 export const TABLE_ORDER = Object.keys(TABLES);
-export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents','integration_received_invoices','supplier_expense_preferences']);
-export const FARM_TABLES = new Set(['pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
-export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'integration_received_invoices','supplier_expense_preferences','bank_reconciliation_rules','vat_drafts','bank_remittances']);
+export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','farm_expense_groups','pig_farms','farm_lots','farm_documents','integration_received_invoices','supplier_invoice_templates','supplier_expense_preferences']);
+export const FARM_TABLES = new Set(['farm_expense_groups','farm_expense_assignments','pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
+export const OPTIONAL_TABLES=new Set(['supplier_invoice_revisions','supplier_invoice_templates',...FARM_TABLES,'integration_received_invoices','supplier_expense_preferences','bank_reconciliation_rules','vat_drafts','bank_remittances']);
 export const fail = (code, status=400) => { throw new HttpError(status, code); };
 export const sha = value => createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 export const encodeRow = row => Object.fromEntries(Object.entries(row).map(([key,value])=>[key,Buffer.isBuffer(value)?{$binary_base64:value.toString('base64')}:value]));

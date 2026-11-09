@@ -24,6 +24,9 @@ import {createFarmService} from '../services/farms.js';
 import { createVatService } from '../services/vat.js';
 import {createImportedInvoiceService} from '../integrations/received-invoices.js';
 import {date} from '../services/validation.js';
+import {createSupplierInvoiceService} from '../services/supplier-invoices/service.js';
+import {createSupplierGmailService} from '../services/supplier-invoices/gmail.js';
+import {createFarmOrganizationService} from '../services/farm-organization.js';
 
 // Scope belongs to the request, never to global server state.
 export function companyScope(central, defaultCompanyId, {automaticBackups=createAutomaticBackupManager(central),companyDatabases}={}) {
@@ -45,6 +48,10 @@ export function companyScope(central, defaultCompanyId, {automaticBackups=create
     const [[company]] = await db.execute('SELECT id FROM companies WHERE id=?', [companyId]);
     if (!company) throw new HttpError(404, 'COMPANY_NOT_FOUND');
     req.companyId = companyId;
+    req.farmOrganization=createFarmOrganizationService(db,companyId,{actor:req.user?.key||'local'});
+    const supplierOptions={actor:req.user?.key||'local'};
+    req.supplierInvoices=createSupplierInvoiceService(db,companyId,supplierOptions);
+    req.supplierGmail=createSupplierGmailService(db,companyId,supplierOptions);
     req.vat = createVatService(db,companyId);
     req.importedInvoices=createImportedInvoiceService(db,companyId);
     req.farms = createFarmService(db,companyId);

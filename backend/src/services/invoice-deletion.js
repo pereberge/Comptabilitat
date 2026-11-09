@@ -19,6 +19,7 @@ export function createInvoiceDeletionService(pool,companyId){
   const [entries]=await db.execute('SELECT * FROM journal_entries WHERE company_id=? AND id IN ('+placeholders(entryIds)+') ORDER BY id',[companyId,...entryIds]);
   const [journalLines]=await db.execute('SELECT * FROM journal_lines WHERE company_id=? AND entry_id IN ('+placeholders(entryIds)+') ORDER BY id',[companyId,...entryIds]);
   const [documents]=await db.execute('SELECT id,company_id,exercise_id,source_name,source_sha256,status,invoice_id,entry_id,version,updated_at FROM invoice_documents WHERE company_id=? AND invoice_id=? ORDER BY id',[companyId,invoice.id]);
+  const [farmAssignments]=await db.execute('SELECT * FROM farm_expense_assignments WHERE company_id=? AND invoice_id=? ORDER BY id',[companyId,invoice.id]);
   const exerciseIds=[...new Set([invoice.exercise_id,...entries.map(row=>row.exercise_id)])].sort((a,b)=>a-b);
   const [exercises]=await db.execute('SELECT * FROM accounting_exercises WHERE company_id=? AND id IN ('+placeholders(exerciseIds)+') ORDER BY id FOR UPDATE',[companyId,...exerciseIds]);
   const [[company]]=await db.execute('SELECT id,name FROM companies WHERE id=?',[companyId]);
@@ -39,6 +40,7 @@ export function createInvoiceDeletionService(pool,companyId){
   const [externalDocuments]=await db.execute(`SELECT id FROM invoice_documents WHERE company_id=? AND (invoice_id IS NULL OR invoice_id<>?) AND entry_id IN (${placeholders(entryIds)}) LIMIT 1`,[companyId,invoice.id,...entryIds]);
   if(externalInvoices.length||externalSettlements.length||externalDocuments.length)blockers.push({message:'Un asiento está vinculado a otra factura, recibo o documento. Revisa esos vínculos antes de borrar.'});
   const sets=[
+   ...(farmAssignments.length?[{table:'farm_expense_assignments',rows:farmAssignments}]:[]),
    {table:'portfolio_settlements',rows:settlements},
    {table:'portfolio_receipts',rows:receipts},
    {table:'trade_invoice_lines',rows:lines},
