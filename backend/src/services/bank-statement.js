@@ -4,6 +4,9 @@ import { decimal } from '../../../shared/money.js';
 export const normalizeBankText = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const banks = {'2100':'CaixaBank','3058':'Cajamar','0049':'Santander','0081':'Sabadell','0182':'BBVA','1465':'ING','0128':'Bankinter','2080':'Abanca','2103':'Unicaja','2085':'Ibercaja'};
 const invalid = code => { throw new Error('BANK_STATEMENT_'+code); };
+// Some bank downloads include a MIME preamble before the PDF header.
+// Keep the original bytes: PDF.js already supports these prefixed documents.
+export const isBankStatementPdf = buffer => Buffer.isBuffer(buffer)&&/%PDF-\d\.\d\b/.test(buffer.subarray(0,1024).toString('latin1'));
 function checkCurrency(text){const match=String(text).toUpperCase().match(/(?:MONEDA|DIVISA|CURRENCY|CUENTA EN|COMPTE EN)[:\s;]+([A-Z]{3})\b/);if(match&&match[1]!=='EUR')invalid('UNSUPPORTED_CURRENCY');}
 export function bankDate(text, year) {
   const months = {GEN:1,ENE:1,JAN:1,FEB:2,MAR:3,ABR:4,APR:4,MAI:5,MAY:5,JUN:6,JUL:7,AGO:8,AUG:8,SET:9,SEP:9,OCT:10,NOV:11,DES:12,DIC:12,DEC:12};
@@ -21,10 +24,26 @@ export function bankDate(text, year) {
   const parsed = new Date(result+'T00:00:00Z');
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0,10) === result ? result : null;
 }
+export function bankStatementDocumentDate(text){
+ const normalized=String(text).normalize('NFD').replace(/\p{M}/gu,'').toUpperCase();
+ const datePattern='(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[/.\\-]\\d{1,2}[/.\\-]\\d{4})';
+ const labels=[
+  "(?:FECHA(?:\\s+DE(?:L)?)?\\s+(?:EMISION|EXPEDICION|EXTRACTO|CONSULTA)|DATA(?:\\s+DE)?(?:\\s+L['’])?\\s*(?:EMISSIO|EXTRACTE|CONSULTA))",
+  '(?:HASTA|FINS\\s+(?:A|AL)|A\\s+FECHA|FECHA\\s+FIN(?:AL)?|DATA\\s+FINAL|AL)',
+ ];
+ for(const [index,label]of labels.entries()){
+  const matches=[...normalized.matchAll(new RegExp('\\b'+label+'\\s*[:;=\\-]?\\s*'+datePattern,'g'))];
+  const dates=[...new Set(matches.map(match=>bankDate(match[1])).filter(Boolean))];
+  if(dates.length===1)return {statement_date:dates[0],statement_date_origin:index===0?'document':'period_end'};
+  if(dates.length>1)return {};
+ }
+ return {};
+}
 function money(text) {
-  let value = String(text).trim().replace(/\s|€/g,'');
+  let value = String(text).trim().replace(/\s+EUR$/i,'').replace(/\s|€/g,'');
   if (/^\(.*\)$/.test(value)) value = '-'+value.slice(1,-1);
-  if (/^[+-]?(?:\d{1,3}(?:\.\d{3})*|\d+),\d{2}$/.test(value)) value=value.replaceAll('.','').replace(',','.');
+  if (/^[+-]?(?:\d{1,3}(?:\.\d{3})*|\d+),\d{1,2}$/.test(value)) value=value.replaceAll('.','').replace(',','.');
+  if (/^[+-]?\d+\.\d$/.test(value)) value+='0';
   if (!/^[+-]?\d+\.\d{2}$/.test(value)) return null;
   return BigInt(value.replace('.',''));
 }
@@ -61,17 +80,27 @@ export function validateBankRows(rows, metadata = {}) {
 }
 export function parseBankPages(pages) {
   if(!Array.isArray(pages) || !pages.length || pages.length>100)invalid('INVALID_PDF');
-  const rows=[], metadata=[];
+  const rows=[], metadata=[], holders=new Set();let documentDate;
   for(const [index,page]of pages.entries()){
     const items=page.items.map(item=>({...item,text:(item.text??item.str??'').trim(),x:item.x??item.transform?.[4],y:item.y??item.transform?.[5]})).filter(item=>item.text);
     const header = names => items.find(item=>names.includes(normalizeBankText(item.text)));
-    const dateHeader=header(['FECHA','DATA','FECHAOPERACION','DATAOPERACIO']),conceptHeader=header(['CONCEPTO','CONCEPTE','DESCRIPCION','DESCRIPCIO']);
+    const dateHeader=header(['FECHA','DATA','FECHAOPERACION','DATAOPERACIO','FCONTABLE']),conceptHeader=header(['CONCEPTO','CONCEPTE','DESCRIPCION','DESCRIPCIO','CONCEPTOBENEFORDENANTE']);
     const amountHeader=header(['IMPORTE','IMPORT']),balanceHeader=header(['SALDO']),debitHeader=header(['DEBE','CARGO','CARGOS']),creditHeader=header(['HABER','ABONO','ABONOS']);
     const valueHeader=header(['FVALOR','FECHAVALOR','DATAVALOR']);
     const extraHeader=header(['MESDADES','MASDATOS']);
-    const conceptLeft=valueHeader?valueHeader.x+(valueHeader.width||0)+5:conceptHeader?.x-5;
+    const conceptLeft=Math.max(conceptHeader?.x-5,valueHeader?valueHeader.x+(valueHeader.width||0)+5:0);
     if(!dateHeader || !conceptHeader || !balanceHeader || (!amountHeader&&(!debitHeader||!creditHeader)))invalid('UNSUPPORTED_PDF');
     metadata.push(items.filter(item=>item.y>dateHeader.y+4).map(item=>item.text).join(' '));
+    // Header fields are separate PDF text items and may follow all the table rows in extraction order.
+    const field=label=>{
+      const anchor=items.find(item=>item.y>dateHeader.y+4&&normalizeBankText(item.text)===label);
+      return anchor?items.filter(item=>Math.abs(item.y-anchor.y)<3&&item.x>anchor.x+(anchor.width||0)+5).sort((a,b)=>a.x-b.x)[0]?.text:null;
+    };
+    const holder=field('TITULAR');if(holder)holders.add(holder);
+    if(dateHeader&&normalizeBankText(dateHeader.text)==='FCONTABLE'){
+      const value=field('FECHA')?.match(/^\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4}/)?.[0];
+      if(value)documentDate=bankDate(value);
+    }
     const dates=items.map((item,itemIndex)=>({...item,itemIndex,date:bankDate(item.text)}))
       .filter(item=>item.date && item.x<Math.min(dateHeader.x+40,conceptHeader.x-5) && item.y<dateHeader.y-4);
     let monetaryRows=0;
@@ -99,7 +128,7 @@ export function parseBankPages(pages) {
         const y=Number(anchor.date.slice(0,4))+(valueDate>anchor.date?-1:1);valueDate=bankDate(valueItem.text,String(y));
       }
       const amountX = amountHeader?.x ?? Math.min(debitHeader.x,creditHeader.x);
-      const concept=block.filter(item=>item.x>=conceptLeft&&item.x<amountX-20 && !amounts.includes(item) && !/^(Firefox|https?:\/\/)/i.test(item.text))
+      const concept=block.filter(item=>item.y<dateHeader.y-4&&item.x>=conceptLeft&&item.x<amountX-20 && !amounts.includes(item) && !/^(Firefox|https?:\/\/)/i.test(item.text))
         .sort((a,b)=>(extraHeader?(a.x>=extraHeader.x?1:0)-(b.x>=extraHeader.x?1:0):0)||b.y-a.y||a.x-b.x).map(item=>item.text).join(' ').slice(0,1000);
       if(!concept)invalid('MISSING_COLUMNS');
       rows.push({page:page.page??index+1,date:anchor.date,value_date:valueDate,concept,amount:decimal(movement),balance:decimal(money(balanceItem.text))});monetaryRows++;
@@ -109,7 +138,8 @@ export function parseBankPages(pages) {
     if(!monetaryRows || tableBalances.length!==monetaryRows)invalid('MISSING_COLUMNS');
   }
   checkCurrency(metadata.join(' '));
-  return validateBankRows(rows,{bank:detectBank(metadata.join(' ')),pages:pages.length,format:'pdf',mime:'application/pdf'});
+  if(holders.size>1)invalid('MULTIPLE_HOLDERS');
+  return validateBankRows(rows,{bank:{...detectBank(metadata.join(' ')),holder:[...holders][0]||''},pages:pages.length,format:'pdf',mime:'application/pdf',...(documentDate?{statement_date:documentDate,statement_date_origin:'document'}:bankStatementDocumentDate(metadata.join(' ')))});
 }
 export async function extractBankPdf(buffer) {
   const task=getDocument({data:Uint8Array.from(buffer),isEvalSupported:false,useSystemFonts:true,verbosity:0});
@@ -161,7 +191,7 @@ export function parseBankCsv(buffer) {
       if(columns.iban>=0)ibans.push(record[columns.iban]);
       rows.push({page:1,date:movementDate,value_date:valueDate,concept,amount:decimal(movement),balance:decimal(balance)});
     }
-    return validateBankRows(rows,{bank:detectBank(table.slice(0,headerIndex).flat().join(' ')+' '+ibans.join(' ')),pages:1,format:'csv',mime:'text/csv'});
+    return validateBankRows(rows,{bank:detectBank(table.slice(0,headerIndex).flat().join(' ')+' '+ibans.join(' ')),pages:1,format:'csv',mime:'text/csv',...bankStatementDocumentDate(table.slice(0,headerIndex).flat().join(' '))});
   }
   invalid('UNSUPPORTED_CSV');
 }

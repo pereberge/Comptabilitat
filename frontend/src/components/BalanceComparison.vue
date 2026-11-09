@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { b } from '../locales/balance-sheet.js';
 import { reportMoney as money, reportDate as date } from '../services/report-format.js';
+import ReportAmountButton from './ReportAmountButton.vue';
 const props=defineProps({data:{type:Object,required:true},ledgerLink:{type:Function,required:true},totalLabels:{type:Array,default:()=>[['assets',b.totalAsset],['equity_liabilities',b.totalEquity],['difference',b.difference]]},showResult:{type:Boolean,default:true},accountDigits:{type:Number,default:0},sideTotals:{type:Boolean,default:false}});
 const emit=defineEmits(['select-exercise']);
 const expanded=ref(new Set());
@@ -21,21 +22,22 @@ const rows=computed(()=>{
     node.children.forEach(child=>visit(child,depth+1));
     for(const account of node.accounts){
       const accountKey=key+':account:'+account.code;
-      result.push({...account,key:accountKey,kind:account.detail_is_subaccount?'subaccount':'account',label:account.code+(account.description?' · '+account.description:''),depth:depth+1,expandable:!!account.subaccounts.length});
-      if(expanded.value.has(accountKey))for(const sub of account.subaccounts)result.push({...sub,key:accountKey+':sub:'+sub.id,kind:'subaccount',label:sub.code+' · '+sub.description,depth:depth+2,expandable:false});
+      result.push({...account,node_id:node.id,key:accountKey,kind:account.detail_is_subaccount?'subaccount':'account',label:account.code+(account.description?' · '+account.description:''),depth:depth+1,expandable:!!account.subaccounts.length});
+      if(expanded.value.has(accountKey))for(const sub of account.subaccounts)result.push({...sub,node_id:node.id,key:accountKey+':sub:'+sub.id,kind:'subaccount',label:sub.code+' · '+sub.description,depth:depth+2,expandable:false});
     }
   }
   if(props.sideTotals){
     for(const side of ['asset','equity_liabilities']){
       props.data.comparison.sections.filter(node=>node.side===side).forEach(node=>visit(node,0));
       const key=side==='asset'?'assets':'equity_liabilities';
-      result.push({...props.data.comparison.totals[key],key:'total:'+side,kind:'total',depth:0,label:side==='asset'?b.totalAsset:b.totalEquity,expandable:false});
+      result.push({...props.data.comparison.totals[key],total_key:key,key:'total:'+side,kind:'total',depth:0,label:side==='asset'?b.totalAsset:b.totalEquity,expandable:false});
     }
   }else props.data.comparison.sections.forEach(node=>visit(node,0));return result;
 });
 function toggle(key){const next=new Set(expanded.value);next.has(key)?next.delete(key):next.add(key);expanded.value=next;}
 function selectPeriod(event,earlier){if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey&&event.button===0)emit('select-exercise',earlier?previous.value.exercise.id:props.data.exercise.id);}
 function periodLabel(sheet){return sheet.report==='profit_loss'?date(sheet.from)+' — '+date(sheet.to):date(sheet.date);}
+function selection(row){return row.kind==='node'?{kind:'node',id:row.id}:row.kind==='total'?{kind:'total',key:row.total_key}:{kind:row.kind,node_id:row.node_id,code:row.code};}
 </script>
 <template>
   <div class="balance-comparison table-wrap panel" role="region" :aria-label="b.comparison" tabindex="0">
@@ -47,12 +49,16 @@ function periodLabel(sheet){return sheet.report==='profit_loss'?date(sheet.from)
           <th scope="row" :style="{'--indent':Math.min(row.depth,6)*14+'px'}">
             <button v-if="row.expandable" class="comparison-toggle" :aria-expanded="expanded.has(row.key)" @click="toggle(row.key)"><span aria-hidden="true">{{ expanded.has(row.key)?'−':'+' }}</span>{{ row.label }}</button><span v-else class="comparison-label">{{ row.label }}</span>
           </th>
-          <td class="amount"><RouterLink v-if="row.kind==='subaccount'&&row.current_id" :to="ledgerLink({id:row.current_id},data)" :title="b.signed+': '+money(row.current_signed_balance)" @click="selectPeriod($event,false)">{{ money(row.amount) }}</RouterLink><template v-else>{{ money(row.amount) }}</template></td>
-          <td class="amount"><RouterLink v-if="row.kind==='subaccount'&&row.previous_id" :to="ledgerLink({id:row.previous_id},previous)" :title="b.signed+': '+money(row.previous_signed_balance)" @click="selectPeriod($event,true)">{{ money(row.previous_amount) }}</RouterLink><template v-else>{{ money(row.previous_amount) }}</template></td>
-          <td class="amount">{{ money(row.difference) }}</td>
+          <td class="amount"><ReportAmountButton :amount="row.amount" :selection="selection(row)" :label="row.label" :sheet="data" /></td>
+          <td class="amount"><ReportAmountButton :amount="row.previous_amount" :selection="selection(row)" :label="row.label" :sheet="previous" /></td>
+          <td class="amount"><ReportAmountButton :amount="row.difference" :selection="selection(row)" :label="row.label+' · '+b.change" :sheets="[data,previous]" /></td>
         </tr>
       </tbody>
-      <tfoot><tr v-for="[key,label] in footerLabels" :key="key"><th scope="row">{{ label }}</th><td class="amount">{{ money(data.comparison.totals[key].amount) }}</td><td class="amount">{{ money(data.comparison.totals[key].previous_amount) }}</td><td class="amount">{{ money(data.comparison.totals[key].difference) }}</td></tr><tr v-if="showResult"><th scope="row">{{ data.comparison.generated_result?b.balanceResult:b.result }}</th><td class="amount">{{ money(data.comparison.result.total.amount) }}</td><td class="amount">{{ money(data.comparison.result.total.previous_amount) }}</td><td class="amount">{{ money(data.comparison.result.total.difference) }}</td></tr><tr v-if="showResult&&data.comparison.generated_result" class="comparison-generated-result"><th scope="row">{{ b.generatedResult }}</th><td class="amount">{{ money(data.comparison.generated_result.amount) }}</td><td class="amount">{{ money(data.comparison.generated_result.previous_amount) }}</td><td class="amount">{{ money(data.comparison.generated_result.difference) }}</td></tr></tfoot>
+      <tfoot>
+       <tr v-for="[key,label] in footerLabels" :key="key"><th scope="row">{{ label }}</th><td class="amount"><ReportAmountButton :amount="data.comparison.totals[key].amount" :selection="{kind:'total',key}" :label="label" :sheet="data" /></td><td class="amount"><ReportAmountButton :amount="data.comparison.totals[key].previous_amount" :selection="{kind:'total',key}" :label="label" :sheet="previous" /></td><td class="amount"><ReportAmountButton :amount="data.comparison.totals[key].difference" :selection="{kind:'total',key}" :label="label+' · '+b.change" :sheets="[data,previous]" /></td></tr>
+       <tr v-if="showResult"><th scope="row">{{ data.comparison.generated_result?b.balanceResult:b.result }}</th><td class="amount"><ReportAmountButton :amount="data.comparison.result.total.amount" :selection="{kind:'result',key:'total'}" :label="b.balanceResult" :sheet="data" /></td><td class="amount"><ReportAmountButton :amount="data.comparison.result.total.previous_amount" :selection="{kind:'result',key:'total'}" :label="b.balanceResult" :sheet="previous" /></td><td class="amount"><ReportAmountButton :amount="data.comparison.result.total.difference" :selection="{kind:'result',key:'total'}" :label="b.balanceResult+' · '+b.change" :sheets="[data,previous]" /></td></tr>
+       <tr v-if="showResult&&data.comparison.generated_result" class="comparison-generated-result"><th scope="row">{{ b.generatedResult }}</th><td class="amount"><ReportAmountButton :amount="data.comparison.generated_result.amount" :selection="{kind:'generated_result'}" :label="b.generatedResult" :sheet="data" /></td><td class="amount"><ReportAmountButton :amount="data.comparison.generated_result.previous_amount" :selection="{kind:'generated_result'}" :label="b.generatedResult" :sheet="previous" /></td><td class="amount"><ReportAmountButton :amount="data.comparison.generated_result.difference" :selection="{kind:'generated_result'}" :label="b.generatedResult+' · '+b.change" :sheets="[data,previous]" /></td></tr>
+      </tfoot>
     </table>
   </div>
 </template>

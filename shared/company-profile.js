@@ -6,7 +6,7 @@ export const companyTextFields = {
   invoice_notes: 1000, registry_info: 500, journal_source_name: 160,
 };
 export const paymentMethods = ['transfer', 'direct_debit', 'cash', 'card', 'other'];
-export const companyProfileKeys = [...Object.keys(companyTextFields), 'payment_method'];
+export const companyProfileKeys = [...Object.keys(companyTextFields), 'payment_method','payroll_agreement'];
 export function emptyCompanyProfile() {
   return Object.fromEntries(companyProfileKeys.map(key => [key, '']));
 }

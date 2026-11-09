@@ -5,6 +5,7 @@ import { nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { companyTextFields, companyProfileKeys, emptyCompanyProfile, paymentMethods } from '../../../shared/company-profile.js';
 import { companyFormats } from '../../../shared/company-formats.js';
+import {payrollAgreements,payrollAgreementFor} from '../../../shared/payroll-agreements.js';
 import { useContext } from '../composables/context.js';
 import { api } from '../services/accounting.js';
 import { companyTheme } from '../services/company-theme.js';
@@ -158,6 +159,7 @@ async function save() {
         <h2>{{ item.name }}</h2>
       </div>
       <p class="muted company-format-label">{{ t.businessFormat }}: {{ t.formats[item.business_format||'general'] }}</p>
+      <p class="muted company-format-label">{{ t.payrollAgreement }}: {{ payrollAgreementFor(item.payroll_agreement)?.label||t.noPayrollAgreement }}</p>
       <dl v-if="item.tax_id || item.city" class="company-profile-summary"><template v-if="item.tax_id"><dt>{{ t.fields.tax_id }}</dt><dd>{{ item.tax_id }}</dd></template><template v-if="item.city"><dt>{{ t.fields.city }}</dt><dd>{{ item.city }}</dd></template></dl>
       <p v-if="item.id === company?.id" class="badge badge-open"><AppIcon name="check" />{{ t.selected }}</p>
       <div class="actions company-profile-actions">
@@ -179,6 +181,7 @@ async function save() {
           <p class="muted company-section-help">{{ t[tab.id + 'Help'] }}</p>
           <label v-if="tab.id === 'fiscal'">{{ t.name }}<input v-model="form.name" name="company_name" maxlength="160" autocomplete="organization" required autofocus></label>
           <label v-if="tab.id === 'fiscal'">{{ t.businessFormat }}<select v-model="form.business_format" name="business_format" :aria-label="t.businessFormat"><option v-for="format in companyFormats" :key="format" :value="format">{{ t.formats[format] }}</option></select><span class="muted company-field-help">{{ t.businessFormatHelp }}</span></label>
+          <label v-if="tab.id === 'fiscal'">{{ t.payrollAgreement }}<select v-model="form.payroll_agreement" name="payroll_agreement" :aria-label="t.payrollAgreement"><option value="">{{ t.noPayrollAgreement }}</option><option v-for="agreement in payrollAgreements" :key="agreement.code" :value="agreement.code">{{ agreement.label }} · {{ agreement.code }}</option></select><span class="muted company-field-help">{{ t.payrollAgreementHelp }}</span><a v-if="payrollAgreementFor(form.payroll_agreement)" :href="payrollAgreementFor(form.payroll_agreement).source" target="_blank" rel="noopener noreferrer">Consultar convenio en el BOE</a></label>
           <div class="form-grid company-fields">
             <label v-for="field in tab.fields" :key="field.key" :class="{ 'company-field-wide': field.wide }">{{ t.fields[field.key] }}
               <select v-if="field.type === 'select'" v-model="form[field.key]" :name="field.key"><option value="">{{ t.paymentMethods[''] }}</option><option v-for="method in paymentMethods" :key="method" :value="method">{{ t.paymentMethods[method] }}</option></select>

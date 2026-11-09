@@ -178,6 +178,9 @@ test('company membership scopes defaults, concurrent requests, URLs, logos and u
 });
 
 test('stored permissions and path encodings cannot grant master rights',()=>{
+ assert.equal(requiredPermission('DELETE','/bank-reconciliations/1'),'accounting_write');
+ assert.equal(requiredPermission('GET','/bank-reconciliations/1/movements/2/matches'),null);
+ assert.equal(requiredPermission('POST','/bank-reconciliations/1/settlements'),'accounting_write');
  assert.equal(permissionsFor({role:'user',permissions:{entries_delete:true,invoice_delete:true,exercise_clear:true,users_manage:true}}).entries_delete,false);
  for(const [method,path,permission]of [['GET','/accounting/ledger',null],['POST','/companies','companies_manage'],['DELETE','/entries/1','entries_delete'],['GET','/master/company-evolution','users_manage'],['HEAD','/MASTER/COMPANY-EVOLUTION/','users_manage'],['POST','/entries','accounting_write'],['POST','/exercises','exercise_create'],['POST','/EXERCISES/123/CLEAR/','exercise_clear'],['POST','/exercises/123/%63lear','exercise_clear'],['GET','/exercises/123/clear/preview','exercise_clear'],['POST','/exercises/123/operations/closing','exercise_operations'],['POST','/data-backups/restore','data_import'],['POST','/journal-import/commit','data_import'],['POST','/invoices/5/email-draft',null]])assert.equal(requiredPermission(method,path),permission);
 });

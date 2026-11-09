@@ -1,20 +1,21 @@
 <script setup>
 import { b } from '../locales/balance-sheet.js';
 import { reportMoney as money } from '../services/report-format.js';
+import ReportAmountButton from './ReportAmountButton.vue';
 defineProps({node:{type:Object,required:true},ledgerLink:{type:Function,required:true},accountDigits:{type:Number,default:0}});
 </script>
 <template>
  <details class="balance-node" :class="{'balance-section':node.depth===0}" :open="node.depth===0||accountDigits>0">
-  <summary><span>{{ node.label }}</span><strong class="amount">{{ money(node.amount) }} €</strong></summary>
+  <summary><span>{{ node.label }}</span><strong class="amount"><ReportAmountButton :amount="node.amount" :selection="{kind:'node',id:node.id}" :label="node.label" euro /></strong></summary>
   <div class="balance-children">
    <BalanceSheetNode v-for="child in node.children" :key="child.id" :node="child" :account-digits="accountDigits" :ledger-link="ledgerLink" />
    <template v-for="account in node.accounts" :key="account.code">
-   <div v-if="account.detail_is_subaccount" class="balance-subaccount"><RouterLink :to="ledgerLink(account)">{{ account.code }}{{ account.description?' · '+account.description:'' }}</RouterLink><span class="amount" :title="b.signed+': '+money(account.signed_balance)">{{ money(account.amount) }} €</span></div>
+   <div v-if="account.detail_is_subaccount" class="balance-subaccount"><RouterLink :to="ledgerLink(account)">{{ account.code }}{{ account.description?' · '+account.description:'' }}</RouterLink><span class="amount" :title="b.signed+': '+money(account.signed_balance)"><ReportAmountButton :amount="account.amount" :selection="{kind:'subaccount',node_id:node.id,code:account.code}" :label="account.code+' · '+account.description" euro /></span></div>
    <details v-else class="balance-account">
-    <summary><span>{{ account.code }}{{ account.description?' · '+account.description:'' }}</span><span class="amount">{{ money(account.amount) }} €</span></summary>
+    <summary><span>{{ account.code }}{{ account.description?' · '+account.description:'' }}</span><span class="amount"><ReportAmountButton :amount="account.amount" :selection="{kind:'account',node_id:node.id,code:account.code}" :label="account.code+' · '+account.description" euro /></span></summary>
     <div v-for="sub in account.subaccounts" :key="sub.id" class="balance-subaccount">
      <RouterLink :to="ledgerLink(sub)">{{ sub.code }} · {{ sub.description }}</RouterLink>
-     <span class="amount" :title="b.signed+': '+money(sub.signed_balance)">{{ money(sub.amount) }} €</span>
+     <span class="amount" :title="b.signed+': '+money(sub.signed_balance)"><ReportAmountButton :amount="sub.amount" :selection="{kind:'subaccount',node_id:node.id,code:sub.code}" :label="sub.code+' · '+sub.description" euro /></span>
     </div>
    </details>
    </template>

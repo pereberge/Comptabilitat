@@ -3,6 +3,10 @@ export function cents(value) {
   const [whole, fraction = ''] = value.replace(',', '.').split('.');
   return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
 }
+export function signedCents(value) {
+  if(typeof value!=='string')throw new Error('INVALID_AMOUNT');
+  return value.startsWith('-')?-cents(value.slice(1)):cents(value);
+}
 export function decimal(value) {
   const sign = value < 0n ? '-' : '';
   const positive = value < 0n ? -value : value;

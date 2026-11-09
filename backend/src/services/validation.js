@@ -1,5 +1,5 @@
 import { HttpError } from '../middleware/errors.js';
-import { cents, decimal } from '../../../shared/money.js';
+import { signedCents, decimal } from '../../../shared/money.js';
 export const fail = code => { throw new HttpError(400, code); };
 export function id(value) {
  if (!/^[1-9]\d*$/.test(String(value)) || !Number.isSafeInteger(Number(value)) || Number(value)>4294967295) fail('INVALID_ID');
@@ -24,12 +24,12 @@ export function validateEntry(body) {
  const lines=body.lines.map(line=>{
   if(!line || typeof line!=='object') fail('INVALID_LINES');
   let d,c;
-  try{ d=cents(line.debit);c=cents(line.credit); }catch{fail('INVALID_AMOUNT');}
-  if(!((d>0n && c===0n)||(c>0n && d===0n))) fail('INVALID_LINE_AMOUNTS');
+  try{ d=signedCents(line.debit);c=signedCents(line.credit); }catch{fail('INVALID_AMOUNT');}
+  if(!((d!==0n && c===0n)||(c!==0n && d===0n))) fail('INVALID_LINE_AMOUNTS');
   debit+=d;credit+=c;
   return {account_id:id(line.account_id),description:description(line.description),debit:decimal(d),credit:decimal(c)};
  });
- if(debit>999999999999999n || credit>999999999999999n) fail('TOTAL_TOO_LARGE');
+ if(debit>999999999999999n || debit< -999999999999999n || credit>999999999999999n || credit< -999999999999999n) fail('TOTAL_TOO_LARGE');
  if(debit!==credit) fail('UNBALANCED_ENTRY');
  return {exerciseId,entryDate,concept,lines,requestId:body.request_id};
 }

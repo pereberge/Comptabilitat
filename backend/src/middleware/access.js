@@ -9,11 +9,13 @@ export function requiredPermission(method,path){
  const normalized=normalizedPath(path),parts=normalized.split('/'),[area,,action,detail]=parts;
  if(area==='master')return 'users_manage';
  if(normalized==='companies'&&method==='POST')return 'companies_manage';
+ if(area==='purchases')return ['GET','HEAD','OPTIONS'].includes(method)?'purchases_read':parts.at(-1)==='confirm'?'purchases_confirm':'purchases_write';
  if(area==='entries'&&method==='DELETE')return 'entries_delete';
  if(area==='invoices'&&['delete','delete-preview'].includes(action))return 'invoice_delete';
  if(method==='POST'&&normalized==='tax/vat/settlement-preview')return null;
  if(method==='POST'&&normalized==='tax/corporate/preview')return null;
  if(method==='POST'&&normalized==='tax/installments/preview')return null;
+ if(method==='POST'&&['payroll/preview','payroll/batch/preview','payroll/batch/delete-preview'].includes(normalized))return null;
  if(['GET','HEAD','OPTIONS'].includes(method))return area==='exercises'&&action==='clear'&&detail==='preview'||area==='exercise-clears'&&action==='backup'?'exercise_clear':null;
  if(area==='farms'&&['preview','import'].includes(parts[1]))return 'data_import';
  if(area==='exercises'&&action==='clear')return 'exercise_clear';

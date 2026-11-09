@@ -42,7 +42,7 @@ function balanceAnchor(rows,lines) {
   return anchor;
 }
 
-export function buildBankAnalysis({company,exercise,account,statement,lines,history,accounts,sourceName,sourceHash,pendingInvoices=[],rules=[],manualProposals=[]}) {
+export function buildBankAnalysis({company,exercise,account,statement,lines,history,accounts,sourceName,sourceHash,pendingInvoices=[],rules=[],manualProposals=[],postedMovements=[]}) {
   const rows=statement.rows.filter(row=>row.date>=exercise.start_date&&row.date<=exercise.end_date);
   if(!rows.length)throw Object.assign(new Error('Period'),{code:'BANK_STATEMENT_PERIOD_MISMATCH',status:409});
   const from=rows[0].date,through=rows.at(-1).date;
@@ -57,11 +57,19 @@ export function buildBankAnalysis({company,exercise,account,statement,lines,hist
   const start=anchor?addBankDays(anchor.date,1):from;
   const bookStart=anchor?addBankDays(anchor.book_date,1):from;
   const candidates=bankLines.filter(row=>row.entry_date>=bookStart&&row.entry_date<=readThrough&&!['opening','closing','regularization'].includes(row.entry_type));
+  const linked=new Map();
+  for(const movement of after){
+    const ids=new Set(postedMovements.filter(posted=>String(posted.movement_id)===String(movement.id)).map(posted=>posted.entry_id));
+    const entries=candidates.filter(line=>ids.has(line.entry_id));
+    if(ids.size&&ids.size===new Set(entries.map(line=>line.entry_id)).size&&entries.reduce((total,line)=>total+net(line),0n)===amount(movement.amount)&&entries.every(line=>!used.has(key(line)))){
+      linked.set(String(movement.id),entries);for(const entry of entries)used.add(key(entry));
+    }
+  }
   for(const row of after){
     const same=candidates.filter(line=>!used.has(key(line))&&Math.abs(bankDayNumber(line.entry_date)-bankDayNumber(row.date))<=BANK_BALANCE_MAX_DAYS&&net(line)===amount(row.amount));
-    let found=same.length===1?same[0]:null;
-    if(same.length>1){const ranked=same.map(line=>({line,distance:Math.abs(bankDayNumber(line.entry_date)-bankDayNumber(row.date)),score:similarity(row.concept,line.description)})).sort((a,b)=>a.distance-b.distance||b.score-a.score);if(ranked[0].distance<ranked[1].distance||ranked[0].score>=0.5&&ranked[0].score>ranked[1].score)found=ranked[0].line;}
-    if(found){used.add(key(found));if(found.entry_date>bookThrough)bookThrough=found.entry_date;matched.push({...row,entry_id:found.entry_id,entry_number:found.number,book_date:found.entry_date,basis:'Importe exacto y fecha a '+Math.abs(bankDayNumber(found.entry_date)-bankDayNumber(row.date))+' días; revisar el justificante.'});}
+    const linkedEntries=linked.get(String(row.id));let found=linkedEntries?.[0]||(same.length===1?same[0]:null);
+    if(!found&&same.length>1){const ranked=same.map(line=>({line,distance:Math.abs(bankDayNumber(line.entry_date)-bankDayNumber(row.date)),score:similarity(row.concept,line.description)})).sort((a,b)=>a.distance-b.distance||b.score-a.score);if(ranked[0].distance<ranked[1].distance||ranked[0].score>=0.5&&ranked[0].score>ranked[1].score)found=ranked[0].line;}
+    if(found){used.add(key(found));const bookDate=linkedEntries?.reduce((latest,line)=>line.entry_date>latest?line.entry_date:latest,found.entry_date)||found.entry_date;if(bookDate>bookThrough)bookThrough=bookDate;matched.push({...row,entry_id:found.entry_id,entry_number:found.number,book_date:bookDate,basis:linkedEntries?.length>1?'Liquidación de varios recibos vinculada a este movimiento.':'Importe exacto y fecha a '+Math.abs(bankDayNumber(found.entry_date)-bankDayNumber(row.date))+' días; revisar el justificante.'});}
     else pending.push(row);
   }
   const bookUnmatched=candidates.filter(row=>row.entry_date<=bookThrough&&!used.has(key(row))).map(row=>({...row,amount:decimal(net(row))}));
@@ -103,9 +111,10 @@ export function buildBankAnalysis({company,exercise,account,statement,lines,hist
   const anchorEntry=anchor?.entry;
   const openingGap=anchor?amount(anchor.balance)-anchor.book_balance:initial-bookInitial;
   return {analysis_version:2,company:{id:company.id,name:company.name},exercise:{id:exercise.id,name:exercise.name},
-    account:{code:account.code,name_by_user:statement.bank.name,stored_name:account.description,iban_masked:statement.bank.iban_masked},
+    account:{code:account.code,name_by_user:statement.bank.name,stored_name:account.description,iban_masked:statement.bank.iban_masked,holder:statement.bank.holder||''},
     source:{name:sourceName,sha256:sourceHash,mime:statement.mime,pages:statement.pages,rows:statement.rows.length,selected_rows:rows.length,
-      from:rows[0].date,to:through,full_from:statement.from,full_to:statement.to,initial_balance_inferred:statement.initial_balance},
+      from:rows[0].date,to:through,full_from:statement.from,full_to:statement.to,initial_balance_inferred:statement.initial_balance,
+      statement_date:statement.statement_date||statement.to,statement_date_origin:statement.statement_date_origin||'period_end'},
     scope:{last_matching_date:anchor?.date??null,last_matching_book_date:anchor?.book_date??null,last_matching_balance:anchor?.balance??null,last_book_entry:anchorEntry?.number??null,
       last_book_entry_date:anchorEntry?.entry_date??null,balance_match_max_days:BANK_BALANCE_MAX_DAYS,book_analysis_start_date:bookStart,book_balance_date:bookThrough,ledger_read_through:readThrough,
       last_matching_book_balance:anchor?decimal(anchor.book_balance):null,balance_match_difference:anchor?decimal(anchor.book_balance-amount(anchor.balance)):null,balance_match_tolerance:decimal(BANK_BALANCE_TOLERANCE_CENTS),

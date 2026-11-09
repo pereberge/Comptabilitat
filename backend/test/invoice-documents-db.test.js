@@ -69,6 +69,44 @@ test('MySQL PDF archive, proposal editing, atomic posting and existing journal a
    await assert.rejects(createInvoiceDocumentService(failurePool(pool),company.id).post(saved.id,{version:saved.version,confirm:true,action:'create'}),/Injected invoice document failure/);
    assert.deepEqual([await count('journal_entries'),await count('trade_invoices'),await count('portfolio_receipts')],before);assert.equal((await service.get(saved.id)).status,'draft');
   });
+  await t.test('invoice-linked journals can be edited directly while retaining the original document and invoice',async()=>{
+   const original=await accounting.getEntry(posted.entry_id),invoice=await invoices.get(posted.id);
+   assert.equal(original.editable,true);assert.equal(Number(original.linked_document),1);
+   const changedCost=await accounting.createAccount({code:'6280.0002',description:'Corrected supply account'});
+   const payload={exercise_id:exercise.id,revision:original.revision,entry_date:original.entry_date,description:'Corrected invoice posting',lines:original.lines.map(line=>({id:line.id,account_id:line.account_id===cost.id?changedCost.id:line.account_id,description:'Corrected accounting concept',debit:line.debit,credit:line.credit}))};
+   const saved=await accounting.updateEntry(original.id,payload);
+   assert.equal(saved.number,original.number);assert.equal(saved.description,payload.description);
+   assert.equal(saved.lines.find(line=>line.account_id===changedCost.id).debit,'16.33');
+   assert.deepEqual(saved.lines.map(line=>line.id),original.lines.map(line=>line.id));
+   const listed=await accounting.listEntries({exercise_id:exercise.id,view:'lines',number:String(saved.number)});
+   assert.ok(listed.some(line=>line.entry_id===saved.id&&line.account_name==='Corrected supply account'));
+   const unchangedInvoice=await invoices.get(posted.id);
+   assert.equal(unchangedInvoice.total_amount,invoice.total_amount);assert.equal(unchangedInvoice.entry_id,saved.id);
+   assert.equal((await service.get(doc.id)).entry_id,saved.id);assert.deepEqual((await service.source(doc.id)).source_pdf,pdf);
+   await assert.rejects(accounting.updateEntry(original.id,{...payload,description:'Stale modification'}),error=>error.code==='ENTRY_CHANGED');
+   await assert.rejects(accounting.updateEntry(original.id,{...payload,revision:saved.revision,lines:payload.lines.map((line,index)=>index===0?{...line,credit:'999.00'}:line)}));
+   assert.equal((await accounting.getEntry(original.id)).revision,saved.revision);
+  });
+  await t.test('an edited posting date is persisted and survives reopening with a matching journal',async()=>{
+   await accounting.createEntry({exercise_id:exercise.id,entry_date:'2026-10-20',description:'Factura DATE-SAVE',request_id:randomUUID(),lines:[{account_id:cost.id,description:'Supply',debit:'16.33',credit:'0.00'},{account_id:vat.id,description:'VAT',debit:'3.43',credit:'0.00'},{account_id:party.id,description:'Supplier',debit:'0.00',credit:'19.76'}]});
+   const preview=await service.preview(invoicePdf(company.name,'DATE-SAVE'),exercise.id,'date-save.pdf');
+   assert.equal(preview.proposal.form.posting_date,'2026-10-20');
+   let draft=await service.get((await service.archive({token:preview.token})).id);
+   const saved=await service.update(draft.id,{version:draft.version,form:{...draft.form,posting_date:'2026-10-15'}});
+   assert.equal(saved.form.posting_date,'2026-10-15');
+   assert.equal((await service.get(draft.id)).form.posting_date,'2026-10-15');
+   const [[stored]]=await pool.execute('SELECT form FROM invoice_documents WHERE company_id=? AND id=?',[company.id,draft.id]);
+   assert.equal((typeof stored.form==='string'?JSON.parse(stored.form):stored.form).posting_date,'2026-10-15');
+  });
+  await t.test('a different invoice reference and date can create a new journal despite equal supplier and amounts',async()=>{
+   const preview=await service.preview(invoicePdf(company.name,'NEW-SAME-AMOUNT'),exercise.id,'new-invoice.pdf');
+   let draft=await service.get((await service.archive({token:preview.token})).id);
+   draft=await service.update(draft.id,{version:draft.version,form:{...draft.form,invoice_date:'2026-10-16',posting_date:'2026-10-16',offset_account_id:cost.id,vat_account_id:vat.id}});
+   assert.equal(draft.proposal.candidates.length,0);assert.ok(draft.proposal.similar_entries.length>0);
+   const before=await count('journal_entries');
+   const result=await service.post(draft.id,{version:draft.version,confirm:true,action:'create'});
+   const invoice=await invoices.get(result.id);assert.equal(invoice.reference,'NEW-SAME-AMOUNT');assert.equal(invoice.invoice_date,'2026-10-16');assert.notEqual(invoice.entry_id,posted.entry_id);assert.equal(await count('journal_entries'),before+1);
+  });
   await t.test('API serves the exact scoped source, lists documents and rejects foreign retrieval',async()=>{
    server=createApp(context,accounting,companyScope(pool,company.id)).listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));const base='http://127.0.0.1:'+server.address().port+'/api';
    const source=await fetch(base+'/invoice-documents/'+doc.id+'/source',{headers:{'X-Company-Id':String(company.id)}});assert.equal(source.status,200);assert.match(source.headers.get('content-type'),/application\/pdf/);assert.equal(source.headers.get('x-content-type-options'),'nosniff');assert.deepEqual(Buffer.from(await source.arrayBuffer()),pdf);

@@ -16,7 +16,10 @@ export async function loadInvoicePdf(invoiceId,options){const file=await respons
 export async function downloadInvoiceEmail(invoiceId,body){const file=await response('/invoices/'+invoiceId+'/email-draft',{method:'POST',body});return download(file.body,file.filename||'factura.eml');}
 export function invoiceMailto({to,subject,message}){return 'mailto:'+encodeURIComponent(to||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(message);}
 export async function printInvoice(invoiceId){
- const file=await response('/invoices/'+invoiceId+'/print'),html=await file.body.text(),frame=document.createElement('iframe');frame.title='Impresión de factura';frame.className='invoice-print-frame';frame.setAttribute('aria-hidden','true');Object.assign(frame.style,{position:'fixed',left:'-10000px',top:'0',width:'210mm',height:'297mm',border:'0'});
+ const file=await response('/invoices/'+invoiceId+'/print');return printHtml(await file.body.text());
+}
+export async function printHtml(html,title='Impresión de factura'){
+ const frame=document.createElement('iframe');frame.title=title;frame.className='invoice-print-frame';frame.setAttribute('aria-hidden','true');Object.assign(frame.style,{position:'fixed',left:'-10000px',top:'0',width:'210mm',height:'297mm',border:'0'});
  let timer;const cleanup=()=>{clearTimeout(timer);frame.remove();};
  try{
   await new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(new Error('Print load timeout')),15000);frame.onload=()=>{clearTimeout(timer);resolve();};frame.srcdoc=html;document.body.append(frame);});

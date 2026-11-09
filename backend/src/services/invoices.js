@@ -12,8 +12,11 @@ import { activePayments,receiptRows } from './portfolio-data.js';
 import { nextIssuedReference } from './invoice-numbering.js';
 import { emptyPartyProfile,completeFiscalProfile,invoicePartyProfile } from '../../../shared/account-party.js';
 import {normalizePartyPaymentProfile,partyPaymentReceipts} from '../../../shared/party-payments.js';
+import {createInvoiceDatesService} from './invoice-dates.js';
+import {purchaseAccountingLink} from './purchase-accounting-link.js';
 
 export function createInvoiceService(pool,companyId){
+ const invoiceDates=createInvoiceDatesService(pool,companyId);
  async function detail(db,invoiceId){
   const [[invoice]]=await db.execute(`SELECT i.*,a.code AS party_code,a.party_profile AS account_party_profile,o.code AS offset_code,e.name AS exercise_name FROM trade_invoices i JOIN accounts a ON a.company_id=i.company_id AND a.id=i.party_account_id JOIN accounts o ON o.company_id=i.company_id AND o.id=i.offset_account_id JOIN accounting_exercises e ON e.company_id=i.company_id AND e.id=i.exercise_id WHERE i.company_id=? AND i.id=?`,[companyId,id(invoiceId)]);
   if(!invoice)throw new HttpError(404,'INVOICE_NOT_FOUND');
@@ -23,9 +26,11 @@ export function createInvoiceService(pool,companyId){
   const {account_party_profile:accountProfile,...record}=invoice;
   const issuer=typeof invoice.issuer_snapshot==='string'?JSON.parse(invoice.issuer_snapshot):invoice.issuer_snapshot;
   const currentCompany=await createCompanyService(db).getCompany(companyId);
-  return {...record,documents,verifactu:await invoiceFiscalInfo(db,companyId,invoice.id),issuer_snapshot:issuer,issuer_fiscal:completeFiscalProfile(issuer,currentCompany),party_fiscal:completeFiscalProfile(invoicePartyProfile(record),accountProfile),lines,receipts};
+  return {...record,documents,purchase_document:await purchaseAccountingLink(db,companyId,invoice.id),verifactu:await invoiceFiscalInfo(db,companyId,invoice.id),issuer_snapshot:issuer,issuer_fiscal:completeFiscalProfile(issuer,currentCompany),party_fiscal:completeFiscalProfile(invoicePartyProfile(record),accountProfile),lines,receipts};
  }
  return {
+  dates:invoiceDates.get,
+  updateDates:invoiceDates.update,
   get:invoiceId=>withTransaction(pool,db=>detail(db,invoiceId)),
   nextReference:exerciseId=>withTransaction(pool,db=>nextIssuedReference(db,companyId,exerciseId)),
   async list(query={}){
@@ -100,7 +105,7 @@ export function createInvoiceService(pool,companyId){
    };
    return options.db?create(options.db):withTransaction(pool,create);
   },
-  async void(invoiceId,body){
+  async void(invoiceId,body,actor='local'){
    const target=id(invoiceId),data={request_id:requestId(body?.request_id),exercise_id:id(body?.exercise_id),date:date(body?.date),reason:text(body?.reason,200,true)},digest=hash(data);
    return withTransaction(pool,async db=>{
     await lockCompany(db,companyId);
@@ -113,6 +118,8 @@ export function createInvoiceService(pool,companyId){
     if(latest.date&&data.date<latest.date)fail('INVALID_PAYMENT_DATE');
     const reversal=await reverseJournal(db,companyId,invoice.entry_id,data.exercise_id,data.date,'Anulación factura '+invoice.reference+' · '+data.reason);
     await db.execute("UPDATE trade_invoices SET status='void',void_entry_id=?,void_request_id=?,void_request_hash=?,void_date=?,void_reason=? WHERE company_id=? AND id=?",[reversal.id,data.request_id,digest,data.date,data.reason,companyId,target]);
+    const purchase=await purchaseAccountingLink(db,companyId,target);
+    if(purchase){await db.execute("UPDATE purchase_invoices SET status='cancelled',version=version+1 WHERE company_id=? AND id=?",[companyId,purchase.id]);await db.execute('INSERT INTO management_audit_events(company_id,actor,action,entity_type,entity_id,before_data,after_data) VALUES (?,?,?,?,?,?,?)',[companyId,actor,'void','invoices',purchase.id,JSON.stringify({status:'confirmed',invoice_id:target}),JSON.stringify({status:'cancelled',invoice_id:target,reason:data.reason})]);}
     await appendFiscalRecord(db,companyId,invoice,'anulacion');
     return {...await detail(db,target),replayed:false};
    });

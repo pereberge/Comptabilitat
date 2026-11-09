@@ -10,12 +10,12 @@ const companyColumns = 'c.id, c.name, c.subaccount_length, c.business_format, l.
 const companyFrom = `FROM companies c LEFT JOIN company_logos l ON l.company_id = c.id
   LEFT JOIN company_details d ON d.company_id = c.id`;
 const companyQuery = 'SELECT ' + companyColumns + ', ' + companyProfileKeys.map(field => 'd.' + field).join(', ') + ' ' + companyFrom;
-const companyListQuery = 'SELECT ' + companyColumns + ', d.tax_id, d.city ' + companyFrom;
+const companyListQuery = 'SELECT ' + companyColumns + ', d.tax_id, d.city, d.payroll_agreement ' + companyFrom;
 
 function companyDetails(row, full = false) {
   return {
     id: row.id, name: row.name, subaccount_length: row.subaccount_length, business_format: row.business_format||'general',
-    ...(full ? Object.fromEntries(companyProfileKeys.map(field => [field, row[field] ?? ''])) : { tax_id: row.tax_id ?? '', city: row.city ?? '' }),
+    ...(full ? Object.fromEntries(companyProfileKeys.map(field => [field, row[field] ?? ''])) : { tax_id: row.tax_id ?? '', city: row.city ?? '',payroll_agreement:row.payroll_agreement??'' }),
     logo_url: row.logo_version ? `/api/companies/${row.id}/logo?v=${encodeURIComponent(String(row.logo_version))}` : null,
   };
 }

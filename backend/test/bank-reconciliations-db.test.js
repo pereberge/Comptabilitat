@@ -82,7 +82,7 @@ test('MySQL bank reconciliation: immutable proposals, source PDF, exact balances
     assert.equal(source.headers.get('content-type'),'application/pdf');
     assert.equal(source.headers.get('cache-control'),'no-store');
     assert.equal(source.headers.get('x-content-type-options'),'nosniff');
-    assert.match(source.headers.get('content-disposition'),/statement\.pdf/);
+    assert.match(source.headers.get('content-disposition'),/Extracte-Bank-2026-10-20\.pdf/);
     assert.deepEqual(Buffer.from(await source.arrayBuffer()),pdf);
     await post('2026-10-21',bank,capital,'50.00');
     assert.equal((await service.get(saved.id)).current.ledger_changed,false,'future activity must not change an analysis through 20 October');

@@ -35,6 +35,7 @@ async function load(reloadAccounts=false,editedId=null){
 function chooseAccount(id){accountId.value=id;notice.value='';if(id)load();else{generation++;loading.value=false;result.value=null;}}
 function openEntry(row,edit=false){entryId.value=row.entry_id;editRequested.value=edit;}
 async function saved(entry){notice.value=t.entryUpdated;await load(false,entry.id);}
+async function deleted(){entryId.value=null;notice.value=t.entryDeleted;await load(false);}
 watch(()=>props.exercise.id,()=>load(true),{immediate:true});onBeforeUnmount(()=>{generation++;window.removeEventListener('resize',fitLedger);});
 </script>
 <template>
@@ -50,7 +51,7 @@ watch(()=>props.exercise.id,()=>load(true),{immediate:true});onBeforeUnmount(()=
   </div>
   <p v-else-if="!loading&&!error" class="empty-cell">{{ result?r.empty:r.choose }}</p>
  </section>
- <EntryDetail v-if="entryId" :entry-id="entryId" allow-edit :edit-on-open="editRequested" @close="entryId=null" @saved="saved" />
+ <EntryDetail v-if="entryId" :entry-id="entryId" allow-edit :edit-on-open="editRequested" @close="entryId=null" @saved="saved" @deleted="deleted" />
 </template>
 <style scoped>
 .home-ledger{margin:20px 0;min-width:0;overflow:hidden}.home-ledger-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px 12px}.home-ledger-heading h2{font-size:18px}.home-ledger-heading .muted{margin-top:5px;font-size:12px}.home-ledger-filters{display:flex;align-items:end;flex-wrap:wrap;gap:10px;padding:0 20px 14px}.home-ledger-account{width:280px;max-width:100%}.home-ledger-field-label{display:block;font-size:12px;color:#65748a;margin-bottom:5px}.home-ledger-account-name{font-size:12px;color:#53647b;align-self:center;flex:1;min-width:180px;overflow-wrap:anywhere}.home-ledger-scroll{height:var(--home-ledger-height,clamp(300px,calc(100dvh - 410px),650px));overflow:auto;overscroll-behavior:contain;border-top:1px solid #e2e7ed}.home-ledger-table{min-width:700px}.home-ledger-table th{position:sticky;top:0;z-index:1}.home-ledger-table tfoot th,.home-ledger-table tfoot td{position:sticky;bottom:0;background:#f0f4f8;border-top:1px solid #cbd5e1;font-weight:600}.home-ledger-table td{padding:9px 12px}.home-ledger-table td:nth-child(3){min-width:220px;overflow-wrap:anywhere}.home-ledger-last{background:var(--primary-soft)}.home-ledger-edit{font-size:11px;padding:5px 9px}.home-ledger-loading,.home-ledger>.success-note{padding:12px 20px}.home-ledger>.notice{margin:0 20px 14px}

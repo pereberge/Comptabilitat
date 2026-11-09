@@ -28,6 +28,8 @@ La comprobación y los traslados usan permiso de escritura. Se vuelven a verific
 
 **Pasar a Facturas** abre con un clic la propuesta del PDF pendiente en Facturas. Conserva el original, sus datos extraídos y el ejercicio correspondiente a la fecha de factura cuando existe; el resto se completa al revisar la propuesta. Mueve el documento a gestionadas y evita duplicados en los reintentos. No registra asientos ni recibos hasta confirmar la propuesta. La lectura de PDF queda guardada desde `028_document_invoice_extraction.sql` y sirve también para proponer relaciones con movimientos bancarios. Los demás formatos permanecen en el archivo para consultarlos y gestionarlos manualmente.
 
+En **Editar propuesta y recibos**, los datos obligatorios que faltan o son incorrectos aparecen en rojo desde que se abre el formulario, con un mensaje junto al campo. El resumen permite pulsar cada aviso para ir al dato correspondiente y se actualiza al corregirlo. Incluye las cuentas de IVA y retención cuando proceden, fechas, conceptos e importes; si los recibos no cuadran, indica cuánto falta o sobra por repartir. Los datos fiscales opcionales vacíos no se consideran errores. Antes de contabilizar también se señalan en rojo la confirmación de revisión pendiente y el asiento por seleccionar cuando hay varias coincidencias.
+
 Migraciones: `014_invoice_deletions.sql` y `015_documentation.sql` (`npm run db:migrate`). Compilar con `npm run build` para actualizar la interfaz servida en el puerto 3000.
 
 API, siempre con `X-Company-Id`:

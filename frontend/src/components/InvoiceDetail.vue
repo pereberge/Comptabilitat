@@ -13,17 +13,20 @@ import { t,treasuryError } from '../locales/treasury.js';
 import FormDialog from './FormDialog.vue';
 import EntryDetail from './EntryDetail.vue';
 import InvoicePdf from './InvoicePdf.vue';
+import {downloadFile} from '../services/documentation.js';
 const props=defineProps({invoiceId:[String,Number],readOnly:Boolean}),emit=defineEmits(['close','void','delete']);
 const invoice=ref(null),error=ref(''),entryId=ref(null),pdf=ref(null),logoUrl=ref(''),logoFailed=ref(false),logoImage=ref(null),printing=ref(false),emailing=ref(false),deliveryError=ref('');
 const identities=computed(()=>invoice.value?invoiceFiscalIdentities(invoice.value):null);
 onMounted(async()=>{try{const loaded=await api('/invoices/'+props.invoiceId);if(loaded.direction==='issued'){logoUrl.value=loaded.issuer_snapshot.logo_url||'';if(!logoUrl.value){const issuer=await api('/companies/'+loaded.company_id).catch(()=>null);logoUrl.value=issuer?.logo_url||'';}}invoice.value=loaded;}catch(cause){error.value=treasuryError(cause);}});
 async function print(){if(printing.value)return;printing.value=true;deliveryError.value='';try{await printInvoice(invoice.value.id);}catch(cause){deliveryError.value=invoiceDeliveryError(cause);}finally{printing.value=false;}}
 function viewPdf(){pdf.value={invoiceId:invoice.value.id};}
+async function purchaseOriginal(){try{await downloadFile('/documentation/'+invoice.value.purchase_document.original_document_id+'/source',invoice.value.purchase_document.source_name);}catch(cause){deliveryError.value=treasuryError(cause);}}
 </script>
 <template><Teleport to="body">
  <FormDialog class="print-document invoice-detail-dialog" :busy="printing" :title="invoice?t.invoices+' · '+invoice.reference:t.invoices" @close="emit('close')">
   <p v-if="error" role="alert">{{ error }}</p><p v-else-if="!invoice" role="status">{{ t.loading }}</p>
   <template v-else>
+   <p v-if="invoice.purchase_document?.original_document_id" class="document-controls"><button type="button" class="button" @click="purchaseOriginal">Descarregar original de compra · {{ invoice.purchase_document.source_name }}</button></p>
    <div class="actions document-controls invoice-delivery-controls"><button class="button primary" :disabled="printing" @click="print">{{ printing?'Preparando impresión…':'Imprimir' }}</button><button class="button" :disabled="printing" @click="viewPdf">Ver PDF</button><button class="button" :disabled="printing" @click="emailing=true">Preparar correo</button></div><p v-if="deliveryError" class="notice error-notice document-controls" role="alert">{{ deliveryError }}</p>
    <div class="trade-document-heading"><div><img v-if="logoUrl&&!logoFailed" ref="logoImage" class="invoice-document-logo" :src="logoUrl" :alt="'Anagrama de '+identities.issuer.name" @error="logoFailed=true"><InvoiceFiscalIdentity :person="identities.issuer" :label="invoice.direction==='issued'?'Datos fiscales del emisor':'Datos fiscales del proveedor'" /></div><div><span class="badge" :class="invoice.status==='void'?'trade-void':'badge-open'">{{ invoice.status==='void'?t.void:invoice.direction==='issued'?t.issued:t.received }}</span><h3>{{ invoice.reference }}</h3><p>{{ t.invoiceDate }}: {{ date(invoice.invoice_date) }}</p><p>{{ t.postingDate }}: {{ date(invoice.posting_date) }} · {{ invoice.exercise_name }}</p></div></div>
    <section class="trade-document-party"><InvoiceFiscalIdentity :person="identities.recipient" :label="invoice.direction==='issued'?'Datos fiscales del cliente':'Datos fiscales del destinatario'" /></section><p class="muted document-controls"><small>{{ t.partyAccount }}: {{ invoice.party_code }}</small></p>

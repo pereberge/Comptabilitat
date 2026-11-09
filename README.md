@@ -1,5 +1,9 @@
 # Contabilidad — Mantenimiento de subcuentas y asientos
 
+**Archivo de extractos:** Conciliació bancària conserva los PDF y CSV anteriores con banco y fecha y permite consultarlos, descargarlos o borrarlos desde **Extractes arxivats**. [Uso y comprobaciones](docs/conciliacion-bancaria.md).
+
+**Actualizar diarios:** en Ejercicios, **Importar / actualizar diario PDF** permite cargar una nueva copia sin borrar la anterior. Compara asientos, sustituye los modificados y añade los nuevos, con copia previa y conservación de los PDF originales. Requiere la migración 041. [Uso y comprobaciones](docs/actualizacion-diarios.md).
+
 **Bases per empresa:** mode opcional amb usuaris centrals i dades comptables en bases separades. Inclou trasllat verificat, encaminament de Gestió i còpies per empresa. [Activació, migració i recuperació](docs/bases-per-empresa.md).
 
 **Clientes y proveedores:** las subcuentas 430/440 y 400/410 incluyen una ficha de datos fiscales que se carga en las facturas y se conserva en su impresión y PDF. Requiere la migración 034. [Uso y conservación de los datos](docs/clientes-proveedores.md).
@@ -25,7 +29,7 @@ Aplicación local con Vue 3 (Composition API), Vite, JavaScript, Vue Router, Exp
 
 ## Mantenimiento de subcuentas
 
-Pantalla única para consultar, crear y editar cuentas y subcuentas. El alta utiliza un solo formulario: código y descripción. La notación cuenta.subcuenta (4300.0001) identifica el padre sin seleccionarlo. El servidor crea los niveles que falten y deduce el tipo; no hay selector de tipo ni de padre.
+Pantalla única para consultar, crear y editar cuentas y subcuentas. El alta utiliza un solo formulario: código y descripción. La notación cuenta.subcuenta (4300.2) identifica el padre sin seleccionarlo y completa el sufijo con ceros: con 8 dígitos, 4300.0002. El servidor crea los niveles que falten y deduce el tipo; no hay selector de tipo ni de padre.
 
 Las fichas de clientes, deudores, proveedores y acreedores se gestionan desde su subcuenta, sin un módulo independiente de proveedores. Los datos del antiguo módulo de proveedores se recuperan en la ficha fiscal mediante la migración 034.
 
@@ -102,6 +106,7 @@ En “Mantenimiento de subcuentas” puedes buscar por código o descripción, f
 - Códigos VARCHAR; raíces del 1 al 9.
 - Las cuentas amplían un dígito de su padre; la jerarquía que falte se crea automáticamente. Para códigos oficiales se usa el nombre del catálogo; los niveles personalizados se crean con “Cuenta [código]”, editable después.
 - Las subcuentas pertenecen al prefijo indicado antes del punto, de al menos tres dígitos. El código completo sin punto tiene la longitud configurada en `companies.subaccount_length` (8 inicialmente). Ejemplo: 4300.0001 se almacena como 43000001, con padre 4300 y sufijo 0001.
+- Todos los campos de entrada de cuenta/subcuenta usan una sola casilla con lupa. Se puede escribir `4300.2`, `4300.0002` o el código completo `43000002`; al salir o pulsar Intro se muestra `4300.0002`. Con 10 dígitos se completa como `4300.000002`. El mismo formato abreviado sirve para crear y buscar subcuentas. Seleccionar una subcuenta existente no crea cuentas nuevas.
 - Las cuentas generales y subcuentas existentes pueden coexistir: cargar desarrollos oficiales no mueve ni renumera las subcuentas históricas. Los movimientos siguen vinculados a los mismos IDs.
 - El código, tipo y padre son inmutables; se pueden editar la descripción y la ficha fiscal del cliente o proveedor. Esto evita ciclos y cambios en la clasificación de movimientos existentes.
 - “Proponer código de subcuenta” parte de una cuenta escrita en el campo Código (por ejemplo 4300) y devuelve el siguiente al mayor código completo de su prefijo; es una propuesta. Si otro usuario lo ocupa antes del guardado, la restricción única lo rechaza y puedes pedir otra propuesta.
@@ -124,7 +129,7 @@ Los importes admiten punto o coma decimal, hasta dos decimales y **sin separador
 Reglas verificadas en el backend:
 - Entre 2 y 100 líneas; descripción obligatoria.
 - Cada línea usa una subcuenta de la misma empresa.
-- Un único lado positivo por línea, sin negativos ni líneas a cero.
+- Un único lado distinto de cero por línea. Se admiten importes negativos en Debe o Haber, conservando el signo y la columna introducidos.
 - Debe igual a Haber.
 - Fecha válida dentro de un ejercicio abierto de la empresa.
 - Precisión mediante BigInt en céntimos y almacenamiento DECIMAL(15,2), sin cálculo monetario en coma flotante.
@@ -258,6 +263,8 @@ Los botones pequeños junto al título de Inicio permiten cambiar de empresa pul
 
 ## Facturas y cartera de cobros y pagos
 
+En **Nóminas** (`/nominas`), mantén las fichas de trabajadores y prepara nóminas mensuales y extraordinarias con PDF, resumen CSV y contabilización revisada. El convenio se elige en la ficha de cada empresa: fabricación de piensos o granjas avícolas y otros animales. Sin convenio, Nóminas queda oculto. Aplicar las migraciones 039 y 040 mediante `npm run db:migrate`. [Uso, convenios, cálculo y alcance](docs/nominas.md).
+
 En **Facturas** (`/facturas`), registra facturas emitidas o recibidas con sus conceptos, IVA, retención y uno o varios recibos con fechas e importes editables. Guardar crea la factura, su asiento y todos los vencimientos en una sola transacción. La migración `008_invoices_portfolio.sql` incorpora los registros y relaciones necesarios.
 
 En **Cartera** (`/cartera`), consulta pendientes y vencidos de todos los ejercicios de la empresa, registra cobros/pagos totales o parciales, modifica vencimientos y revisa el historial. Las liquidaciones crean su asiento de banco/caja y actualizan el pendiente de forma conjunta. Facturas y recibos son imprimibles; la cartera incluye CSV. Las anulaciones se realizan mediante contrasientos, conservando el historial. Uso, API, cálculos, pruebas y alcance: [docs/cartera.md](docs/cartera.md).
@@ -288,9 +295,9 @@ En un ejercicio vacío, **Importar libro diario PDF** permite revisar un informe
 
 También admite `LISTADO DEL DIARIO`, con cabecera de asiento y columnas CUENTA/NOMBRE/CONCEPTO/DEBE/HABER. Verifica los totales de cada asiento, el total general y la secuencia de páginas; conserva los asientos que continúan en otra página. Solo omite filas sin cuenta ni concepto con ambos importes a cero, indicando su cantidad en la revisión. La API de alta admite `subaccount_length` entre 6 y 20 (8 por defecto), para crear la empresa con la longitud del diario antes de importarlo.
 
-La migración `007_journal_import.sql` incorpora el registro de importación y conserva el PDF original y su SHA-256 en MySQL. La creación de subcuentas, asientos, líneas y registro de origen se realiza en una única transacción con comprobación final de cantidades y totales. Repetir la misma importación no duplica movimientos; un diario diferente no sustituye un ejercicio con movimientos. Un PDF con cierre al final del período deja el ejercicio cerrado para consulta.
+La migración `007_journal_import.sql` incorpora el registro de importación y conserva el PDF original y su SHA-256 en MySQL. La creación de subcuentas, asientos, líneas y registro de origen se realiza en una única transacción con comprobación final de cantidades y totales. Repetir la misma importación no duplica movimientos. Con la migración `041_journal_import_versions.sql`, una nueva copia puede actualizar los asientos modificados y añadir los nuevos sin borrar el diario anterior, con copia de seguridad previa y conservación de todas las versiones del PDF. [Uso y comprobaciones](docs/actualizacion-diarios.md). Un PDF con cierre al final del período deja el ejercicio cerrado para consulta.
 
-El Mayor y Sumas y Saldos incluyen el cierre por defecto para poder conciliar con el documento. La casilla **Excluir asiento de cierre** permite ver los saldos previos al cierre. El Balance de Situación siempre usa esos saldos y sus enlaces al Mayor mantienen el mismo criterio. La entrada manual conserva las validaciones originales de importes positivos y partida doble.
+El Mayor y Sumas y Saldos incluyen el cierre por defecto para poder conciliar con el documento. La casilla **Excluir asiento de cierre** permite ver los saldos previos al cierre. El Balance de Situación siempre usa esos saldos y sus enlaces al Mayor mantienen el mismo criterio. La entrada y edición manual admiten importes negativos con la migración 042, conservando el signo, los céntimos exactos y el cuadramiento de la partida doble.
 
 API: `GET/POST /api/exercises`, `POST /api/journal-import/preview?exercise_id=…` (cuerpo PDF de hasta 5 MB), y `POST /api/journal-import/commit` con `{token}`. Todas usan el contexto `X-Company-Id`. La revisión caduca a los 15 minutos. Los lectores admiten PDF con texto de hasta 300 páginas, 5.000 asientos, 20.000 líneas y 1.000 líneas por asiento. El formato Producción porcina admite también DIARI; otros formatos o documentos escaneados requieren otro adaptador.
 

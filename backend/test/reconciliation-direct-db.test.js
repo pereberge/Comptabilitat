@@ -21,10 +21,10 @@ test('MySQL direct reconciliation: current list, atomic journal posting, criteri
   const csv='Fecha;Concepto;Importe;Saldo\n10/01/2026;Opening;1000,00;1000,00\n12/01/2026;SERVEI NETEJA 01;-100,00;900,00\n20/01/2026;SERVEI NETEJA 02;-200,00;700,00';
   const prepare=async(content,direct=true)=>{const preview=await imports.preview(Buffer.from(content),company.year,'direct.csv','text/csv'),analysis=await imports.analyze({token:preview.token,account_id:bank.id,replace_current:direct});return {preview,analysis};};
   const old=await prepare(csv,false),oldSaved=await imports.commit({token:old.preview.token});await imports.discard({token:old.preview.token});let report;
-  await t.test('upload opens a direct list and replaces the previous report in the same exercise',async()=>{
+  await t.test('upload opens a direct list and archives the previous report in the same exercise',async()=>{
    const next=await prepare(csv+'\n'),saved=await imports.commit({token:next.preview.token});await imports.discard({token:next.preview.token});report=await service.get(saved.id);
-   assert.equal(report.snapshot.workflow,'direct');assert.equal(report.snapshot.work_anchor.bank_date,'2026-01-10');assert.equal(report.snapshot.work_start_date,'2026-01-11');assert.equal(await count('bank_reconciliations',company.id),1);
-   await assert.rejects(service.get(oldSaved.id),error('RECONCILIATION_NOT_FOUND'));assert.equal((await service.list({exercise_id:company.year}))[0].workflow,'direct');
+   assert.equal(report.snapshot.workflow,'direct');assert.equal(report.snapshot.work_anchor.bank_date,'2026-01-10');assert.equal(report.snapshot.work_start_date,'2026-01-11');assert.equal(await count('bank_reconciliations',company.id),2);
+   assert.equal((await service.get(oldSaved.id)).snapshot.workflow,'archived');assert.equal((await service.list({exercise_id:company.year}))[0].workflow,'direct');
   });
   const body=()=>({version:report.version,movement_id:2,date:'2026-01-12',concept:'SERVEI NETEJA 01',remember:true,rule_concept:'SERVEI NETEJA',counter_lines:[{account_id:expense.id,debit:'100.00',credit:'0.00'}],request_id:randomUUID()});
   await t.test('manual save posts exactly one balanced journal and remembers the criterion atomically',async()=>{
@@ -52,14 +52,14 @@ test('MySQL direct reconciliation: current list, atomic journal posting, criteri
    await assert.rejects(createBankReconciliationService(failing,company.id).postMovement(report.id,next),/Injected direct failure/);assert.equal(await count('journal_entries',company.id),2);assert.equal(await count('bank_reconciliation_rules',company.id),1);
    await assert.rejects(createBankReconciliationService(pool,foreign.id).postMovement(report.id,next),error('RECONCILIATION_NOT_FOUND'));
    const result=await service.postMovement(report.id,next);assert.ok(result.entry_id);report=await service.get(report.id);assert.equal(report.snapshot.posted_movements.length,2);assert.equal(await count('journal_entries',company.id),3);
-   const archive=readBackup((await createDataBackupService(pool,company.id).export()).file);assert.equal(archive.tables.bank_reconciliations[0].snapshot.posted_movements.length,2);
+   const archive=readBackup((await createDataBackupService(pool,company.id).export()).file);assert.equal(archive.tables.bank_reconciliations.find(row=>row.id===report.id).snapshot.posted_movements.length,2);
   });
-  await t.test('a failed replacement keeps the current extract, and a new extract removes only its reports',async()=>{
+  await t.test('a failed archive keeps the current extract, and a new extract retains all original reports',async()=>{
    const future=await prepare(csv+'\n\n');
-   const failing={async getConnection(){const db=await pool.getConnection();return {execute(sql,args){if(sql.startsWith('DELETE FROM bank_reconciliations WHERE company_id=? AND exercise_id=? AND id<>?'))throw new Error('Injected replacement failure');return db.execute(sql,args);},query:(...args)=>db.query(...args),beginTransaction:()=>db.beginTransaction(),commit:()=>db.commit(),rollback:()=>db.rollback(),release:()=>db.release()};}};
-   await assert.rejects(createBankImportService(failing,company.id).commit({token:future.preview.token}),/Injected replacement failure/);assert.equal(await count('bank_reconciliations',company.id),1);await service.get(report.id);
-   const next=await imports.commit({token:future.preview.token});await imports.discard({token:future.preview.token});assert.notEqual(next.id,report.id);assert.equal(await count('bank_reconciliations',company.id),1);assert.equal(await count('journal_entries',company.id),3);assert.equal(await count('bank_reconciliation_rules',company.id),2);
-   await assert.rejects(service.get(report.id),error('RECONCILIATION_NOT_FOUND'));
+   const failing={async getConnection(){const db=await pool.getConnection();return {execute(sql,args){if(sql.startsWith("UPDATE bank_reconciliations SET snapshot=JSON_SET"))throw new Error('Injected replacement failure');return db.execute(sql,args);},query:(...args)=>db.query(...args),beginTransaction:()=>db.beginTransaction(),commit:()=>db.commit(),rollback:()=>db.rollback(),release:()=>db.release()};}};
+   await assert.rejects(createBankImportService(failing,company.id).commit({token:future.preview.token}),/Injected replacement failure/);assert.equal(await count('bank_reconciliations',company.id),2);await service.get(report.id);
+   const next=await imports.commit({token:future.preview.token});await imports.discard({token:future.preview.token});assert.notEqual(next.id,report.id);assert.equal(await count('bank_reconciliations',company.id),3);assert.equal(await count('journal_entries',company.id),3);assert.equal(await count('bank_reconciliation_rules',company.id),2);
+   assert.equal((await service.get(report.id)).snapshot.workflow,'archived');assert.equal((await service.list({exercise_id:company.year})).filter(row=>row.workflow==='direct').length,1);
   });
  }finally{
   for(const companyId of ids){for(const table of ['bank_reconciliation_rules','bank_reconciliations','bank_connections','journal_lines','journal_entries','company_details','accounting_exercises'])await pool.execute('DELETE FROM '+table+' WHERE company_id=?',[companyId]);const [accounts]=await pool.execute('SELECT id FROM accounts WHERE company_id=? ORDER BY LENGTH(code) DESC',[companyId]);for(const row of accounts)await pool.execute('DELETE FROM accounts WHERE company_id=? AND id=?',[companyId,row.id]);await pool.execute('DELETE FROM companies WHERE id=?',[companyId]);}

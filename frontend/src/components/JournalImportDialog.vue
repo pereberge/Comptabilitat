@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import FormDialog from './FormDialog.vue';
+import JournalImportChanges from './JournalImportChanges.vue';
 import { t, exerciseError } from '../locales/exercises.js';
 import { reportMoney as money, reportDate as date } from '../services/report-format.js';
 import { previewJournal, commitJournal } from '../services/journal-import.js';
@@ -24,8 +25,9 @@ async function commit() {
 }
 </script>
 <template>
-  <FormDialog class="journal-import-dialog" :title="t.import + ' · ' + exercise.name" :busy="busy" @close="emit('close')">
+  <FormDialog class="journal-import-dialog" :class="{'journal-import-with-changes':preview?.updating}" :title="t.import + ' · ' + exercise.name" :busy="busy" @close="emit('close')">
     <p class="muted">{{ t.importHelp }}</p>
+    <p class="muted">{{ t.updateHelp }}</p>
     <p v-if="error" class="notice error-notice" role="alert">{{ error }}</p>
     <form @submit.prevent="review">
       <label>{{ t.choosePdf }}<input type="file" accept="application/pdf,.pdf" :disabled="busy" required @change="choose"></label>
@@ -44,9 +46,15 @@ async function commit() {
       <p v-if="preview.totals.ignored_empty_lines" class="notice">{{ preview.totals.ignored_empty_lines }} filas vacías sin cuenta y con Debe/Haber a cero se omiten. Se conserva el PDF original y la posición de las líneas restantes.</p>
       <p v-if="preview.has_closing" class="notice">{{ t.closing }}</p>
       <p v-if="preview.already_imported" class="notice">{{ t.already }}</p>
+      <section v-if="preview.updating" class="journal-update-summary">
+        <h3>{{ t.changes }}</h3>
+        <dl class="import-totals"><div><dt>{{ t.addedEntries }}</dt><dd>{{ preview.changes.added }}</dd></div><div><dt>{{ t.updatedEntries }}</dt><dd>{{ preview.changes.updated }}</dd></div><div><dt>{{ t.unchangedEntries }}</dt><dd>{{ preview.changes.unchanged }}</dd></div><div v-if="preview.changes.retained"><dt>{{ t.retainedEntries }}</dt><dd>{{ preview.changes.retained }}</dd></div></dl>
+        <p class="notice">{{ t.updateBackup }}</p>
+        <JournalImportChanges :changes="preview.change_details||[]" />
+      </section>
       <h3>{{ t.firstLast }}</h3>
       <div class="table-wrap"><table><thead><tr><th>{{ t.number }}</th><th v-if="preview.source_format==='diari_ca'">{{ t.sourceReference }}</th><th>{{ t.date }}</th><th>{{ t.concept }}</th><th>{{ t.debit }}</th></tr></thead><tbody><tr v-for="row in preview.sample" :key="row.number"><td>{{ row.number }}</td><td v-if="preview.source_format==='diari_ca'">{{ row.source_journal_code }} / {{ row.source_entry_reference }}</td><td>{{ date(row.entry_date) }}</td><td>{{ row.description }}</td><td class="amount">{{ money(row.debit) }}</td></tr></tbody></table></div>
-      <div class="actions"><button type="button" class="button primary" :disabled="busy" @click="commit">{{ preview.already_imported ? t.replay : t.commit }}</button></div>
+      <div class="actions"><button type="button" class="button primary" :disabled="busy" @click="commit">{{ preview.already_imported ? t.replay : preview.updating ? t.updateCommit : t.commit }}</button></div>
     </section>
   </FormDialog>
 </template>

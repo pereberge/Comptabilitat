@@ -4,6 +4,8 @@ En **Ejercicios** (`/ejercicios`), cada ficha muestra los asientos vigentes de a
 
 La importación del **DIARI** con códigos de diario y referencias requiere **Producción porcina** en la ficha de empresa. Conserva también el nombre de origen y los apuntes originales. Configuración, límites y comprobaciones: [produccion-porcina.md](produccion-porcina.md).
 
+**Importar / actualizar diario PDF** permite cargar una nueva copia del diario existente: muestra los asientos nuevos y modificados y guarda una copia antes de actualizar, sin borrar el ejercicio. [Actualización de diarios](actualizacion-diarios.md).
+
 - **Generar cierre** prepara una vista previa, regulariza los saldos restantes de los grupos 6 y 7 contra una subcuenta 129 y cierra las cuentas de los grupos 1 a 5 en la fecha final del ejercicio. La confirmación guarda los asientos y deja el ejercicio cerrado.
 - **Generar apertura** incorpora los saldos patrimoniales del ejercicio anterior al primer día del ejercicio abierto. El anterior debe terminar el día previo, estar cerrado y tener un único cierre vigente con todas sus cuentas saldadas.
 - **Nuevo ejercicio** permite marcar **Crear también el asiento de apertura**. Se revisan sus saldos antes de guardar; el ejercicio y la apertura se crean en una sola transacción. Sin marcarla, el ejercicio empieza vacío.

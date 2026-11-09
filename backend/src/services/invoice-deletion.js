@@ -3,6 +3,7 @@ import { id,fail } from './validation.js';
 import { hash,requestId } from './invoice-validation.js';
 import { lockCompany } from './subaccounts.js';
 import { withTransaction } from '../db/transaction.js';
+import {purchaseAccountingLink} from './purchase-accounting-link.js';
 
 const json=value=>typeof value==='string'?JSON.parse(value):value;
 const conflict=code=>{throw new HttpError(409,code);};
@@ -23,6 +24,7 @@ export function createInvoiceDeletionService(pool,companyId){
   const [exercises]=await db.execute('SELECT * FROM accounting_exercises WHERE company_id=? AND id IN ('+placeholders(exerciseIds)+') ORDER BY id FOR UPDATE',[companyId,...exerciseIds]);
   const [[company]]=await db.execute('SELECT id,name FROM companies WHERE id=?',[companyId]);
   const blockers=[];
+  if(await purchaseAccountingLink(db,companyId,invoice.id))blockers.push({code:'purchase_document',message:'La factura está vinculada a documentos de compra. Conserva sus vínculos y utiliza la anulación de factura.'});
   const [[remittance]]=await db.execute("SELECT m.id FROM bank_remittances m JOIN portfolio_receipts r ON r.company_id=m.company_id AND JSON_CONTAINS(m.receipt_ids,CAST(r.id AS JSON)) WHERE m.company_id=? AND m.status='prepared' AND r.invoice_id=? LIMIT 1",[companyId,invoice.id]);
   if(remittance)blockers.push({code:'bank_remittance',message:'Cancela primero la remesa bancaria '+remittance.id+' que contiene recibos de esta factura.'});
   const [[fiscal]]=await db.execute('SELECT id FROM verifactu_records WHERE company_id=? AND invoice_id=? LIMIT 1',[companyId,invoice.id]);

@@ -1,6 +1,7 @@
 import { companyTextFields, paymentMethods, isValidIban } from '../../../shared/company-profile.js';
 import { fail } from './validation.js';
 import {isValidCreditorId,sepaIdentifier} from '../../../shared/sepa.js';
+import {payrollAgreementFor} from '../../../shared/payroll-agreements.js';
 
 export function validateCompanyProfile(body) {
   const result = {};
@@ -27,6 +28,10 @@ export function validateCompanyProfile(body) {
   if (Object.hasOwn(body, 'payment_method')) {
     if (body.payment_method !== '' && !paymentMethods.includes(body.payment_method)) fail('INVALID_PAYMENT_METHOD');
     result.payment_method = body.payment_method;
+  }
+  if(Object.hasOwn(body,'payroll_agreement')){
+    if(body.payroll_agreement!==''&&!payrollAgreementFor(body.payroll_agreement))fail('INVALID_PAYROLL_AGREEMENT');
+    result.payroll_agreement=body.payroll_agreement;
   }
   return result;
 }

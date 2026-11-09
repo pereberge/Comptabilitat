@@ -10,6 +10,7 @@ import { useContext } from './composables/context.js';
 import {workspace} from './services/workspace-state.js';
 import { companyTheme } from './services/company-theme.js';
 import {companyHasCapability} from '../../shared/company-formats.js';
+import {companyHasPayroll} from '../../shared/payroll-agreements.js';
 import AppIcon from './components/AppIcon.vue';
 import StatusBadge from './components/StatusBadge.vue';
 import './assets/companies.css';
@@ -51,6 +52,9 @@ function rememberWorkspace(){
  if(stale)void router.replace({path:route.path,hash:route.hash});
 }
 watch([()=>route.fullPath,()=>company.value?.id,selectedId,loading],rememberWorkspace,{flush:'post'});
+watch([()=>route.name,()=>company.value?.payroll_agreement,loading,restoringWorkspace],()=>{
+ if(!loading.value&&!restoringWorkspace.value&&company.value&&route.name==='payroll'&&!companyHasPayroll(company.value))void router.replace('/');
+},{flush:'post'});
 function switchCompany(id) {
   if (loading.value) return;
   menuOpen.value = false;
@@ -73,6 +77,8 @@ function changeCompany(event) { switchCompany(event.target.value); }
       <RouterLink class="nav-item" to="/cuentas" @click="menuOpen=false"><AppIcon name="list" />{{ es.accounts }}</RouterLink>
       <RouterLink class="nav-item" to="/asientos" @click="menuOpen=false"><AppIcon name="book" />{{ es.entries }}</RouterLink>
       <RouterLink class="nav-item" to="/facturas" @click="menuOpen=false"><AppIcon name="list" />{{ es.invoices }}</RouterLink>
+      <RouterLink v-if="can('purchases_read')" class="nav-item" to="/compras" @click="menuOpen=false"><AppIcon name="list" />Compres</RouterLink>
+      <RouterLink v-if="companyHasPayroll(company)" class="nav-item" to="/nominas" @click="menuOpen=false"><AppIcon name="book" />{{ es.payroll }}</RouterLink>
       <RouterLink class="nav-item" :class="{'router-link-exact-active':['corporateTax','installmentTax'].includes(route.name)}" to="/hacienda" @click="menuOpen=false"><AppIcon name="building" />{{ es.tax }}</RouterLink>
       <RouterLink v-if="companyHasCapability(company,'pig_production')" class="nav-item" to="/granjas" @click="menuOpen=false"><AppIcon name="building" />Gestión de granjas</RouterLink>
       <RouterLink class="nav-item" to="/verifactu" @click="menuOpen=false"><AppIcon name="check" />VERI*FACTU</RouterLink>

@@ -1,4 +1,5 @@
 <script setup>
+import DateInput from '../components/DateInput.vue';
 import {useAccess} from '../composables/access.js';
 const {can}=useAccess();
 import { computed, nextTick, ref, watch, onBeforeUnmount } from 'vue';
@@ -6,7 +7,8 @@ import { onBeforeRouteLeave } from 'vue-router';
 import { useContext } from '../composables/context.js';
 import { api } from '../services/accounting.js';
 import { t,errorText } from '../locales/accounting.js';
-import { cents,displayMoney } from '../../../shared/money.js';
+import {displayMoney} from '../../../shared/money.js';
+import {journalTotals} from '../../../shared/journal-totals.js';
 import EntryDetail from '../components/EntryDetail.vue';
 import JournalSource from '../components/JournalSource.vue';
 import SubaccountInput from '../components/SubaccountInput.vue';
@@ -18,8 +20,8 @@ const detailId=ref(null);
 const filters=ref({from:'',to:'',number:'',amount:''});
 let generation=0,lineKey=0;
 const newLine=()=>({key:++lineKey,account_id:'',debit:'',credit:''});
-const totals=computed(()=>{let debit=0n,credit=0n;try{for(const line of form.value?.lines||[]){debit+=cents(line.debit||'0');credit+=cents(line.credit||'0');}return {debit,credit,difference:debit-credit,valid:true};}catch{return {debit:0n,credit:0n,difference:0n,valid:false};}});
-const canSave=computed(()=>!busy.value&&form.value&&selectedExercise.value?.status==='open'&&String(form.value.exercise_id)===selectedId.value&&totals.value.valid&&totals.value.debit>0n&&totals.value.difference===0n&&form.value.lines.length>=2&&form.value.lines.every(line=>line.account_id));
+const totals=computed(()=>journalTotals(form.value?.lines||[]));
+const canSave=computed(()=>!busy.value&&form.value&&selectedExercise.value?.status==='open'&&String(form.value.exercise_id)===selectedId.value&&totals.value.balanced&&form.value.lines.length>=2&&form.value.lines.every(line=>line.account_id));
 async function load({positionAtLatest=false}={}){
  const ticket=++generation;entries.value=[];error.value='';
  if(!selectedId.value)return;loading.value=true;
@@ -28,6 +30,7 @@ async function load({positionAtLatest=false}={}){
 }
 watch(selectedId,()=>{detailId.value=null;filters.value={from:'',to:'',number:'',amount:''};load({positionAtLatest:true});},{immediate:true});
 async function entrySaved(){notice.value=t.entryUpdated;await load();}
+async function entryDeleted(){detailId.value=null;notice.value=t.entryDeleted;await load();}
 async function open(){
  formError.value='';notice.value='';busy.value=true;
  const period=selectedExercise.value;
@@ -59,7 +62,7 @@ onBeforeRouteLeave(()=>!form.value||(!busy.value&&window.confirm(t.confirmDiscar
  <div class="page-heading"><div><h1>{{ t.entries }}</h1><p class="muted">{{ t.entryHelp }}</p></div><button class="button primary" :disabled="!can('accounting_write')||(busy||selectedExercise?.status!=='open')" @click="open">{{ t.newEntry }}</button></div>
  <p v-if="!selectedExercise" class="notice">{{ t.noExercise }}</p><p v-else-if="selectedExercise.status==='closed'" class="notice">{{ t.closed }}</p>
  <p v-if="error" class="notice error-notice" role="alert">{{ error }}</p><p v-if="notice" role="status" class="success-note">{{ notice }}</p>
- <form class="filters" @submit.prevent="load"><label>{{ t.from }}<input v-model="filters.from" type="date"></label><label>{{ t.to }}<input v-model="filters.to" type="date"></label><label>{{ t.number }}<input v-model="filters.number" type="text" inputmode="numeric" pattern="[0-9]+"></label><label>{{ t.amount }}<input v-model="filters.amount" type="text" inputmode="decimal" placeholder="0,00" maxlength="16" :title="t.amountSearchHelp"></label><button class="button" :disabled="loading||!selectedId">{{ t.filter }}</button></form>
+ <form class="filters" @submit.prevent="load"><label>{{ t.from }}<DateInput v-model="filters.from" /></label><label>{{ t.to }}<DateInput v-model="filters.to" /></label><label>{{ t.number }}<input v-model="filters.number" type="text" inputmode="numeric" pattern="[0-9]+"></label><label>{{ t.amount }}<input v-model="filters.amount" type="text" inputmode="decimal" placeholder="0,00" maxlength="16" :title="t.amountSearchHelp"></label><button class="button" :disabled="loading||!selectedId">{{ t.filter }}</button></form>
  <p class="muted entry-search-help">{{ t.amountSearchHelp }} {{ t.entryClickHelp }}</p>
  <p v-if="loading" role="status">{{ t.loading }}</p>
  <div v-else class="table-wrap panel"><table class="journal-table"><thead><tr><th>{{ t.date }}</th><th>{{ t.entryNumber }}</th><th>{{ t.account }}</th><th>{{ t.subaccount }}</th><th>{{ t.accountName }}</th><th>{{ t.concept }}</th><th class="amount">{{ t.debit }}</th><th class="amount">{{ t.credit }}</th></tr></thead><tbody>
@@ -68,7 +71,7 @@ onBeforeRouteLeave(()=>!form.value||(!busy.value&&window.confirm(t.confirmDiscar
  </tbody></table></div>
  <FormDialog v-if="form" :title="t.newEntry" :busy="busy" @close="close"><form @submit.prevent="save">
  <p v-if="formError" role="alert" class="notice error-notice">{{ formError }}</p>
- <div class="form-grid"><label>{{ t.number }}<input :value="t.automatic" disabled></label><label>{{ t.date }}<input v-model="form.entry_date" type="date" :min="selectedExercise?.start_date" :max="selectedExercise?.end_date" required :disabled="busy"></label></div>
+ <div class="form-grid"><label>{{ t.number }}<input :value="t.automatic" disabled></label><label>{{ t.date }}<DateInput v-model="form.entry_date" :min="selectedExercise?.start_date" :max="selectedExercise?.end_date" required :disabled="busy" /></label></div>
  <label>{{ t.concept }}<input v-model="form.description" maxlength="200" required :disabled="busy"></label>
  <div class="table-wrap"><table class="entry-grid"><thead><tr><th>{{ t.subaccount }}</th><th>{{ t.description }}</th><th>{{ t.debit }}</th><th>{{ t.credit }}</th><th>{{ t.remove }}</th></tr></thead><tbody><tr v-for="(line,index) in form.lines" :key="line.key">
  <td><SubaccountInput v-model="line.account_id" :accounts="subaccounts" :label="t.subaccount+' '+(index+1)" :disabled="busy" /></td>
@@ -76,8 +79,8 @@ onBeforeRouteLeave(()=>!form.value||(!busy.value&&window.confirm(t.confirmDiscar
  <td><input v-model="line.debit" inputmode="decimal" placeholder="0,00" :aria-label="t.debit+' '+(index+1)" :disabled="busy"></td><td><input v-model="line.credit" inputmode="decimal" placeholder="0,00" :aria-label="t.credit+' '+(index+1)" :disabled="busy"></td>
  <td><button v-if="index >= 2" type="button" class="button" :disabled="busy" :aria-label="t.remove+' '+(index+1)" @click="form.lines.splice(index,1)">×</button></td></tr></tbody></table></div>
  <button type="button" class="button" :disabled="busy||form.lines.length>=100" @click="form.lines.push(newLine())">{{ t.addLine }}</button>
- <div class="entry-totals" aria-live="polite"><template v-if="totals.valid"><span>{{ t.debit }} <strong>{{ displayMoney(totals.debit) }}</strong></span><span>{{ t.credit }} <strong>{{ displayMoney(totals.credit) }}</strong></span><span>{{ t.difference }} <strong>{{ displayMoney(totals.difference) }}</strong></span><span :class="totals.difference===0n&&totals.debit>0n?'success-note':''">{{ totals.difference===0n&&totals.debit>0n?t.balanced:t.unbalanced }}</span></template><span v-else role="alert">{{ t.invalidTotals }}</span></div>
+ <div class="entry-totals" aria-live="polite"><template v-if="totals.valid"><span>{{ t.debit }} <strong>{{ displayMoney(totals.debit) }}</strong></span><span>{{ t.credit }} <strong>{{ displayMoney(totals.credit) }}</strong></span><span>{{ t.difference }} <strong>{{ displayMoney(totals.difference) }}</strong></span><span :class="totals.balanced?'success-note':''">{{ totals.balanced?t.balanced:t.unbalanced }}</span></template><span v-else role="alert">{{ t.invalidTotals }}</span></div>
  <div class="actions"><button class="button primary" :disabled="!canSave">{{ t.register }}</button><button type="button" class="button" :disabled="busy" @click="close">{{ t.cancel }}</button></div>
  </form></FormDialog>
-<EntryDetail v-if="detailId" :entry-id="detailId" allow-edit :edit-on-open="selectedExercise?.status==='open'&&can('accounting_write')" @close="detailId=null" @saved="entrySaved" />
+<EntryDetail v-if="detailId" :entry-id="detailId" allow-edit :edit-on-open="selectedExercise?.status==='open'&&can('accounting_write')" @close="detailId=null" @saved="entrySaved" @deleted="entryDeleted" />
 </template>

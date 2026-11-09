@@ -83,7 +83,7 @@ test('MySQL: cuentas, asientos atómicos, aislamiento, concurrencia e idempotenc
   assert.equal(response.status,201);
   const list=await fetch(base+'/api/entries?exercise_id='+period.insertId);
   assert.equal(list.status,200);assert.equal((await list.json()).length,9);
-  const dotted=await service.createAccount({code:'4300.0003',description:'Dotted customer'});
+  const dotted=await service.createAccount({code:'4300.3',description:'Dotted customer'});
   assert.equal(dotted.code,'43000003');assert.equal(dotted.parent_code,'4300');
   assert.equal((await service.getAccount(dotted.parent_id)).description,'Clientes (euros)');
   assert.equal((await service.getAccount(first.id)).parent_id,account.id);
@@ -92,7 +92,7 @@ test('MySQL: cuentas, asientos atómicos, aislamiento, concurrencia e idempotenc
   assert.equal(customSub.parent_code,'4398');
   assert.equal((await service.getAccount(customSub.parent_id)).description,'Cuenta 4398');
   const hierarchy=await service.listAccounts();assert.ok(hierarchy.find(a=>a.code==='439'));
-  await assert.rejects(service.createAccount({code:'4388.01',description:'Bad length'}),e=>e.code==='INVALID_SUBACCOUNT_FORMAT');
+  await assert.rejects(service.createAccount({code:'4388.00001',description:'Bad length'}),e=>e.code==='INVALID_CODE');
   assert.ok(!(await service.listAccounts()).some(a=>a.code==='4388'));
   const paired=await Promise.all([service.createAccount({code:'4370.0001',description:'One'}),service.createAccount({code:'4370.0002',description:'Two'})]);
   assert.equal(paired[0].parent_id,paired[1].parent_id);

@@ -21,6 +21,7 @@ const json=value=>typeof value==='string'?JSON.parse(value):value;
 labels.farm_sales='ventas manuales de granjas';
 labels.corporate_tax_drafts='borradores del Impuesto sobre Sociedades';
 labels.installment_tax_drafts='borradores de pagos fraccionados · Modelo 202';
+labels.payroll_settings='configuración de nóminas';labels.payroll_employees='trabajadores';labels.payroll_slips='nóminas';
 const identity=row=>row.id??row.company_id;
 const normalize=value=>String(value||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const marks=rows=>rows.map(()=>'?').join(',');
@@ -43,7 +44,7 @@ function filter(table,exerciseId){
 async function metadata(db){
  const result={};
  for(const table of TABLE_ORDER){
-  const [columns]=await db.execute('SHOW COLUMNS FROM '+table);
+  let columns;try{[columns]=await db.execute('SHOW COLUMNS FROM '+table);}catch(error){if(error.code!=='ER_NO_SUCH_TABLE'||!OPTIONAL_TABLES.has(table))throw error;columns=[];}
   result[table]=columns.filter(column=>!/(?:VIRTUAL|STORED) GENERATED/.test(column.Extra));
  }
  return result;
@@ -80,6 +81,7 @@ export function createDataBackupService(pool,companyId){
   await lockCompany(db,companyId);
   const meta=await metadata(db),tables={},references={},indexes={};
   for(const table of TABLE_ORDER){
+   if(!meta[table].length&&OPTIONAL_TABLES.has(table)){tables[table]=[];references[table]=[];indexes[table]=new Map();continue;}
    const columns=meta[table].map(column=>'r.'+column.Field).join(','),where=filter(table,requested);
    const [rows]=await db.execute('SELECT '+columns+' FROM '+table+' r WHERE '+(table==='companies'?'r.id=?':'r.company_id=?')+' AND '+where.sql+' ORDER BY '+(table==='company_details'||table==='company_logos'?'r.company_id':'r.id'),[companyId,...where.params]);
    tables[table]=rows.map(encodeRow);references[table]=[];indexes[table]=new Map(tables[table].map(row=>[identity(row),row]));
@@ -164,9 +166,9 @@ export function createDataBackupService(pool,companyId){
   }
   for(const table of TABLE_ORDER){
    for(const row of data.references[table]){
-    const values=TABLES[table].key.map(field=>TABLES[table].refs[field]?maps[TABLES[table].refs[field]].get(row[field]):row[field]);
+    const values=TABLES[table].key.map(field=>TABLES[table].refs[field]&&row[field]!=null?maps[TABLES[table].refs[field]].get(row[field]):row[field]);
     if(values.some(value=>value==null))continue;
-    const [[found]]=await db.execute('SELECT * FROM '+table+' WHERE company_id=? AND '+TABLES[table].key.map(field=>field+'=?').join(' AND '),[companyId,...values]);
+    const [[found]]=await db.execute('SELECT * FROM '+table+' WHERE company_id=? AND '+TABLES[table].key.map(field=>field+'<=>?').join(' AND '),[companyId,...values]);
     if(found){
      maps[table].set(identity(row),identity(found));
      for(const field of ['amount','total_amount','base_total','tax_total','withholding_total','number','entry_date','start_date','end_date','kind','code']){
@@ -266,13 +268,14 @@ export function createDataBackupService(pool,companyId){
      if(['companies','company_details','company_logos','accounts','accounting_exercises'].includes(table))continue;
      for(const row of data.tables[table]){
       if(SHARED.has(table)){
-       const values=TABLES[table].key.map(field=>TABLES[table].refs[field]?maps[TABLES[table].refs[field]].get(row[field]):row[field]),[[existing]]=await db.execute('SELECT id FROM '+table+' WHERE company_id=? AND '+TABLES[table].key.map(field=>field+'=?').join(' AND '),[companyId,...values]);
+       const values=TABLES[table].key.map(field=>TABLES[table].refs[field]&&row[field]!=null?maps[TABLES[table].refs[field]].get(row[field]):row[field]),[[existing]]=await db.execute('SELECT id FROM '+table+' WHERE company_id=? AND '+TABLES[table].key.map(field=>field+'<=>?').join(' AND '),[companyId,...values]);
        if(existing){maps[table].set(row.id,existing.id);continue;}
       }
       const newId=await insert(db,table,row,meta,maps);pending.push({table,row,newId});
      }
     }
     for(const {table,row,newId}of pending){
+     if(table==='management_audit_events'&&row.entity_id!=null){const entityTable={orders:'purchase_orders',receipts:'purchase_receipts',invoices:'purchase_invoices',unit:'purchase_units',item:'purchase_items'}[row.entity_type];if(entityTable&&maps[entityTable].has(row.entity_id))await db.execute('UPDATE management_audit_events SET entity_id=? WHERE company_id=? AND id=?',[maps[entityTable].get(row.entity_id),companyId,newId]);}
      if(table==='bank_remittances'){
       const receiptIds=row.receipt_ids.map(value=>maps.portfolio_receipts.get(value)).filter(Boolean),complete=receiptIds.length===row.receipt_ids.length;
       await db.execute('UPDATE bank_remittances SET receipt_ids=?,snapshot=?,status=? WHERE company_id=? AND id=?',[JSON.stringify(receiptIds),JSON.stringify(remapJson(row.snapshot,maps)),complete?row.status:'archived',companyId,newId]);

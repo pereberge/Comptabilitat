@@ -39,7 +39,9 @@ ejercicio de las fechas reales de los movimientos. Un informe de 2026 que termin
 en octubre se importa en el ejercicio 2026 abierto si no contiene un cierre.
 
 El PDF original y su SHA-256 se archivan con los movimientos. La confirmación es
-atómica y reintentable sin duplicar; requiere un ejercicio vacío. Cambiar el
+atómica y reintentable sin duplicar. La primera importación requiere un ejercicio vacío;
+las siguientes pueden actualizar los asientos modificados y añadir los nuevos, con
+copia de seguridad previa. [Actualización de diarios](actualizacion-diarios.md). Cambiar el
 formato o el alias después de revisar el archivo exige que el contexto siga
 siendo válido al confirmar. El LIBRO DIARIO anterior mantiene su numeración.
 

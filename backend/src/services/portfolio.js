@@ -8,6 +8,25 @@ import { receiptDetail,receiptRows,today } from './portfolio-data.js';
 import { requireAccount,reverseJournal } from './trade-posting.js';
 import { postJournalEntry } from './accounting.js';
 import {requireUnremittedReceipt} from './remittance-lock.js';
+// The caller owns the transaction, so reconciliation and settlement can commit together.
+export async function settlePortfolioReceipt(db,companyId,receiptId,body){
+ const target=id(receiptId),data={request_id:requestId(body?.request_id),exercise_id:id(body?.exercise_id),payment_date:date(body?.payment_date),amount:positiveAmount(body?.amount),bank_account_id:id(body?.bank_account_id),payment_method:method(body?.payment_method),reference:text(body?.reference,100),notes:text(body?.notes,500)},digest=hash({receipt_id:target,...data});
+ await lockCompany(db,companyId);
+ const [[existing]]=await db.execute('SELECT id,request_hash FROM portfolio_settlements WHERE company_id=? AND request_id=?',[companyId,data.request_id]);
+ if(existing){if(existing.request_hash!==digest)fail('REQUEST_CONFLICT');return {...await receiptDetail(db,companyId,target),settlement_id:existing.id,replayed:true};}
+ const [[locked]]=await db.execute('SELECT id FROM portfolio_receipts WHERE company_id=? AND id=? FOR UPDATE',[companyId,target]);if(!locked)throw new HttpError(404,'RECEIPT_NOT_FOUND');
+ const receipt=await receiptDetail(db,companyId,target);
+ if(receipt.status==='void')throw new HttpError(409,'INVOICE_VOIDED');if(cents(data.amount)>cents(receipt.remaining_amount))throw new HttpError(409,'SETTLEMENT_EXCEEDS_REMAINING');
+ if(data.payment_date<receipt.invoice_date)fail('INVALID_PAYMENT_DATE');
+ const bank=await requireAccount(db,companyId,data.bank_account_id,['57'],'INVALID_BANK_ACCOUNT'),issued=receipt.direction==='issued';
+ const concept=((issued?'Cobro ':'Pago ')+'recibo '+receipt.id+' · '+receipt.reference+' · '+receipt.party_name).slice(0,200);
+ const entry=await postJournalEntry(db,companyId,{exercise_id:data.exercise_id,entry_date:data.payment_date,description:concept,request_id:data.request_id,lines:[
+  {account_id:bank.id,description:concept,debit:issued?data.amount:'0.00',credit:issued?'0.00':data.amount},
+  {account_id:receipt.party_account_id,description:concept,debit:issued?'0.00':data.amount,credit:issued?data.amount:'0.00'},
+ ]});
+ const [settlement]=await db.execute('INSERT INTO portfolio_settlements(company_id,receipt_id,exercise_id,payment_date,amount,bank_account_id,payment_method,reference,notes,entry_id,request_id,request_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[companyId,target,data.exercise_id,data.payment_date,data.amount,bank.id,data.payment_method,data.reference,data.notes,entry.id,data.request_id,digest]);
+ return {...await receiptDetail(db,companyId,target),settlement_id:settlement.insertId,replayed:false};
+}
 export function createPortfolioService(pool,companyId){
  return {
   async list(query={}){
@@ -60,24 +79,7 @@ export function createPortfolioService(pool,companyId){
    });
   },
   async settle(receiptId,body){
-   const target=id(receiptId),data={request_id:requestId(body?.request_id),exercise_id:id(body?.exercise_id),payment_date:date(body?.payment_date),amount:positiveAmount(body?.amount),bank_account_id:id(body?.bank_account_id),payment_method:method(body?.payment_method),reference:text(body?.reference,100),notes:text(body?.notes,500)},digest=hash({receipt_id:target,...data});
-   return withTransaction(pool,async db=>{
-    await lockCompany(db,companyId);
-    const [[existing]]=await db.execute('SELECT id,request_hash FROM portfolio_settlements WHERE company_id=? AND request_id=?',[companyId,data.request_id]);
-    if(existing){if(existing.request_hash!==digest)fail('REQUEST_CONFLICT');return {...await receiptDetail(db,companyId,target),settlement_id:existing.id,replayed:true};}
-    const [[locked]]=await db.execute('SELECT id FROM portfolio_receipts WHERE company_id=? AND id=? FOR UPDATE',[companyId,target]);if(!locked)throw new HttpError(404,'RECEIPT_NOT_FOUND');
-    const receipt=await receiptDetail(db,companyId,target);
-    if(receipt.status==='void')throw new HttpError(409,'INVOICE_VOIDED');if(cents(data.amount)>cents(receipt.remaining_amount))throw new HttpError(409,'SETTLEMENT_EXCEEDS_REMAINING');
-    if(data.payment_date<receipt.invoice_date)fail('INVALID_PAYMENT_DATE');
-    const bank=await requireAccount(db,companyId,data.bank_account_id,['57'],'INVALID_BANK_ACCOUNT'),issued=receipt.direction==='issued';
-    const concept=((issued?'Cobro ':'Pago ')+'recibo '+receipt.id+' · '+receipt.reference+' · '+receipt.party_name).slice(0,200);
-    const entry=await postJournalEntry(db,companyId,{exercise_id:data.exercise_id,entry_date:data.payment_date,description:concept,request_id:data.request_id,lines:[
-     {account_id:bank.id,description:concept,debit:issued?data.amount:'0.00',credit:issued?'0.00':data.amount},
-     {account_id:receipt.party_account_id,description:concept,debit:issued?'0.00':data.amount,credit:issued?data.amount:'0.00'},
-    ]});
-    const [settlement]=await db.execute('INSERT INTO portfolio_settlements(company_id,receipt_id,exercise_id,payment_date,amount,bank_account_id,payment_method,reference,notes,entry_id,request_id,request_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[companyId,target,data.exercise_id,data.payment_date,data.amount,bank.id,data.payment_method,data.reference,data.notes,entry.id,data.request_id,digest]);
-    return {...await receiptDetail(db,companyId,target),settlement_id:settlement.insertId,replayed:false};
-   });
+   return withTransaction(pool,db=>settlePortfolioReceipt(db,companyId,receiptId,body));
   },
   async reverse(settlementId,body){
    const target=id(settlementId),data={request_id:requestId(body?.request_id),exercise_id:id(body?.exercise_id),date:date(body?.date),reason:text(body?.reason,200,true)},digest=hash(data);

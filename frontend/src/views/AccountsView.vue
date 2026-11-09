@@ -1,7 +1,7 @@
 <script setup>
 import {useAccess} from '../composables/access.js';
 const {can}=useAccess();
-import { displayAccountCode } from '../../../shared/account-codes.js';
+import { displayAccountCode,parseAccountCode,findSubaccount } from '../../../shared/account-codes.js';
 import { useContext } from '../composables/context.js';
 import { computed, onMounted, ref,watch } from 'vue';
 import {accountPartyType,emptyPartyProfile} from '../../../shared/account-party.js';
@@ -21,8 +21,11 @@ const importing=ref(false);
 const { company } = useContext();
 const accounts=ref([]),search=ref(''),kind=ref(''),loading=ref(false),error=ref(''),notice=ref('');
 const form=ref(null),busy=ref(false),formError=ref(''),selected=ref(null);
-const rows=computed(()=>accounts.value.filter(a=>(!kind.value||a.kind===kind.value)&&(!search.value||a.code.includes(search.value.replaceAll('.',''))||[a.description,a.party_profile?.name,a.party_profile?.tax_id].some(value=>value?.toLocaleLowerCase('es').includes(search.value.toLocaleLowerCase('es'))))));
-const formPartyType=computed(()=>{const code=(form.value?.code||'').replaceAll('.','');return accountPartyType({code,kind:code.length===(company.value?.subaccount_length||8)?'subaccount':'account'});});
+const resolvedSearch=computed(()=>findSubaccount(search.value,accounts.value));
+const rows=computed(()=>accounts.value.filter(a=>(!kind.value||a.kind===kind.value)&&(!search.value||a.id===resolvedSearch.value?.id||displayAccountCode(a).includes(search.value)||a.code.includes(search.value.replaceAll('.',''))||[a.description,a.party_profile?.name,a.party_profile?.tax_id].some(value=>value?.toLocaleLowerCase('es').includes(search.value.toLocaleLowerCase('es'))))));
+const normalizedCode=computed(()=>{try{return parseAccountCode(form.value?.code||'',company.value?.subaccount_length||8);}catch{return null;}});
+const formPartyType=computed(()=>normalizedCode.value?accountPartyType(normalizedCode.value):null);
+function completeCode(){const value=normalizedCode.value;if(value?.parentCode)form.value.code=displayAccountCode({...value,parent_code:value.parentCode});}
 watch(()=>form.value?.description,(value,previous)=>{if(form.value?.party_profile&&(!form.value.party_profile.name||form.value.party_profile.name===previous))form.value.party_profile.name=value||'';});
 const proposedParent=computed(()=>{
  const code=form.value?.code?.split('.')[0];
@@ -30,7 +33,7 @@ const proposedParent=computed(()=>{
 });
 const codeParts=computed(()=>{
  const code=form.value?.code||'';
- if(code.includes('.')){const [parent,suffix]=code.split('.');return {parent,suffix};}
+ if(code.includes('.')){const parsed=normalizedCode.value;if(parsed?.parentCode)return {parent:parsed.parentCode,suffix:parsed.code.slice(parsed.parentCode.length)};return null;}
  if(code.length===(company.value?.subaccount_length||8)){
  const parent=accounts.value.filter(a=>a.kind==='account'&&a.code.length<code.length&&code.startsWith(a.code)).sort((a,b)=>b.code.length-a.code.length)[0];
  if(parent)return {parent:parent.code,suffix:code.slice(parent.code.length)};
@@ -61,7 +64,7 @@ onMounted(load);
  <p v-if="formError" class="notice error-notice" role="alert">{{ formError }}</p>
  <template v-if="!form.id"><p class="muted account-form-help">{{ t.autoKindHelp }}</p>
 
- <label>{{ t.code }}<input v-model="form.code" inputmode="decimal" pattern="[1-9][0-9]*(\.[0-9]+)?" maxlength="21" placeholder="4300.0001" required></label><button type="button" class="button" :disabled="busy||!proposedParent||proposedParent.code.length<3" @click="suggest">{{ t.suggestSubaccount }}</button>
+ <label>{{ t.code }}<input v-model="form.code" inputmode="decimal" pattern="[1-9][0-9]*(\.[0-9]+)?" maxlength="21" placeholder="4300.2" required @blur="completeCode"><small>{{ t.shortSubaccountHelp }}</small></label><button type="button" class="button" :disabled="busy||!proposedParent||proposedParent.code.length<3" @click="suggest">{{ t.suggestSubaccount }}</button>
  <p v-if="codeParts" class="notice account-code-preview"><strong>{{ t.account }}: {{ codeParts.parent }}</strong><span>{{ t.subaccount }}: {{ codeParts.suffix }}</span></p></template>
  <p v-if="form.id" class="account-code">{{ form.code }}</p><label>{{ t.description }}<input v-model="form.description" name="account_description" maxlength="200" required></label>
  <section v-if="formPartyType" class="account-fiscal-profile"><h3>{{ partyText.title }} · {{ partyText[formPartyType] }}</h3><p class="muted">{{ partyText.help }}</p><PartyProfileFields v-model="form.party_profile" /></section>

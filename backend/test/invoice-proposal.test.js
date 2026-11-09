@@ -29,7 +29,7 @@ const form={exercise_id:1,direction:'received',reference:'SUP-2026-1',invoice_da
 const journal=accounts.map((account,index)=>({entry_id:55,number:130,entry_date:'2026-10-20',entry_description:'S/ FAC. SUP-2026-1',status:'posted',entry_type:'normal',account_id:account.id,code:account.code,debit:index===0?'0.00':index===1?'16.33':'3.43',credit:index===0?'19.76':'0.00'}));
 const exercise={start_date:'2026-01-01',end_date:'2026-12-31'};
 test('proposal prioritizes existing accounts and finds the existing invoice journal without modifying input',()=>{
- const before=JSON.stringify(form),proposal=buildInvoiceProposal({form,extraction:parseInvoicePages(invoicePages()),accounts,journal,exercise});
+ const before=JSON.stringify(form),proposal=buildInvoiceProposal({suggestPostingDate:true,form,extraction:parseInvoicePages(invoicePages()),accounts,journal,exercise});
  assert.equal(proposal.ready,true);assert.equal(proposal.form.offset_account_id,2);assert.equal(proposal.form.party_account_id,1);assert.equal(proposal.form.posting_date,'2026-10-20');assert.equal(proposal.candidates[0].number,130);assert.equal(proposal.candidates[0].reference_matches,true);assert.equal(JSON.stringify(form),before);
  assert.equal(proposal.journal.reduce((sum,row)=>sum+BigInt(row.debit.replace('.',''))-BigInt(row.credit.replace('.','')),0n),0n);
 });
@@ -64,3 +64,57 @@ test('a conflicting CIF never wins by name and an ambiguous CIF requires explici
  assert.equal(make({},ambiguous,[other]).ready,false);assert.equal(make({},ambiguous,[other]).form.party_account_id,undefined);assert.equal(make({party_account_id:4},ambiguous,[other]).ready,true);
 });
 
+
+test('Energia XXI extracts compact and spaced supply addresses',()=>{
+ for(const label of ['Adre\u00e7adesubministrament:','Adre\u00e7a de subministrament:']){
+  const address='AVDIPUTACIOED.AUSTRAL39BJO4,43850CAMBRILSBADIA,TARRAGONA';
+  const result=parseInvoicePages([{items:['ENERGIA XXI',"DADES DE LA FACTURA D'ELECTRICITAT",label+address].map(text=>({text}))}]);
+  assert.equal(result.supply_address,address);
+ }
+});
+test('supply account memory isolates addresses and suppliers and respects manual choice',()=>{
+ const extraction={...parseInvoicePages(invoicePages()),supply_address:'AV DIPUTACIO 39'};
+ const supplyAccounts=[{extraction,form:{...form,offset_account_id:2}}];
+ const build=(source=extraction,input={},history=supplyAccounts)=>buildInvoiceProposal({form:{...form,...input},extraction:source,supplyAccounts:history,accounts,journal:[],exercise});
+ assert.equal(build().form.offset_account_id,2);
+ assert.match(build().basis,/recordada/);
+ assert.equal(build({...extraction,supply_address:'OTHER 39'}).form.offset_account_id,undefined);
+ assert.equal(build({...extraction,supplier:{tax_id:'B22222222'}}).form.offset_account_id,undefined);
+ assert.equal(build(extraction,{offset_account_id:3}).form.offset_account_id,3);
+ assert.equal(build(extraction,{},[{extraction,form:{...form,offset_account_id:999}},...supplyAccounts]).form.offset_account_id,undefined);
+ const withHistory=buildInvoiceProposal({form,extraction:{...extraction,supply_address:'OTHER'},supplyAccounts,accounts,journal,exercise});
+ // A matching invoice remains detectable; general supplier history must not choose a different supply's account.
+ const unrelated=journal.map(row=>({...row,entry_description:'Unrelated invoice',debit:row.code.startsWith('62')?'100.00':row.debit}));
+ assert.equal(buildInvoiceProposal({form,extraction,supplyAccounts:[],accounts,journal:unrelated,exercise}).form.offset_account_id,undefined);
+});
+
+test('editing an older proposal restores supply notes without losing or duplicating user notes',()=>{
+ const address='AVDIPUTACIOED.AUSTRAL39BJO4,43850CAMBRILSBADIA,TARRAGONA';
+ const extraction={...parseInvoicePages(invoicePages()),parser:'energia-xxi',layout_lines:['Adre\u00e7adesubministrament:'+address]};
+ const original={...form,notes:'Revisar el rebut amb administracio'};
+ const build=input=>buildInvoiceProposal({form:input,extraction,accounts,journal:[],exercise});
+ const first=build(original);
+ assert.equal(first.form.notes,original.notes+'\nAdre\u00e7a de subministrament: '+address);
+ assert.equal(build(first.form).form.notes,first.form.notes);
+ assert.equal(original.notes,'Revisar el rebut amb administracio');
+});
+
+test('edited accounting dates survive repeated proposal rebuilds even when equal to invoice date',()=>{
+ const extraction=parseInvoicePages(invoicePages());
+ for(const posting_date of ['2026-10-15','2026-10-18']){
+  const input={...form,posting_date};
+  const first=buildInvoiceProposal({form:input,extraction,accounts,journal,exercise});
+  assert.equal(first.form.posting_date,posting_date);
+  const reopened=buildInvoiceProposal({form:first.form,extraction,accounts,journal,exercise});
+  assert.equal(reopened.form.posting_date,posting_date);
+  assert.equal(reopened.candidates[0].entry_id,55);
+ }
+});
+
+test('equal amounts with different invoice references do not force linking even with a shared numeric suffix',()=>{
+ for(const reference of ['OTHER-2026-1','OTHER-123456']){
+  const history=journal.map(row=>({...row,entry_description:reference.endsWith('123456')?'Factura OLD-123456':row.entry_description}));
+  const proposal=buildInvoiceProposal({form:{...form,reference,invoice_date:'2026-10-16',posting_date:'2026-10-16',offset_account_id:2,vat_account_id:3},extraction:parseInvoicePages(invoicePages()),accounts,journal:history,exercise});
+  assert.equal(proposal.candidates.length,0);assert.equal(proposal.similar_entries.length,1);assert.equal(proposal.ready,true);assert.equal(proposal.form.posting_date,'2026-10-16');
+ }
+});

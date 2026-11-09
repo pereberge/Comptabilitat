@@ -4,13 +4,14 @@ import { id } from './validation.js';
 import { withTransaction } from '../db/transaction.js';
 import { lockCompany, nextSubaccountCode } from './subaccounts.js';
 import { ensureAccount } from './account-hierarchy.js';
-import { parseBankCsv, normalizeBankText } from './bank-statement.js';
+import { parseBankCsv, normalizeBankText, isBankStatementPdf } from './bank-statement.js';
 import { buildBankAnalysis } from './bank-analysis.js';
 import { readReconciliationLedger, reconciliationLedgerHash } from './bank-reconciliations.js';
 import { bankLedgerReadThrough,bankReconciliationDates } from '../../../shared/bank-reconciliation.js';
 import {readPendingDocumentInvoices} from './document-invoice-data.js';
 import {readBankStatementPdf as extractPdf} from './bank-pdf-reader.js';
 import {readReconciliationRules} from './reconciliation-rules.js';
+import {archiveOtherBankStatements} from './bank-statement-archive.js';
 
 const previews = new Map(), lifetime=15*60*1000;
 let active=0;
@@ -52,7 +53,7 @@ export function createBankImportService(pool,companyId) {
     const rules=await readReconciliationRules(db,companyId,account.id);
     let previous=null;
     if(selection.replace_current&&preview.existing){const [[row]]=await db.execute('SELECT snapshot FROM bank_reconciliations WHERE company_id=? AND id=?',[companyId,preview.existing.id]);if(row)previous=typeof row.snapshot==='string'?JSON.parse(row.snapshot):row.snapshot;}
-    const snapshot=buildBankAnalysis({...meta,account,statement,lines,history,pendingInvoices,rules,manualProposals:previous?.manual_proposals||[],sourceName:preview.sourceName,sourceHash:preview.sourceHash});
+    const snapshot=buildBankAnalysis({...meta,account,statement,lines,history,pendingInvoices,rules,manualProposals:previous?.manual_proposals||[],postedMovements:previous?.posted_movements||[],sourceName:preview.sourceName,sourceHash:preview.sourceHash});
     if(selection.replace_current){snapshot.workflow='direct';snapshot.work_start_date=previous?.work_start_date||snapshot.scope.analysis_start_date;snapshot.work_anchor=previous?.work_anchor||{bank_date:snapshot.scope.last_matching_date,book_date:snapshot.scope.last_matching_book_date,bank_balance:snapshot.scope.last_matching_balance,book_balance:snapshot.scope.last_matching_book_balance,difference:snapshot.scope.balance_match_difference};snapshot.posted_movements=previous?.posted_movements||[];}
     return {snapshot,account,ledgerHash:reconciliationLedgerHash(lines)};
   }
@@ -64,7 +65,7 @@ export function createBankImportService(pool,companyId) {
       if(active>=3||[...previews.values()].filter(preview=>!preview.result).length>=10)fail('BANK_STATEMENT_BUSY',429);
       active++;
       try{
-        const meta=await context(pool,exerciseId),pdf=buffer.subarray(0,5).toString()==='%PDF-';
+        const meta=await context(pool,exerciseId),pdf=isBankStatementPdf(buffer);
         if(!pdf&&!['text/csv','application/csv','text/plain'].includes(mime))fail('BANK_STATEMENT_UNSUPPORTED_FILE');
         let statement;
         try{statement=pdf?await extractPdf(buffer):parseBankCsv(buffer);}catch(error){if(error instanceof HttpError)throw error;fail(error.message?.startsWith('BANK_STATEMENT_')?error.message:'BANK_STATEMENT_INVALID_CSV');}
@@ -122,10 +123,10 @@ export function createBankImportService(pool,companyId) {
         if(existing&&!preview.selection.replace_current)return {id:existing.id,replayed:true};
         const selected={...preview.selection,create_account:false,account_id:account.id};
         const result=await analysis(db,preview,selected);
-        if(existing){await db.execute('UPDATE bank_reconciliations SET snapshot=?,ledger_hash=?,version=version+1 WHERE company_id=? AND id=?',[JSON.stringify(result.snapshot),result.ledgerHash,companyId,existing.id]);await db.execute('DELETE FROM bank_reconciliations WHERE company_id=? AND exercise_id=? AND id<>?',[companyId,meta.exercise.id,existing.id]);return {id:existing.id,replayed:false};}
+        if(existing){await db.execute('UPDATE bank_reconciliations SET snapshot=?,ledger_hash=?,version=version+1 WHERE company_id=? AND id=?',[JSON.stringify(result.snapshot),result.ledgerHash,companyId,existing.id]);if(preview.selection.replace_current)await archiveOtherBankStatements(db,companyId,meta.exercise.id,existing.id);return {id:existing.id,replayed:false};}
         const [saved]=await db.execute(`INSERT INTO bank_reconciliations(company_id,exercise_id,account_id,source_name,source_sha256,source_pdf,source_mime,snapshot,ledger_hash)
           VALUES (?,?,?,?,?,?,?,?,?)`,[companyId,meta.exercise.id,account.id,preview.sourceName,preview.sourceHash,preview.buffer,preview.statement.mime,JSON.stringify(result.snapshot),result.ledgerHash]);
-        if(preview.selection.replace_current)await db.execute('DELETE FROM bank_reconciliations WHERE company_id=? AND exercise_id=? AND id<>?',[companyId,meta.exercise.id,saved.insertId]);
+        if(preview.selection.replace_current)await archiveOtherBankStatements(db,companyId,meta.exercise.id,saved.insertId);
         return {id:saved.insertId,replayed:false};
       });
       previews.set(body.token,{companyId,exerciseId:preview.exerciseId,expires:preview.expires,result:saved});

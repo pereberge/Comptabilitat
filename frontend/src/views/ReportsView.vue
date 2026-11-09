@@ -143,5 +143,5 @@ function exportCsv(){
    </tbody><tfoot><tr><th colspan="2">{{ r.total }}</th><th v-for="key in columns" :key="key" class="amount">{{ money(result.totals[key]) }}</th></tr></tfoot></table></div>
   </template>
  </template>
- <EntryDetail v-if="entryId" :entry-id="entryId" :allow-edit="ledger" @close="entryId=null" @saved="load" />
+ <EntryDetail v-if="entryId" :entry-id="entryId" :allow-edit="ledger" @close="entryId=null" @saved="load" @deleted="load" />
 </template>

@@ -60,11 +60,17 @@ La consulta usa `GET /api/entries?exercise_id=ID&view=lines`. Clicar cualquier p
 
 El número de asiento abre el detalle; desde ahí se puede elegir **Editar asiento**. El listado de Inicio abre la edición directamente al clicar cualquier línea. Se requiere el permiso `accounting_write`, un ejercicio abierto y un asiento normal contabilizado. Los asientos anuales, borradores, anulados o vinculados a facturas, cartera o documentos se consultan y se gestionan desde su origen.
 
-`GET /api/entries/ID` devuelve `revision`, `editable`, `edit_blocked_reason` y los límites del ejercicio. `PATCH /api/entries/ID` recibe `exercise_id`, `revision`, `entry_date`, `description` y `lines`. Las líneas pueden conservar su `id` original; las nuevas lo omiten. Cada línea conserva su concepto, debe usar una subcuenta de la empresa y tener un importe positivo en un único lado. Debe y Haber deben cuadrar exactamente.
+`GET /api/entries/ID` devuelve `revision`, `editable`, `edit_blocked_reason` y los límites del ejercicio. `PATCH /api/entries/ID` recibe `exercise_id`, `revision`, `entry_date`, `description` y `lines`. Las líneas pueden conservar su `id` original; las nuevas lo omiten. Cada línea conserva su concepto, debe usar una subcuenta de la empresa y tener un importe distinto de cero en un único lado. Se admiten importes negativos en creación y edición, con punto o coma y hasta dos decimales, manteniendo su signo y columna. Debe y Haber deben cuadrar exactamente, también en asientos negativos o con signos mixtos. Requiere la migración 042.
 
 La actualización conserva el número, el ejercicio, la empresa, el estado y la identificación de la solicitud original. Bloquea el ejercicio y el asiento, comprueba la revisión y actualiza cabecera y líneas dentro de una sola transacción. Un fallo revierte todo; una edición simultánea se rechaza con `ENTRY_CHANGED`. Repetir una modificación ya guardada devuelve el estado vigente sin duplicar apuntes. El Mayor vuelve a consultar los movimientos y saldos después de guardar.
 
 ## Verificación
+
+### Eliminar un asiento individual
+
+Desde el detalle o la edición del diario, **Eliminar asiento** pide escribir su número antes de confirmar. Requiere el permiso `entries_delete`, un ejercicio abierto y un asiento normal contabilizado. Elimina la cabecera y todas sus líneas en una transacción y actualiza los listados y saldos del diario y del Mayor. No renumera los demás asientos.
+
+Se bloquean los asientos vinculados a facturas, recibos, documentos, nóminas, integraciones o movimientos identificados de una conciliación bancaria, así como las operaciones anuales y los asientos anulados. El motivo aparece junto al botón. `DELETE /api/entries/ID` exige `revision` y `confirm_number`; una revisión desactualizada impide borrar datos cambiados por otra sesión. Las pruebas de eliminación comprueban permisos, aislamiento por empresa, confirmación, documentos vinculados y reversión completa si falla el borrado.
 
 Aplicar `npm run db:migrate`. Para pruebas MySQL en PowerShell:
 

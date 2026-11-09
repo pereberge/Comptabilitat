@@ -72,7 +72,7 @@ test('MySQL: journal restoration is atomic, idempotent, source-faithful and supp
     assert.equal(results[0].entries,4);assert.equal(results[0].lines,8);
     const repeat=await service.preview(source,exercise.id);assert.equal(repeat.already_imported,true);assert.equal((await service.commit(repeat.token)).replayed,true);
     const repaginated=await service.preview(journalPdf(first.name),exercise.id);assert.equal(repaginated.already_imported,true);
-    await assert.rejects(service.preview(journalPdf(first.name.toUpperCase()),exercise.id),cause=>cause.code==='JOURNAL_NOT_EMPTY');
+    const renamed=await service.preview(journalPdf(first.name.toUpperCase()),exercise.id);assert.equal(renamed.updating,true);assert.equal(renamed.changes.updated,0);
     const [[stored]]=await pool.execute('SELECT * FROM journal_imports WHERE company_id=?',[first.id]);
     assert.deepEqual(stored.source_pdf,source);assert.equal(stored.source_hash,createHash('sha256').update(source).digest('hex'));
     const accounting=createAccountingService(pool,first.id), entries=await accounting.listEntries({exercise_id:exercise.id,view:'lines'});

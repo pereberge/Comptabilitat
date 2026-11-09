@@ -29,6 +29,25 @@ test('pending invoice relations require exact totals with date or text evidence 
  const data=build([row(1,'2026-05-01','Opening','100.00','100.00'),row(2,'2026-05-20','MANTENIMENT','-10.00','90.00')],[line(1,'2026-05-01','100.00','0.00')],[],[account,fee],invoices);
  assert.equal(data.pending_invoice_matches.length,1);assert.equal(data.pending_invoice_matches[0].movement_id,2);assert.equal(data.proposals.length,0);assert.match(data.unresolved[0].reason,/Documentación/);
 });
+test('explicit invoice amount searches include distant dates without weakening automatic suggestions',()=>{
+ const movement=row(1,'2026-01-20','Unknown payment','-10.00','90.00');
+ const invoice=(id,direction,total='10.00',currency='EUR')=>({id,direction,version:1,title:'PDF',extraction:{total_amount:total,currency,invoice_date:'2025-05-01',supplier:{name:'Supplier'}}});
+ const invoices=[invoice(1,'received'),invoice(2,'issued'),invoice(3,'received','10.01'),invoice(4,'received','10.00','USD'),invoice(5,'unknown')];
+ assert.deepEqual(matchPendingInvoices([movement],invoices),[]);
+ assert.deepEqual(matchPendingInvoices([movement],invoices,{amountOnly:true})[0].candidates.map(row=>row.documentation_id),[1,5]);
+});
+test('a journal explicitly linked to one bank row cannot also match another row with the same amount',()=>{
+ const rows=[row(1,'2026-01-10','Opening','100.00','100.00'),row(2,'2026-01-12','Payment A','-10.00','90.00'),row(3,'2026-01-12','Payment B','-10.00','80.00')];
+ const statement=validateBankRows(rows,{bank:{name:'Bank'},pages:1,mime:'text/csv'});
+ const result=buildBankAnalysis({company:{id:1,name:'Test'},exercise:{id:1,name:'2026',start_date:'2026-01-01',end_date:'2026-12-31'},account,statement,lines:[line(1,'2026-01-10','100.00','0.00'),line(2,'2026-01-12','0.00','10.00')],history:[],accounts:[account,fee],sourceName:'test.csv',sourceHash:'a'.repeat(64),postedMovements:[{movement_id:3,entry_id:2}]});
+ assert.deepEqual(result.scope.matched_movements.map(row=>row.id),[3]);assert.deepEqual(result.scope.bank_pending.map(row=>row.id),[2]);
+});
+test('several receipt journals reconcile one selected bank row by their combined exact amount',()=>{
+ const rows=[row(1,'2026-01-10','Opening','100.00','100.00'),row(2,'2026-01-12','Payment A','-10.00','90.00'),row(3,'2026-01-12','Payment B','-10.00','80.00')];
+ const statement=validateBankRows(rows,{bank:{name:'Bank'},pages:1,mime:'text/csv'});
+ const result=buildBankAnalysis({company:{id:1,name:'Test'},exercise:{id:1,name:'2026',start_date:'2026-01-01',end_date:'2026-12-31'},account,statement,lines:[line(1,'2026-01-10','100.00','0.00'),line(2,'2026-01-12','0.00','4.00'),line(3,'2026-01-12','0.00','6.00')],history:[],accounts:[account,fee],sourceName:'test.csv',sourceHash:'a'.repeat(64),postedMovements:[{movement_id:3,entry_id:2},{movement_id:3,entry_id:3}]});
+ assert.deepEqual(result.scope.matched_movements.map(row=>row.id),[3]);assert.deepEqual(result.scope.bank_pending.map(row=>row.id),[2]);assert.equal(result.book_unmatched.length,0);
+});
 function build(rows,lines=[],history=lines,accounts=[account,fee],pendingInvoices=[]){
  const statement=validateBankRows(rows,{bank:{name:'Test bank',iban_masked:''},pages:1,mime:'text/csv'});
  return buildBankAnalysis({company:{id:1,name:'Test'},exercise:{id:1,name:'2026',start_date:'2026-01-01',end_date:'2026-12-31'},account,statement,lines,history,accounts,pendingInvoices,sourceName:'statement.csv',sourceHash:'a'.repeat(64)});

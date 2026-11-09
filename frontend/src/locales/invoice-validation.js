@@ -1,0 +1,17 @@
+export const v={
+ title:'Completa los campos marcados en rojo para guardar y contabilizar.',
+ required:'Completa este campo.',name:'Introduce el nombre o razón social.',reference:'Introduce el número de factura.',
+ date:'Introduce una fecha válida.',postingBefore:'La fecha contable no puede ser anterior a la factura.',outsideExercise:'La fecha contable debe pertenecer al ejercicio seleccionado.',
+ amount:'Introduce un importe mayor que cero, con un máximo de dos decimales.',rate:'Indica un porcentaje entre 0 y 100, con un máximo de dos decimales.',
+ concept:'Completa el concepto de esta línea.',lines:'Añade entre 1 y 40 conceptos.',receipts:'Añade entre 1 y 60 recibos.',due:'El vencimiento no puede ser anterior a la factura.',
+ email:'Revisa el correo electrónico.',length:max=>'El campo admite como máximo '+max+' caracteres.',
+ offset:'Selecciona la cuenta de gasto, ingreso o activo.',vat:'Selecciona la cuenta de IVA para poder contabilizar esta propuesta.',withholding:'Selecciona la cuenta de retención para poder contabilizar esta propuesta.',
+ account:'Selecciona una subcuenta válida de esta empresa y del tipo indicado.',ambiguous:'Hay varias subcuentas posibles. Selecciona el cliente o proveedor correcto.',taxConflict:'El CIF / NIF no coincide con la subcuenta seleccionada.',
+ receiptSum:(sum,total,difference)=>'Los recibos suman '+sum+' € y la factura '+total+' €. '+(difference.startsWith('-')?'Sobran '+difference.slice(1):'Faltan '+difference)+' € por repartir.',
+ proposalIncomplete:'Faltan datos para contabilizar. Abre «Editar propuesta y recibos» para verlos marcados en rojo.',
+ confirm:'Marca la revisión del PDF, los importes, las cuentas y los recibos antes de contabilizar.',
+ selectEntry:'Selecciona el asiento al que corresponde esta factura.',
+ chooseVat:'Selecciona la cuenta de IVA',chooseWithholding:'Selecciona la cuenta de retención',
+ currency:'No se ha identificado una factura en EUR. Revisa el PDF antes de contabilizar.',
+ multiple:'El documento contiene varias facturas. Sube cada factura por separado para contabilizarla.',
+};

@@ -1,8 +1,13 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { calculateInvoice } from '../../../shared/invoice-money.js';
+import {layoutLines,invoiceDocumentHint,printedMoney} from './invoice-recognition.js';
 export const invoiceIdentity=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-const monetary='(-?(?:\\d{1,3}(?:\\.\\d{3})*|\\d+),\\d{2})';
-function money(text){return typeof text==='string'&&/^-?(?:\d{1,3}(?:\.\d{3})*|\d+),\d{2}$/.test(text)?text.replaceAll('.','').replace(',','.'):null;}
+const monetary='(-?(?:\\d{1,3}(?:[.,]\\d{3})+|\\d+)[.,]\\d{2})(?!\\d)';
+const money=printedMoney;
+function invoiceReferences(text){
+ const pattern=/(?:^|\n)[ \t]*(?:Num(?:ero|\.)?\s*(?:de\s*)?factura|Factura\s*(?:n[ºo.]|numero|num\.?)|Invoice\s*(?:number|no\.?)|Factura(?=[ \t]*[:#：]))[ \t]*([:#：-]?)[ \t]*([A-Z0-9][A-Z0-9/._-]{1,59})/gi;
+ return [...text.matchAll(pattern)].filter(match=>match[1]||/\d/.test(match[2])).map(match=>match[2]);
+}
 export function invoiceDate(value){
  const text=String(value).trim();let result;
  const numeric=text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
@@ -16,21 +21,30 @@ export function invoiceDate(value){
  }
  const date=new Date(result+'T00:00:00Z');return result>='1000-01-01'&&Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===result?result:null;
 }
+export function invoiceSupplyAddress(text){
+ return String(text||'').match(/(?:Adre[c\u00e7]a\s*de\s*subministrament|Direcci[o\u00f3]n\s*del?\s*suministro)[ \t]*:[ \t]*(?:\n[ \t]*)?([^\n]+)/i)?.[1]?.replace(/\s+/g,' ').trim()||'';
+}
+export function invoiceSupplyExtraction(extraction){
+ if(!extraction||extraction.supply_address)return extraction;
+ const address=invoiceSupplyAddress((extraction.layout_lines||[]).join('\n'));
+ return address?{...extraction,supply_address:address}:extraction;
+}
 export function parseInvoicePages(pages){
- const text=pages.map(page=>page.items.map(item=>item.text??item.str??'').join('\n')).join('\n');
+ const sourceLines=layoutLines(pages),text=sourceLines.join('\n');
  const normalized=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  const empty={parser:'manual',supplier:{name:'',tax_id:'',address:''},customer:{name:'',tax_id:'',address:''},reference:'',invoice_date:null,due_date:null,payment_method:'transfer',lines:[],total_amount:null,tax_total:null,base_total:null,withholding_rate:'0',pages:pages.length,currency:'EUR',warnings:[]};
  if(!text.trim())return {...empty,warnings:['El PDF es una imagen. Conserva el original y completa los datos manualmente; no se han inventado importes.']};
- const result={...empty,parser:'generic',warnings:[]};
+ const result={...empty,parser:'generic',warnings:[],layout_lines:sourceLines,document_hint:invoiceDocumentHint(sourceLines)};
  // Keep explicit fiscal identifiers even when an unfamiliar layout has no party labels.
  result.company_tax_ids=[...new Set([...normalized.matchAll(/\b(?:N\.?I\.?F\.?|C\.?I\.?F\.?|VAT)(?:\s*(?:cliente|client|destinatario|proveedor|proveidor|emisor))?\s*[:.-]?\s*((?:ES[\s.-]*)?(?:[A-Z][\s.-]*\d{7}[\s.-]*[A-Z0-9]|\d{8}[\s.-]*[A-Z]))\b/gi)].map(match=>match[1].replace(/[\s.-]/g,'').toUpperCase()))];
  const clean=value=>String(value||'').replace(/\s+/g,' ').trim();
- const field=label=>clean(normalized.match(new RegExp('(?:^|\\n)'+label+'\\s*[:：]\\s*([^\\n]+)','i'))?.[1]);
- const dateField=label=>{const value=normalized.match(new RegExp(label+'\\s*[:：]\\s*([^\\n]+)','i'))?.[1];return value?invoiceDate(value.trim()):null;};
+ const field=label=>clean(normalized.match(new RegExp('(?:^|\\n)'+label+'(?:\\s*[:：]\\s*|[ \\t]*\\n[ \\t]*)([^\\n]+)','i'))?.[1]);
+ const dateField=label=>{const value=normalized.match(new RegExp(label+'(?:\\s*[:：]\\s*|[ \\t]*\\n[ \\t]*)([^\\n]+)','i'))?.[1];return value?invoiceDate(value.trim()):null;};
  const labeledMoney=label=>money(normalized.match(new RegExp(label+'\\s*[:：]?\\s*'+monetary+'\\s*(?:€|EUR)?','i'))?.[1]);
  const special=/ENERGIA\s*XXI/i.test(normalized)&&/DADES DE LA FACTURA D.ELECTRICITAT/i.test(normalized);
  if(special){
   result.parser='energia-xxi';result.supplier={name:'Energía XXI Comercializadora de Referencia, SLU',tax_id:clean(normalized.match(/Cif:\s*([A-Z]\d{8})/i)?.[1]),address:'C/ Ribera del Loira 60, 28042 Madrid'};
+  result.supply_address=invoiceSupplyAddress(text);
   const customer=normalized.match(/Titular del contracte:\s*([^\n]+?)\s+NIF:\s*([A-Z0-9-]+)/i);
   result.customer={name:clean(customer?.[1]),tax_id:clean(customer?.[2]),address:''};
   const reference=normalized.match(/Num\.\s*factura:\s*(\S+)\s+emesa el\s+([^\n]+)/i);
@@ -41,18 +55,18 @@ export function parseInvoicePages(pages){
   result.total_amount=labeledMoney('IMPORT FACTURA');
   result.warnings.push('La domiciliación y la fecha de cargo no acreditan que la factura esté pagada. El pago se registra cuando conste en el banco.');
  }else{
-  result.reference=clean(normalized.match(/(?:Num(?:ero|\.)?\s*(?:de\s*)?factura|Factura\s*(?:n[ºo.]|numero))\s*[:#-]?\s*([A-Z0-9][A-Z0-9/._-]{1,59})/i)?.[1]);
-  result.invoice_date=dateField('Fecha (?:de )?(?:factura|emision)')||dateField('Data (?:de )?(?:factura|emissio)');
+  result.reference=invoiceReferences(normalized)[0]||'';
+  result.invoice_date=dateField('Fecha(?: (?:de )?(?:factura|emision))?')||dateField('Data(?: (?:de )?(?:factura|emissio))?')||dateField('Invoice date');
   result.due_date=dateField('Fecha (?:de )?vencimiento')||dateField('Data (?:de )?venciment');
   result.supplier={name:field('(?:Proveedor|Emisor|Proveidor)'),tax_id:field('(?:NIF|CIF) (?:proveedor|emisor|proveidor)').replace(/[ -]/g,''),address:field('Direccion (?:proveedor|emisor)')};
   result.customer={name:field('(?:Cliente|Destinatario|Client)'),tax_id:field('(?:NIF|CIF) (?:cliente|destinatario|client)').replace(/[ -]/g,''),address:''};
-  result.base_total=labeledMoney('Base imponible');result.tax_total=labeledMoney('(?:Cuota IVA|Importe IVA)');result.total_amount=labeledMoney('(?:Total (?:importe )?factura|Importe total|Total a pagar)');
+  result.base_total=labeledMoney('(?:Base imponible|Base imposable|Subtotal)');result.tax_total=labeledMoney('(?:Cuota IVA|Importe IVA|Quota IVA|Import IVA)');result.total_amount=labeledMoney('(?:Total (?:importe )?factura|Importe total|Import total|Total a pagar|Invoice total)');
   const rates=[...normalized.matchAll(/\bIVA\s*(\d+(?:[,.]\d+)?)\s*%/gi)].map(match=>match[1].replace(',','.'));
   if(new Set(rates).size===1&&result.base_total)result.lines=[{description:field('Concepto')||'Concepto pendiente de revisar según el PDF',base:result.base_total,tax_rate:rates[0]}];
   if(new Set(rates).size>1)result.warnings.push('Hay varios tipos de IVA. Revisa el desglose y completa las bases por tipo.');
   result.warnings.push('Comprueba los campos extraídos con el PDF antes de contabilizar. Los datos que no se han identificado quedan pendientes de completar.');
  }
- const references=[...normalized.matchAll(/(?:Num(?:ero|\.)?\s*(?:de\s*)?factura|Factura\s*(?:n[ºo.]|numero))\s*[:#-]?\s*([A-Z0-9][A-Z0-9/._-]{1,59})/gi)].map(match=>invoiceIdentity(match[1]));
+ const references=invoiceReferences(normalized).map(invoiceIdentity);
  if(new Set(references).size>1){result.multiple_invoices=true;result.warnings.push('Se han detectado varias referencias de factura. Sube cada factura en un PDF separado antes de contabilizar.');}
  if(/(?:MONEDA|DIVISA|CURRENCY)\s*[:：]\s*(?!EUR\b)[A-Z]{3}\b/i.test(normalized)){result.currency='unknown';result.warnings.push('La divisa indicada no se ha identificado como EUR; este documento requiere revisión manual.');}
  if(/\b(?:IRPF|RETENCION)\b/i.test(normalized)){result.warnings.push('El documento menciona retenciones. Debes revisar el porcentaje y los importes antes de contabilizar.');result.withholding_review=true;}

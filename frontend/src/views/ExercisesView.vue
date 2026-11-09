@@ -45,12 +45,12 @@ async function save(){
  }catch(e){formError.value=exerciseError(e);}finally{busy.value=false;}
 }
 function consult(row,name){selectExercise(String(row.id));router.push({name});}
-async function imported(){
+async function imported(result){
  const id=String(importing.value.id);importing.value=null;
  await load();
  try{await reloadData();selectExercise(id);}
  catch{error.value='La importación se ha completado. Recarga la página para actualizar los ejercicios.';}
- notice.value=t.success;
+ notice.value=result?.updated?t.updateSuccess:t.success;
  const row=rows.value.find(item=>String(item.id)===id),openings=row?posted(row,'opening'):[];
  if(openings.length)notice.value+=' Apertura: '+openings.map(entry=>'asiento '+entry.number+(entry.import_id?' (importado)':'')).join(', ')+'.';
 }
@@ -87,7 +87,7 @@ async function saved(result){
     <button v-if="String(row.id)!==selectedId" class="button" @click="selectExercise(String(row.id))">{{ t.choose }}</button>
     <button class="button" @click="consult(row,'entries')">{{ t.journal }}</button><button v-if="row.entries_count" class="button" @click="consult(row,'balanceSheet')">{{ t.balance }}</button>
     <RouterLink class="button" :to="{name:'dataBackup',query:{exercise_id:String(row.id)}}">Copia de seguridad / Importar datos</RouterLink>
-    <button class="button" :disabled="!can('data_import')||(!!row.entries_count&&!row.import)" :title="row.entries_count&&!row.import?'Vacía el ejercicio para importar un libro diario':''" @click="importing=row">{{ row.import?t.replay:t.import }}</button><button v-if="can('exercise_clear')" class="button clear-danger-outline" @click="clearing=row">Borrar contabilidad del período</button>
+    <button class="button" :disabled="!can('data_import')||(!!row.entries_count&&!row.import)" :title="row.entries_count&&!row.import?'Revisa el origen de los asientos antes de importar':''" @click="importing=row">{{ row.import?t.update:t.import }}</button><button v-if="can('exercise_clear')" class="button clear-danger-outline" @click="clearing=row">Borrar contabilidad del período</button>
    </div>
    <p v-if="row.last_clear&&can('exercise_clear')" class="exercise-clear-backup">Copia del último borrado <button class="button" :disabled="!!backupBusy" @click="download(row.last_clear.id)">{{ backupBusy===row.last_clear.id?'Descargando…':'Descargar copia de seguridad' }}</button></p>
   </article>

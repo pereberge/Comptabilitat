@@ -3,6 +3,7 @@ import {computed,ref} from 'vue';
 import {b} from '../locales/balance-sheet.js';
 import {p,profitLossTotalLabels} from '../locales/profit-loss.js';
 import {reportMoney as money,reportDate as date} from '../services/report-format.js';
+import ReportAmountButton from './ReportAmountButton.vue';
 const props=defineProps({data:{type:Object,required:true},ledgerLink:{type:Function,required:true}});
 const emit=defineEmits(['select-exercise']);
 const comparison=computed(()=>props.data.comparison.multiple);
@@ -16,8 +17,8 @@ const rows=computed(()=>{
   node.children.forEach(child=>visit(child,depth+1));
   for(const account of node.accounts){
    const accountKey=key+':account:'+account.code;
-   result.push({...account,key:accountKey,kind:'account',label:account.code+' · '+account.description,depth:depth+1,expandable:!!account.subaccounts.length});
-   if(expanded.value.has(accountKey))for(const sub of account.subaccounts)result.push({...sub,key:accountKey+':sub:'+sub.id,kind:'subaccount',label:sub.code+' · '+sub.description,depth:depth+2,expandable:false});
+   result.push({...account,node_id:node.id,key:accountKey,kind:'account',label:account.code+' · '+account.description,depth:depth+1,expandable:!!account.subaccounts.length});
+   if(expanded.value.has(accountKey))for(const sub of account.subaccounts)result.push({...sub,node_id:node.id,key:accountKey+':sub:'+sub.id,kind:'subaccount',label:sub.code+' · '+sub.description,depth:depth+2,expandable:false});
   }
  }
  comparison.value.sections.forEach(node=>visit(node,0));return result;
@@ -25,6 +26,7 @@ const rows=computed(()=>{
 function toggle(key){const next=new Set(expanded.value);next.has(key)?next.delete(key):next.add(key);expanded.value=next;}
 function selectPeriod(event,period){if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey&&event.button===0)emit('select-exercise',period.sheet.exercise.id);}
 function label(period){return period.sheet?.exercise.name||period.exercise?.name||period.expected_end.slice(0,4);}
+function selection(row){return row.kind==='node'?{kind:'node',id:row.id}:{kind:row.kind,node_id:row.node_id,code:row.code};}
 </script>
 <template>
  <div class="balance-comparison profit-comparison table-wrap panel" role="region" :aria-label="p.threeExercises" tabindex="0">
@@ -34,10 +36,10 @@ function label(period){return period.sheet?.exercise.name||period.exercise?.name
    <tbody>
     <tr v-for="row in rows" :key="row.key" :class="['comparison-'+row.kind,{'comparison-root':row.depth===0}]">
      <th scope="row" :style="{'--indent':Math.min(row.depth,6)*14+'px'}"><button v-if="row.expandable" class="comparison-toggle" :aria-expanded="expanded.has(row.key)" @click="toggle(row.key)"><span aria-hidden="true">{{ expanded.has(row.key)?'−':'+' }}</span>{{ row.label }}</button><span v-else class="comparison-label">{{ row.label }}</span></th>
-     <td v-for="(period,index) in comparison.periods" :key="index" class="amount"><RouterLink v-if="period.available&&row.kind==='subaccount'&&row.ids[index]" :to="ledgerLink({id:row.ids[index]},period.sheet)" :title="b.signed+': '+money(row.signed_balances[index])" @click="selectPeriod($event,period)">{{ money(row.amounts[index]) }}</RouterLink><template v-else>{{ row.amounts[index]===null?'—':money(row.amounts[index]) }}</template></td>
+     <td v-for="(period,index) in comparison.periods" :key="index" class="amount"><ReportAmountButton v-if="period.available" :amount="row.amounts[index]" :selection="selection(row)" :label="row.label" :sheet="period.sheet" /><span v-else>—</span></td>
     </tr>
    </tbody>
-   <tfoot><tr v-for="[key,title] in profitLossTotalLabels" :key="key"><th scope="row">{{ title }}</th><td v-for="(value,index) in comparison.totals[key]" :key="index" class="amount">{{ value===null?'—':money(value) }}</td></tr></tfoot>
+   <tfoot><tr v-for="[key,title] in profitLossTotalLabels" :key="key"><th scope="row">{{ title }}</th><td v-for="(value,index) in comparison.totals[key]" :key="index" class="amount"><ReportAmountButton v-if="comparison.periods[index].available" :amount="value" :selection="{kind:'total',key}" :label="title" :sheet="comparison.periods[index].sheet" /><span v-else>—</span></td></tr></tfoot>
   </table>
  </div>
 </template>

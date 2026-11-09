@@ -59,13 +59,21 @@ export function createAccountingService(pool, companyId) {
   const [[row]]=await db.execute(`SELECT e.*,x.name AS exercise_name,x.start_date AS exercise_start,x.end_date AS exercise_end,x.status AS exercise_status,
     (EXISTS(SELECT 1 FROM trade_invoices i WHERE i.company_id=e.company_id AND (i.entry_id=e.id OR i.void_entry_id=e.id))
      OR EXISTS(SELECT 1 FROM portfolio_settlements s WHERE s.company_id=e.company_id AND (s.entry_id=e.id OR s.reversal_entry_id=e.id))
-     OR EXISTS(SELECT 1 FROM invoice_documents d WHERE d.company_id=e.company_id AND d.entry_id=e.id)) AS linked_document
+     OR EXISTS(SELECT 1 FROM invoice_documents d WHERE d.company_id=e.company_id AND d.entry_id=e.id)
+     OR EXISTS(SELECT 1 FROM payroll_slips n WHERE n.company_id=e.company_id AND (n.entry_id=e.id OR n.reversal_entry_id=e.id))
+     OR EXISTS(SELECT 1 FROM integration_received_invoices i WHERE i.company_id=e.company_id AND i.entry_id=e.id)) AS linked_document,
+    EXISTS(SELECT 1 FROM bank_reconciliations r WHERE r.company_id=e.company_id AND (
+      JSON_CONTAINS(r.snapshot,JSON_OBJECT('entry_id',e.id),'$.posted_movements')
+      OR JSON_CONTAINS(r.snapshot,JSON_OBJECT('entry_id',e.id),'$.scope.matched_movements')
+      OR JSON_CONTAINS(r.snapshot,JSON_OBJECT('entry_id',e.id),'$.work_anchor')
+    )) AS linked_reconciliation
     FROM journal_entries e JOIN accounting_exercises x ON x.company_id=e.company_id AND x.id=e.exercise_id WHERE e.company_id=? AND e.id=?`,[companyId,id(entryId)]);
   if(!row)throw new HttpError(404,'ENTRY_NOT_FOUND');
   const [lines]=await db.execute('SELECT l.*,a.code,COALESCE(l.source_account_name,a.description) AS account_description FROM journal_lines l JOIN accounts a ON a.id=l.account_id AND a.company_id=l.company_id WHERE l.company_id=? AND l.entry_id=? ORDER BY l.position,l.id',[companyId,row.id]);
-  const blocked=row.exercise_status!=='open'?'EXERCISE_CLOSED':row.status!=='posted'||row.entry_type!=='normal'||row.exercise_operation_id||row.cancelled_by_operation_id?'ENTRY_NOT_EDITABLE':Number(row.linked_document)?'ENTRY_LINKED_DOCUMENT':null;
+  const blocked=row.exercise_status!=='open'?'EXERCISE_CLOSED':row.status!=='posted'||row.entry_type!=='normal'||row.exercise_operation_id||row.cancelled_by_operation_id?'ENTRY_NOT_EDITABLE':null;
   const revision=createHash('sha256').update(JSON.stringify({id:row.id,exercise_id:row.exercise_id,number:row.number,date:row.entry_date,description:row.description,status:row.status,type:row.entry_type,operation:row.exercise_operation_id,cancelled:row.cancelled_by_operation_id,lines:lines.map(line=>[line.id,line.account_id,line.position,line.description,line.debit,line.credit,line.source_page,line.source_account_name,line.source_line_number])})).digest('hex');
-  return {...row,lines,revision,editable:!blocked,edit_blocked_reason:blocked,exercise:{id:row.exercise_id,name:row.exercise_name,start_date:row.exercise_start,end_date:row.exercise_end,status:row.exercise_status}};
+  const deleteBlocked=blocked||(row.linked_document?'ENTRY_LINKED_DOCUMENT':row.linked_reconciliation?'ENTRY_LINKED_RECONCILIATION':null);
+  return {...row,lines,revision,editable:!blocked,edit_blocked_reason:blocked,deletable:!deleteBlocked,delete_blocked_reason:deleteBlocked,exercise:{id:row.exercise_id,name:row.exercise_name,start_date:row.exercise_start,end_date:row.exercise_end,status:row.exercise_status}};
  }
  return {
   async listAccounts(query={}) {
@@ -152,6 +160,24 @@ export function createAccountingService(pool, companyId) {
    return rows;
   },
   getEntry:entryId=>transaction(db=>entry(db,entryId),true),
+  async removeEntry(entryId,body){
+   const target=id(entryId);
+   if(typeof body?.revision!=='string'||!/^[a-f0-9]{64}$/.test(body.revision))fail('INVALID_ENTRY_REVISION');
+   const [[source]]=await pool.execute('SELECT exercise_id FROM journal_entries WHERE company_id=? AND id=?',[companyId,target]);
+   if(!source)throw new HttpError(404,'ENTRY_NOT_FOUND');
+   try{return await transaction(async db=>{
+    await lockCompany(db,companyId);
+    await exercise(db,source.exercise_id,true);
+    await db.execute('SELECT id FROM journal_entries WHERE company_id=? AND id=? FOR UPDATE',[companyId,target]);
+    const before=await entry(db,target);
+    if(!before.deletable)throw new HttpError(409,before.delete_blocked_reason);
+    if(before.revision!==body.revision)throw new HttpError(409,'ENTRY_CHANGED');
+    if(String(body.confirm_number)!==String(before.number))fail('ENTRY_DELETE_CONFIRMATION');
+    await db.execute('DELETE FROM journal_lines WHERE company_id=? AND entry_id=?',[companyId,target]);
+    await db.execute('DELETE FROM journal_entries WHERE company_id=? AND id=?',[companyId,target]);
+    return {id:target,number:before.number,deleted:true};
+   });}catch(error){if(error.code==='ER_ROW_IS_REFERENCED_2')throw new HttpError(409,'ENTRY_LINKED_DOCUMENT');throw error;}
+  },
   async updateEntry(entryId,body,{canRemoveLines=true}={}) {
    const target=id(entryId);
    if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!['exercise_id','entry_date','description','lines','revision'].includes(key)))fail('IMMUTABLE_ENTRY');

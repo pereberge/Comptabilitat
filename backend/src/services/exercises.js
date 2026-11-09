@@ -12,6 +12,7 @@ export function createExerciseService(pool, companyId) {
         (SELECT COUNT(*) FROM journal_lines l JOIN journal_entries j ON j.id=l.entry_id AND j.company_id=l.company_id WHERE j.company_id=e.company_id AND j.exercise_id=e.id) AS lines_count,
         i.id AS import_id,i.source_name,i.source_company,i.entry_count,i.line_count,i.account_count,i.debit_total,i.credit_total,i.imported_at
         FROM accounting_exercises e LEFT JOIN journal_imports i ON i.company_id=e.company_id AND i.exercise_id=e.id
+          AND i.id=(SELECT MAX(latest.id) FROM journal_imports latest WHERE latest.company_id=e.company_id AND latest.exercise_id=e.id)
         WHERE e.company_id=? ORDER BY e.start_date DESC`, [companyId]);
       const [annual]=await pool.execute("SELECT id,exercise_id,number,entry_date,entry_type,status,import_id FROM journal_entries WHERE company_id=? AND entry_type IN ('opening','regularization','closing') ORDER BY number",[companyId]);
       const [clears]=await pool.execute('SELECT id,exercise_id,created_at FROM exercise_clears WHERE company_id=? ORDER BY id DESC',[companyId]);

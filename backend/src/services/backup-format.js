@@ -13,6 +13,9 @@ import {normalizeSepaMandate} from '../../../shared/sepa.js';
 import {normalizeCorporateTaxInput} from '../../../shared/corporate-tax.js';
 import {installmentPeriod,normalizeInstallmentTaxInput} from '../../../shared/installment-tax.js';
 import {normalizeReceivedInvoice} from '../integrations/invoice-contract.js';
+import {normalizePayrollEmployee,normalizePayrollSettings,normalizePayrollInput,calculatePayroll,payrollCanonical} from '../../../shared/payroll.js';
+import {purchaseBackupTables} from './purchase-backup.js';
+import {purchaseLine,purchaseNumber} from '../../../shared/purchases.js';
 
 export const MAX_BACKUP_FILE = 100 * 1024 * 1024;
 export const MAX_BACKUP_JSON = 256 * 1024 * 1024;
@@ -20,11 +23,13 @@ export const TABLES = {
  companies: { key: ['id'], refs: {} },
  company_details: { key: ['company_id'], refs: {} },
  company_logos: { key: ['company_id'], refs: {} },
+ payroll_settings:{key:['config_key'],refs:{}},
  vat_drafts: { key: ['tax_year','frequency','period'], refs: {} },
  accounting_exercises: { key: ['start_date','end_date'], refs: {} },
  corporate_tax_drafts: {key:['exercise_id'],refs:{exercise_id:'accounting_exercises'}},
  installment_tax_drafts:{key:['exercise_id','tax_year','period'],refs:{exercise_id:'accounting_exercises'}},
  accounts: { key: ['code'], refs: { parent_id:'accounts' } },
+ payroll_employees:{key:['code'],refs:{}},
  bank_connections: { key: ['iban'], refs: { account_id:'accounts' } },
  bank_reconciliation_rules: {key:['bank_account_id','concept_key','direction'],refs:{bank_account_id:'accounts'}},
  suppliers: { key: ['code'], refs: { account_id:'accounts' } },
@@ -38,10 +43,11 @@ export const TABLES = {
  farm_documents: { key: ['source_sha256'], refs: {} },
  farm_invoices: { key: ['supplier_tax_id','reference'], refs: { exercise_id:'accounting_exercises',document_id:'farm_documents' } },
  farm_cost_lines: { key: ['invoice_id','position'], refs: { invoice_id:'farm_invoices',farm_id:'pig_farms',lot_id:'farm_lots' } },
- journal_imports: { key: ['exercise_id'], refs: { exercise_id:'accounting_exercises' } },
+ journal_imports: { key: ['exercise_id','id'], refs: { exercise_id:'accounting_exercises' } },
  exercise_operations: { key: ['request_id'], refs: { exercise_id:'accounting_exercises',source_exercise_id:'accounting_exercises' } },
  journal_entries: { key: ['request_id'], refs: { exercise_id:'accounting_exercises',import_id:'journal_imports',exercise_operation_id:'exercise_operations',cancelled_by_operation_id:'exercise_operations' } },
  journal_lines: { key: ['entry_id','position'], refs: { entry_id:'journal_entries',account_id:'accounts' } },
+ payroll_slips:{key:['request_id'],refs:{exercise_id:'accounting_exercises',employee_id:'payroll_employees',entry_id:'journal_entries',reversal_entry_id:'journal_entries'}},
  trade_invoices: { key: ['request_id'], refs: { exercise_id:'accounting_exercises',party_account_id:'accounts',offset_account_id:'accounts',vat_account_id:'accounts',withholding_account_id:'accounts',entry_id:'journal_entries',void_entry_id:'journal_entries' } },
  trade_invoice_lines: { key: ['invoice_id','position'], refs: { invoice_id:'trade_invoices' } },
  portfolio_receipts: { key: ['invoice_id','position'], refs: { invoice_id:'trade_invoices' } },
@@ -51,11 +57,13 @@ export const TABLES = {
  bank_reconciliations: { key: ['exercise_id','account_id','source_sha256'], refs: { exercise_id:'accounting_exercises',account_id:'accounts' } },
  integration_received_invoices: { key: ['source_system','external_id'], refs: {exercise_id:'accounting_exercises',supplier_account_id:'accounts',invoice_id:'trade_invoices',entry_id:'journal_entries'} },
  supplier_expense_preferences: {key:['supplier_tax_id'],refs:{expense_account_id:'accounts'}},
+ ...purchaseBackupTables,
 };
 export const TABLE_ORDER = Object.keys(TABLES);
-export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents','integration_received_invoices','supplier_expense_preferences']);
+export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents','integration_received_invoices','supplier_expense_preferences','payroll_settings','payroll_employees']);
 export const FARM_TABLES = new Set(['pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
-export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'integration_received_invoices','supplier_expense_preferences','bank_reconciliation_rules','vat_drafts','bank_remittances','corporate_tax_drafts','installment_tax_drafts']);
+export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'integration_received_invoices','supplier_expense_preferences','bank_reconciliation_rules','vat_drafts','bank_remittances','corporate_tax_drafts','installment_tax_drafts','payroll_settings','payroll_employees','payroll_slips']);
+for(const table of Object.keys(purchaseBackupTables)){SHARED.add(table);OPTIONAL_TABLES.add(table);}
 export const fail = (code, status=400) => { throw new HttpError(status, code); };
 export const sha = value => createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 export const encodeRow = row => Object.fromEntries(Object.entries(row).map(([key,value])=>[key,Buffer.isBuffer(value)?{$binary_base64:value.toString('base64')}:value]));
@@ -128,6 +136,12 @@ export function validateBackup(data) {
   if(!Array.isArray(ids)||ids.length<2||ids.length>1000||new Set(ids).size!==ids.length||ids.some(value=>!Number.isSafeInteger(value)||value<1)||ids.length!==data.tables.accounting_exercises.length||data.tables.accounting_exercises.some(row=>!ids.includes(row.id)))fail('BACKUP_INVALID_FILE');
  }
  const periods=new Map(data.tables.accounting_exercises.map(row=>[row.id,row]));
+ for(const row of data.tables.payroll_settings){try{normalizePayrollSettings(row.payload);if(row.config_key!=='general'||!Number.isSafeInteger(row.version)||row.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const row of data.tables.payroll_employees){try{const profile=normalizePayrollEmployee(row.profile);if(profile.code!==row.code||profile.name!==row.name||!Number.isSafeInteger(row.version)||row.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const row of data.tables.payroll_slips){try{
+  const input=normalizePayrollInput(row.input),employee=normalizePayrollEmployee(row.employee_snapshot.profile),calculation=calculatePayroll(employee,input,row.employer_snapshot),period=periods.get(row.exercise_id);
+  if(!period||input.period_from!==row.period_from||input.period_to!==row.period_to||input.kind!==row.kind||row.period_from<period.start_date||row.period_to>period.end_date||!['draft','posted','voided'].includes(row.status)||row.status==='draft'&&(row.entry_id||row.reversal_entry_id)||row.status!=='draft'&&!row.entry_id||row.status==='voided'&&!row.reversal_entry_id||!Number.isSafeInteger(row.version)||row.version<1||payrollCanonical(calculation)!==payrollCanonical(row.calculation))throw new Error();
+ }catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const table of TABLE_ORDER)for(const row of [...data.tables[table],...data.references[table]]){
   for(const [field,target]of Object.entries(TABLES[table].refs))if(row[field]!=null&&!indexes[target].has(row[field]))fail('BACKUP_BROKEN_LINKS');
   if(!SHARED.has(table)&&row.exercise_id!=null&&owned[table].has(identity(row))&&!periods.has(row.exercise_id))fail('BACKUP_INVALID_FILE');
@@ -135,6 +149,8 @@ export function validateBackup(data) {
   if(owned[table].has(identity(row))&&['trade_invoice_lines','portfolio_receipts'].includes(table)&&!owned.trade_invoices.has(row.invoice_id))fail('BACKUP_BROKEN_LINKS');
   if(owned[table].has(identity(row))&&table==='farm_cost_lines'&&!owned.farm_invoices.has(row.invoice_id))fail('BACKUP_BROKEN_LINKS');
  }
+ for(const table of ['purchase_order_lines','purchase_receipt_lines','purchase_invoice_lines'])for(const row of [...data.tables[table],...data.references[table]]){try{purchaseLine(row,{unpriced:true});}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const row of [...data.tables.purchase_order_receipts,...data.tables.purchase_invoice_links]){try{if(purchaseNumber(row.quantity)<=0n)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  const codes=new Set();
  for(const account of [...data.tables.accounts,...data.references.accounts])if(account.sepa_mandate!=null){try{if(accountPartyType(account)!=='customer')throw new Error();normalizeSepaMandate(account.sepa_mandate);}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const receipt of [...data.tables.portfolio_receipts,...data.references.portfolio_receipts])if(receipt.split_history!=null){

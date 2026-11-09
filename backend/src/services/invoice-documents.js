@@ -1,3 +1,4 @@
+import {invoiceSupplyExtraction} from './invoice-pdf.js';
 import { Worker } from 'node:worker_threads';
 import { createHash,randomUUID } from 'node:crypto';
 import { HttpError } from '../middleware/errors.js';
@@ -9,6 +10,7 @@ import { validateInvoice } from './invoice-validation.js';
 import { createInvoiceService } from './invoices.js';
 import {invoiceCompanyMatches} from './document-company.js';
 import {knownPartyTaxIds} from './party-identification.js';
+import {recognizeInvoiceFormat,learnInvoiceFormat} from './invoice-recognition.js';
 
 const previews=new Map(),lifetime=15*60*1000;let active=0;
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
@@ -30,7 +32,8 @@ export function createInvoiceDocumentService(pool,companyId){
    FROM journal_entries e JOIN journal_lines l ON l.company_id=e.company_id AND l.entry_id=e.id JOIN accounts a ON a.company_id=l.company_id AND a.id=l.account_id
    WHERE e.company_id=? AND e.exercise_id=? ORDER BY e.entry_date,e.number,l.position`,[companyId,exercise.id]);
   const [invoices]=await db.execute('SELECT id,entry_id,direction,reference,party_account_id,party_tax_id,invoice_date,posting_date,base_total,tax_total,withholding_total,total_amount,status FROM trade_invoices WHERE company_id=? AND exercise_id=?',[companyId,exercise.id]);
-  return {company,exercise,accounts,journal,invoices,knownParties:await knownPartyTaxIds(db,companyId)};
+  const [supplyAccounts]=await db.execute("SELECT extraction,form FROM invoice_documents WHERE company_id=? AND status IN ('posted','linked') AND JSON_CONTAINS_PATH(extraction,'one','$.supply_address') ORDER BY updated_at DESC,id DESC",[companyId]);
+  return {company,exercise,accounts,journal,invoices,supplyAccounts,knownParties:await knownPartyTaxIds(db,companyId)};
  }
  function owner(extraction,company){
   const match=party=>!!invoiceCompanyMatches(party,company);
@@ -40,12 +43,19 @@ export function createInvoiceDocumentService(pool,companyId){
  function initialForm(extraction,meta){
   const direction=owner(extraction,meta.company),party=direction==='received'?extraction.supplier:extraction.customer;
   return {exercise_id:meta.exercise.id,direction,reference:(extraction.reference||'').slice(0,60),invoice_date:extraction.invoice_date||'',posting_date:extraction.invoice_date||'',party:{name:(party.name||'').slice(0,200),tax_id:(party.tax_id||'').slice(0,32),address:(party.address||'').slice(0,250),email:''},party_parent:direction==='received'?'4100':'4300',
-   party_account_id:'',offset_account_id:'',vat_account_id:'',withholding_account_id:'',withholding_rate:extraction.withholding_rate||'0',payment_method:extraction.payment_method||'transfer',notes:'Documento PDF conservado con la propuesta. Revisar los datos con el original.',
+   party_account_id:'',offset_account_id:'',vat_account_id:'',withholding_account_id:'',withholding_rate:extraction.withholding_rate||'0',payment_method:extraction.payment_method||'transfer',notes:[extraction.supply_address?'Adre\u00e7a de subministrament: '+extraction.supply_address:'','Documento PDF conservado con la propuesta. Revisar los datos con el original.'].filter(Boolean).join('\n'),
    lines:extraction.lines.length?extraction.lines:[{description:'',base:'',tax_rate:'21'}],receipts:[{due_date:extraction.due_date||extraction.invoice_date||'',amount:extraction.total_amount||'0.00'}],request_id:randomUUID()};
  }
  async function find(db,documentId){
   const [[row]]=await db.execute('SELECT id,company_id,exercise_id,source_name,source_sha256,pages,extraction,form,proposal,status,invoice_id,entry_id,version,created_at,updated_at FROM invoice_documents WHERE company_id=? AND id=?',[companyId,id(documentId)]);
-  if(!row)fail('INVOICE_DOCUMENT_NOT_FOUND',404);return {...row,extraction:parse(row.extraction),form:parse(row.form),proposal:parse(row.proposal)};
+  if(!row)fail('INVOICE_DOCUMENT_NOT_FOUND',404);
+  let extraction=invoiceSupplyExtraction(parse(row.extraction));
+  if(row.status==='draft'&&extraction?.parser==='energia-xxi'&&!extraction.supply_address&&!extraction.layout_lines?.length){
+   const [[source]]=await db.execute('SELECT source_pdf FROM invoice_documents WHERE company_id=? AND id=?',[companyId,row.id]);
+   const fresh=await extractInvoiceDocument(source.source_pdf);
+   extraction={...extraction,...(fresh.supply_address?{supply_address:fresh.supply_address}:{}),layout_lines:fresh.layout_lines};
+  }
+  return {...row,extraction,form:parse(row.form),proposal:parse(row.proposal)};
  }
  async function proposal(db,row){const meta=await context(db,row.exercise_id);return {meta,proposal:buildInvoiceProposal({...meta,form:row.form,extraction:row.extraction})};}
  async function stored(db,documentId){const row=await find(db,documentId),result=await proposal(db,row);return {...row,form:result.proposal.form,proposal:result.proposal,exercise:result.meta.exercise};}
@@ -74,7 +84,7 @@ export function createInvoiceDocumentService(pool,companyId){
      if(!period)fail('DOCUMENTATION_INVOICE_EXERCISE_REQUIRED',409);
      if(period.id!==meta.exercise.id)meta=await context(connection,period.id);
     }
-    const form=initialForm(extraction,meta),proposed=buildInvoiceProposal({...meta,form,extraction}),savedForm=proposed.form;
+    const form=initialForm(extraction,meta),proposed=buildInvoiceProposal({...meta,form,extraction,suggestPostingDate:true}),savedForm=proposed.form;
     const [saved]=await connection.execute(`INSERT INTO invoice_documents(company_id,exercise_id,source_name,source_sha256,source_pdf,pages,extraction,form,proposal,direction,reference,party_name,party_tax_id,invoice_date,total_amount)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,[companyId,meta.exercise.id,sourceName,sourceHash,buffer,extraction.pages,JSON.stringify(extraction),JSON.stringify(savedForm),JSON.stringify(proposed),savedForm.direction,savedForm.reference,savedForm.party.name,savedForm.party.tax_id,savedForm.invoice_date||null,proposed.totals?.total_amount??null]);
     return {id:saved.insertId,exercise_id:meta.exercise.id,replayed:false};
@@ -93,8 +103,8 @@ export function createInvoiceDocumentService(pool,companyId){
    for(const [token,row]of previews)if(row.expires<Date.now())previews.delete(token);
    if(active>=3||[...previews.values()].filter(row=>!row.result).length>=10)fail('INVOICE_PDF_BUSY',429);active++;
    try{
-    const extraction=await extractInvoiceDocument(buffer);
-    const data=await snapshot(async db=>{const meta=await context(db,exerciseId),form=initialForm(extraction,meta);return {meta,proposal:buildInvoiceProposal({...meta,form,extraction})};});
+    const extraction=await recognizeInvoiceFormat(pool,companyId,await extractInvoiceDocument(buffer));
+    const data=await snapshot(async db=>{const meta=await context(db,exerciseId),form=initialForm(extraction,meta);return {meta,proposal:buildInvoiceProposal({...meta,form,extraction,suggestPostingDate:true})};});
     const token=randomUUID(),sourceHash=createHash('sha256').update(buffer).digest('hex'),sourceName=String(filename||'factura.pdf').split(/[\\/]/).at(-1).replace(/[\x00-\x1f]/g,'').slice(0,255)||'factura.pdf';
     const [[existing]]=await pool.execute('SELECT id FROM invoice_documents WHERE company_id=? AND exercise_id=? AND source_sha256=?',[companyId,data.meta.exercise.id,sourceHash]);
     previews.set(token,{companyId,exerciseId:data.meta.exercise.id,buffer:Buffer.from(buffer),sourceName,sourceHash,extraction,form:data.proposal.form,expires:Date.now()+lifetime});
@@ -146,7 +156,8 @@ export function createInvoiceDocumentService(pool,companyId){
      }else if(body.action!=='create')fail('INVOICE_DOCUMENT_ENTRY_CHANGED',409);
      invoice=await createInvoiceService(pool,companyId).create(form,{db,existing_entry_id:existingEntryId,accounting_only:true});
     }
-    await db.execute('UPDATE invoice_documents SET status=?,invoice_id=?,entry_id=?,proposal=?,version=version+1 WHERE company_id=? AND id=?',[status,invoice.id,invoice.entry_id,JSON.stringify(current),companyId,row.id]);
+    const learned=learnInvoiceFormat(row.extraction,form,result.meta.company),extraction=learned?{...row.extraction,learned_template:learned}:row.extraction;
+    await db.execute('UPDATE invoice_documents SET status=?,invoice_id=?,entry_id=?,proposal=?,extraction=?,version=version+1 WHERE company_id=? AND id=?',[status,invoice.id,invoice.entry_id,JSON.stringify(current),JSON.stringify(extraction),companyId,row.id]);
     return {id:invoice.id,document_id:row.id,replayed:false,linked_existing:status==='linked'};
    });
   },

@@ -38,7 +38,7 @@ test('MySQL manual reconciliation: criteria reuse, edits, bank isolation, exact 
    const other=await prepare(csv+'\n\n',otherBank.id);assert.equal(other.analysis.snapshot.proposals.length,0);await imports.discard({token:other.preview.token});
    const incoming=await prepare('Fecha;Concepto;Importe;Saldo\n12/01/2026;PRESTEC FINANCERA refund;100,00;1100,00');assert.equal(incoming.analysis.snapshot.proposals.length,0);await imports.discard({token:incoming.preview.token});
    const next=await createExerciseService(pool,company.id).create({name:'2027',start_date:'2027-01-01',end_date:'2027-12-31'});
-   const annual=await prepare(csv.replaceAll('2026','2027'),bank.id,next.id);assert.equal(annual.analysis.snapshot.proposals.length,2);await imports.discard({token:annual.preview.token});
+   const annual=await prepare(csv.replaceAll('2026','2027'),bank.id,next.id);assert.equal(annual.analysis.snapshot.proposals.filter(row=>row.source==='saved_rule').length,2);await imports.discard({token:annual.preview.token});
   });
   await t.test('stale versions, unbalanced amounts, invalid accounts and foreign reports are rejected',async()=>{
    await assert.rejects(service.saveProposal(report.id,body),error('RECONCILIATION_CHANGED'));

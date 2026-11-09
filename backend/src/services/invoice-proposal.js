@@ -1,13 +1,30 @@
 import { calculateInvoice } from '../../../shared/invoice-money.js';
 import { amount } from './report-amount.js';
 import { validateInvoice } from './invoice-validation.js';
-import { invoiceIdentity } from './invoice-pdf.js';
+import { invoiceIdentity,invoiceSupplyExtraction } from './invoice-pdf.js';
 import {completeFiscalProfile} from '../../../shared/account-party.js';
 import {partyPaymentReceipts,normalizePartyPaymentProfile} from '../../../shared/party-payments.js';
 import {partyTaxId,partyAccountsByTaxId,partyAccountsByName} from '../../../shared/party-identity.js';
 
-export function buildInvoiceProposal({form:input,extraction,accounts,journal,invoices=[],knownParties=[],exercise}){
+export function buildInvoiceProposal({form:input,extraction,accounts,journal,invoices=[],knownParties=[],supplyAccounts=[],exercise,suggestPostingDate=false}){
+ extraction=invoiceSupplyExtraction(extraction);
  const form=structuredClone(input),received=form.direction==='received',warnings=[...extraction.warnings],byId=new Map(accounts.map(account=>[account.id,account]));
+ // Confirmed documents are ordered newest first and scoped to this company.
+ let rememberedSupply=false;
+ if(received&&extraction.supply_address&&!form.offset_account_id){
+  for(const row of supplyAccounts){
+   let previous,saved;try{previous=typeof row.extraction==='string'?JSON.parse(row.extraction):row.extraction;saved=typeof row.form==='string'?JSON.parse(row.form):row.form;}catch{continue;}
+   if(saved?.direction!=='received'||!previous?.supply_address||invoiceIdentity(previous.supply_address)!==invoiceIdentity(extraction.supply_address))continue;
+   const supplier=invoiceIdentity(extraction.supplier?.tax_id)||invoiceIdentity(extraction.supplier?.name);
+   if(!supplier||supplier!==(invoiceIdentity(previous.supplier?.tax_id)||invoiceIdentity(previous.supplier?.name)))continue;
+   const account=byId.get(Number(saved.offset_account_id));
+   if(account?.kind==='subaccount'&&/^[62]/.test(account.code)){form.offset_account_id=account.id;rememberedSupply=true;}
+   break;
+  }
+ }
+ if(extraction.supply_address&&!invoiceIdentity(form.notes).includes(invoiceIdentity(extraction.supply_address))){
+  form.notes=[form.notes||'','Adre\u00e7a de subministrament: '+extraction.supply_address].filter(Boolean).join('\n');
+ }
  const parties=accounts.filter(account=>account.kind==='subaccount'&&(received?/^(400|410)/:/^(430|440)/).test(account.code));
  const identities=[...parties.filter(row=>row.party_profile?.tax_id).map(row=>({account_id:row.id,direction:form.direction,tax_id:row.party_profile.tax_id})),...knownParties,...invoices.map(row=>({account_id:row.party_account_id,direction:row.direction,tax_id:row.party_tax_id})),...parties.filter(row=>row.tax_id).map(row=>({account_id:row.id,direction:form.direction,tax_id:row.tax_id}))];
  const taxId=partyTaxId(form.party?.tax_id),matched=partyAccountsByTaxId(identities,form.direction,taxId).filter(accountId=>parties.some(account=>account.id===accountId));
@@ -33,21 +50,21 @@ export function buildInvoiceProposal({form:input,extraction,accounts,journal,inv
    if(party!==(received?-1n:1n)*amount(totals.total_amount))continue;
    const offset=rows.filter(row=>(received?/^[62]/:/^7/).test(row.code)),vat=rows.filter(row=>(received?/^472/:/^477/).test(row.code));
    if(offset.reduce((sum,row)=>sum+amount(row.debit)-amount(row.credit),0n)!==(received?1n:-1n)*amount(totals.base_total)||vat.reduce((sum,row)=>sum+amount(row.debit)-amount(row.credit),0n)!==(received?1n:-1n)*amount(totals.tax_total))continue;
-   const description=invoiceIdentity(header.entry_description),reference=invoiceIdentity(form.reference),suffix=form.reference?.match(/(\d{6})$/)?.[1];
+   const description=invoiceIdentity(header.entry_description),reference=invoiceIdentity(form.reference),linkedInvoice=invoices.find(invoice=>invoice.entry_id===header.entry_id&&invoice.status==='posted');
    candidates.push({entry_id:header.entry_id,number:header.number,entry_date:header.entry_date,description:header.entry_description,
-    reference_matches:!!(reference&&description.includes(reference)||suffix&&description.includes(suffix)),
+    reference_matches:!!(reference&&(linkedInvoice?invoiceIdentity(linkedInvoice.reference)===reference:description.includes(reference))),
     offset_account_id:offset.length===1?offset[0].account_id:null,vat_account_id:vat.length===1?vat[0].account_id:null});
   }
  }
- const strong=candidates.filter(candidate=>candidate.reference_matches),matches=strong.length?strong:candidates;
+ const strong=candidates.filter(candidate=>candidate.reference_matches),matches=strong;
  if(matches.length===1){
   const match=matches[0];
   if(!form.offset_account_id)form.offset_account_id=match.offset_account_id;
   if(!form.vat_account_id)form.vat_account_id=match.vat_account_id;
-  if(!form.posting_date||form.posting_date===form.invoice_date)form.posting_date=match.entry_date;
+  if(!form.posting_date||suggestPostingDate&&form.posting_date===form.invoice_date)form.posting_date=match.entry_date;
  }
- let basis='Contrapartidas pendientes de revisar.';
- if(!form.offset_account_id&&form.party_account_id){
+ let basis=rememberedSupply?'Cuenta de gasto recordada de la \u00faltima factura confirmada de este suministro.':'Contrapartidas pendientes de revisar.';
+ if(!form.offset_account_id&&form.party_account_id&&!extraction.supply_address){
   const history=[...grouped.values()].filter(rows=>rows[0].status==='posted'&&rows[0].entry_type==='normal'&&rows.some(row=>row.account_id===Number(form.party_account_id)))
     .sort((a,b)=>b[0].entry_date.localeCompare(a[0].entry_date)||b[0].number-a[0].number);
   for(const rows of history){const offsets=rows.filter(row=>(received?/^[62]/:/^7/).test(row.code));if(offsets.length===1){form.offset_account_id=offsets[0].account_id;basis='Según tus datos: misma contrapartida que el asiento '+rows[0].number+' de este proveedor o cliente.';break;}}
@@ -80,6 +97,6 @@ export function buildInvoiceProposal({form:input,extraction,accounts,journal,inv
  const complete=!!(totals&&form.reference?.trim()&&form.party?.name?.trim()&&form.invoice_date&&form.posting_date&&form.offset_account_id&&
   (amount(totals.tax_total)===0n||form.vat_account_id)&&(amount(totals.withholding_total)===0n||form.withholding_account_id)&&
   form.posting_date>=exercise.start_date&&form.posting_date<=exercise.end_date&&form.posting_date>=form.invoice_date);
- return {form,totals,journal:lines,candidates:matches.slice(0,12),existing_invoice:existing?{id:existing.id,entry_id:existing.entry_id,reference:existing.reference,total_amount:existing.total_amount}:null,
+ return {form,totals,journal:lines,candidates:matches.slice(0,12),similar_entries:candidates.filter(candidate=>!candidate.reference_matches).slice(0,12),existing_invoice:existing?{id:existing.id,entry_id:existing.entry_id,reference:existing.reference,total_amount:existing.total_amount}:null,
   basis,alternatives,warnings:[...new Set(warnings)],ready:complete&&valid&&accountsValid&&!paymentError&&!taxConflict&&!(matched.length>1&&!form.party_account_id)&&extraction.currency==='EUR'&&!extraction.multiple_invoices,needs_amount_review:!extraction.totals_verified||!!extraction.withholding_review||printedDifference};
 }

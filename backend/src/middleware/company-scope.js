@@ -24,8 +24,11 @@ import {createFarmService} from '../services/farms.js';
 import { createVatService } from '../services/vat.js';
 import {createCorporateTaxService} from '../services/corporate-tax.js';
 import {createInstallmentTaxService} from '../services/installment-tax.js';
+import {createPayrollService} from '../services/payroll.js';
 import {createImportedInvoiceService} from '../integrations/received-invoices.js';
 import {date} from '../services/validation.js';
+import {createPurchaseService} from '../services/purchases.js';
+import {createPurchaseOcrService} from '../services/purchase-ocr.js';
 
 // Scope belongs to the request, never to global server state.
 export function companyScope(central, defaultCompanyId, {automaticBackups=createAutomaticBackupManager(central),companyDatabases}={}) {
@@ -47,9 +50,12 @@ export function companyScope(central, defaultCompanyId, {automaticBackups=create
     const [[company]] = await db.execute('SELECT id FROM companies WHERE id=?', [companyId]);
     if (!company) throw new HttpError(404, 'COMPANY_NOT_FOUND');
     req.companyId = companyId;
+    req.purchases=createPurchaseService(db,companyId,req.user?.key||'local');
+    req.purchaseOcr=createPurchaseOcrService(db,companyId,req.user?.key||'local');
     req.vat = createVatService(db,companyId);
     req.corporateTax = createCorporateTaxService(db,companyId);
     req.installmentTax = createInstallmentTaxService(db,companyId);
+    req.payroll = createPayrollService(db,companyId);
     req.importedInvoices=createImportedInvoiceService(db,companyId);
     req.farms = createFarmService(db,companyId);
     req.exercises = createExerciseService(db, companyId);

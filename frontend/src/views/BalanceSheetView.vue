@@ -1,5 +1,5 @@
 <script setup>
-import { computed,onBeforeUnmount,ref,watch } from 'vue';
+import { computed,onBeforeUnmount,ref,watch,provide } from 'vue';
 import { useRoute,useRouter } from 'vue-router';
 import { useContext } from '../composables/context.js';
 import { api } from '../services/accounting.js';
@@ -9,6 +9,9 @@ import { reportMoney as money,reportDate as date,downloadCsv } from '../services
 import { balanceSheetCsv } from '../services/balance-sheet-csv.js';
 import { balanceDetailSections } from '../services/balance-detail.js';
 import {exerciseMonths,latestExercise,reportDefaultCutoff,previousExerciseEnd,previousYearCutoff} from '../../../shared/report-periods.js';
+import ReportAmountButton from '../components/ReportAmountButton.vue';
+import ReportAmountDetail from '../components/ReportAmountDetail.vue';
+import {reportAmountDetailKey} from '../services/report-amount-detail.js';
 import BalanceSheetNode from '../components/BalanceSheetNode.vue';
 import BalanceComparison from '../components/BalanceComparison.vue';
 const {company,exercises,selectExercise,selectedId,selectedExercise}=useContext(),route=useRoute(),router=useRouter();
@@ -25,6 +28,10 @@ const effectivePreviousDay=computed(()=>previousDay.value||(day.value===selected
 const currentMonth=computed({get:()=>day.value.slice(0,7),set:value=>{day.value=months.value.find(item=>item.value===value).to;}});
 const priorMonth=computed({get:()=>effectivePreviousDay.value?.slice(0,7),set:value=>{previousDay.value=priorMonths.value.find(item=>item.value===value).to;}});
 const day=ref(''),model=ref('abbreviated'),comparePrevious=ref(true),result=ref(null),loading=ref(false),error=ref('');
+
+const amountDetail=ref(null);
+provide(reportAmountDetailKey,payload=>{const sheets=payload.sheets||[payload.sheet||result.value];if(sheets.every(Boolean))amountDetail.value={...payload,sheets};});
+watch([()=>company.value?.id,selectedId,()=>route.fullPath],()=>amountDetail.value=null);
 let generation=0;
 const current=computed(()=>result.value&&result.value.date===day.value&&result.value.model===model.value&&loadedDigits.value===accountDigits.value&&result.value.compare_previous===comparePrevious.value&&(!comparePrevious.value||!result.value.comparison?.available||result.value.comparison.previous.date===effectivePreviousDay.value)&&String(result.value.exercise.id)===selectedId.value);
 const diagnostics=computed(()=>result.value&&(!result.value.checks.valid||result.value.diagnostic.warnings.length));
@@ -79,27 +86,28 @@ onBeforeUnmount(()=>generation++);
   <p v-if="result.comparison?.available&&!result.comparison.has_activity" role="status" class="notice comparison-notice">{{ b.emptyPrevious }}</p>
   <BalanceComparison v-if="result.comparison?.available" :data="displayResult" :account-digits="loadedDigits" side-totals :ledger-link="ledgerLink" @select-exercise="selectExercise(String($event))" />
   <div v-else class="balance-columns">
-   <section v-for="side in ['asset','equity_liabilities']" :key="side" class="panel balance-column"><h2>{{ side==='asset'?b.asset:b.equity }}</h2><BalanceSheetNode v-for="node in displayResult.sections.filter(s=>s.side===side)" :key="node.id+':'+loadedDigits" :node="node" :account-digits="loadedDigits" :ledger-link="ledgerLink" /><p class="balance-side-total"><strong>{{ side==='asset'?b.totalAsset:b.totalEquity }}</strong><strong class="amount">{{ money(result.totals[side==='asset'?'assets':'equity_liabilities']) }} €</strong></p></section>
+   <section v-for="side in ['asset','equity_liabilities']" :key="side" class="panel balance-column"><h2>{{ side==='asset'?b.asset:b.equity }}</h2><BalanceSheetNode v-for="node in displayResult.sections.filter(s=>s.side===side)" :key="node.id+':'+loadedDigits" :node="node" :account-digits="loadedDigits" :ledger-link="ledgerLink" /><p class="balance-side-total"><strong>{{ side==='asset'?b.totalAsset:b.totalEquity }}</strong><strong class="amount"><ReportAmountButton :amount="result.totals[side==='asset'?'assets':'equity_liabilities']" :selection="{kind:'total',key:side==='asset'?'assets':'equity_liabilities'}" :label="side==='asset'?b.totalAsset:b.totalEquity" euro /></strong></p></section>
   </div>
-  <div v-if="!result.comparison?.available" class="panel balance-totals"><p><strong>{{ b.difference }}</strong><strong>{{ money(result.totals.difference) }} €</strong></p><p v-if="result.generated_result!==undefined"><strong>{{ b.generatedResult }}</strong><strong>{{ money(result.generated_result) }} €</strong></p></div>
+  <div v-if="!result.comparison?.available" class="panel balance-totals"><p><strong>{{ b.difference }}</strong><strong><ReportAmountButton :amount="result.totals.difference" :selection="{kind:'total',key:'difference'}" :label="b.difference" euro /></strong></p><p v-if="result.generated_result!==undefined"><strong>{{ b.generatedResult }}</strong><strong><ReportAmountButton :amount="result.generated_result" :selection="{kind:'generated_result'}" :label="b.generatedResult" euro /></strong></p></div>
   <p v-if="result.generated_result!==undefined" class="muted">{{ b.generatedResultHelp }}</p>
-  <p class="notice" :class="{'error-notice':!result.checks.balanced}" role="status">{{ result.checks.balanced?b.balanced:b.unbalanced }} — {{ b.difference }}: {{ money(result.totals.difference) }} €<span v-if="!result.checks.complete"> · {{ b.review }}</span><span v-else-if="result.diagnostic.warnings.length"> · {{ b.observations }}</span></p>
+  <p class="notice" :class="{'error-notice':!result.checks.balanced}" role="status">{{ result.checks.balanced?b.balanced:b.unbalanced }} — {{ b.difference }}: <ReportAmountButton :amount="result.totals.difference" :selection="{kind:'total',key:'difference'}" :label="b.difference" euro /><span v-if="!result.checks.complete"> · {{ b.review }}</span><span v-else-if="result.diagnostic.warnings.length"> · {{ b.observations }}</span></p>
   <details class="panel balance-diagnostic" :open="!!diagnostics"><summary>{{ b.diagnostic }}</summary>
    <p>{{ result.checks.reconciles_trial_balance?b.verified:b.notVerified }}</p>
-   <h3>{{ b.result }}: {{ money(result.result.total) }} €</h3><p>{{ b.booked }}: {{ money(result.result.booked_129) }} €</p><p>{{ b.residual }}: {{ money(result.result.residual_6_7) }} €</p><p class="muted">{{ b.resultHelp }}</p>
+   <h3>{{ b.result }}: <ReportAmountButton :amount="result.result.total" :selection="{kind:'result',key:'total'}" :label="b.result" euro /></h3><p>{{ b.booked }}: <ReportAmountButton :amount="result.result.booked_129" :selection="{kind:'result',key:'booked_129'}" :label="b.booked" euro /></p><p>{{ b.residual }}: <ReportAmountButton :amount="result.result.residual_6_7" :selection="{kind:'result',key:'residual_6_7'}" :label="b.residual" euro /></p><p class="muted">{{ b.resultHelp }}</p>
    <h3 v-if="result.diagnostic.unclassified.length">{{ b.unclassified }}</h3>
-   <div v-for="row in result.diagnostic.unclassified" :key="row.id" class="notice"><RouterLink :to="ledgerLink(row)">{{ row.code }} · {{ row.description }}</RouterLink><p>{{ b.signed }}: {{ money(row.signed_balance) }} €</p><p>{{ b.reason[row.reason] }}</p></div>
+   <div v-for="row in result.diagnostic.unclassified" :key="row.id" class="notice"><RouterLink :to="ledgerLink(row)">{{ row.code }} · {{ row.description }}</RouterLink><p>{{ b.signed }}: <ReportAmountButton :amount="row.signed_balance" :selection="{kind:'unclassified',code:row.code}" :label="row.code+' · '+row.description" euro /></p><p>{{ b.reason[row.reason] }}</p></div>
    <p v-for="(warning,i) in result.diagnostic.warnings" :key="i" class="notice">{{ b.reason[warning.code] }} <RouterLink v-if="warning.account" :to="ledgerLink(warning.account)">{{ warning.account.code }} · {{ money(warning.account.amount) }} €</RouterLink><span v-if="warning.amount"> {{ money(warning.amount) }} €</span></p>
   </details>
   <details v-if="result.comparison?.available" class="panel balance-diagnostic" :open="!result.comparison.previous.checks.valid">
    <summary>{{ b.priorDiagnostic }} · {{ result.comparison.previous.exercise.name }}</summary>
    <p>{{ result.comparison.previous.checks.balanced?b.balanced:b.unbalanced }} · {{ result.comparison.previous.checks.reconciles_trial_balance?b.verified:b.notVerified }}</p>
-   <p>{{ b.result }}: {{ money(result.comparison.previous.result.total) }} €</p>
+   <p>{{ b.result }}: <ReportAmountButton :amount="result.comparison.previous.result.total" :selection="{kind:'result',key:'total'}" :label="b.result" :sheet="result.comparison.previous" euro /></p>
    <h3 v-if="result.comparison.previous.diagnostic.unclassified.length">{{ b.unclassified }}</h3>
-   <div v-for="row in result.comparison.previous.diagnostic.unclassified" :key="row.id" class="notice"><RouterLink :to="ledgerLink(row,result.comparison.previous)" @click="selectExercise(String(result.comparison.previous.exercise.id))">{{ row.code }} · {{ row.description }}</RouterLink><p>{{ b.signed }}: {{ money(row.signed_balance) }} €</p><p>{{ b.reason[row.reason] }}</p></div>
+   <div v-for="row in result.comparison.previous.diagnostic.unclassified" :key="row.id" class="notice"><RouterLink :to="ledgerLink(row,result.comparison.previous)" @click="selectExercise(String(result.comparison.previous.exercise.id))">{{ row.code }} · {{ row.description }}</RouterLink><p>{{ b.signed }}: <ReportAmountButton :amount="row.signed_balance" :selection="{kind:'unclassified',code:row.code}" :label="row.code+' · '+row.description" :sheet="result.comparison.previous" euro /></p><p>{{ b.reason[row.reason] }}</p></div>
    <p v-for="(warning,i) in result.comparison.previous.diagnostic.warnings" :key="i" class="notice">{{ b.reason[warning.code] }} <RouterLink v-if="warning.account" :to="ledgerLink(warning.account,result.comparison.previous)" @click="selectExercise(String(result.comparison.previous.exercise.id))">{{ warning.account.code }} · {{ money(warning.account.amount) }} €</RouterLink><span v-if="warning.amount"> {{ money(warning.amount) }} €</span></p>
   </details>
  </template>
+ <ReportAmountDetail v-if="amountDetail" :detail="amountDetail" @close="amountDetail=null" />
 </template>
 <style scoped>
 .balance-side-total{display:flex;justify-content:space-between;gap:1rem;padding:1rem .65rem;margin:1rem 0 0;border-top:2px solid var(--primary);background:#edf3f7;font-size:.9rem}.balance-side-total .amount{white-space:nowrap}

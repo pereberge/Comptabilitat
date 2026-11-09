@@ -33,6 +33,7 @@ async function load(){
 }
 function openEntry(line){entryId.value=line.entry_id;}
 async function saved(){notice.value=t.entryUpdated;await load();}
+async function deleted(){entryId.value=null;notice.value=t.entryDeleted;await load();}
 watch(()=>props.exercise.id,()=>{entryId.value=null;notice.value='';load();},{immediate:true});
 onBeforeUnmount(()=>{generation++;window.removeEventListener('resize',fitEntries);});
 </script>
@@ -49,7 +50,7 @@ onBeforeUnmount(()=>{generation++;window.removeEventListener('resize',fitEntries
    </tbody></table>
   </div>
  </section>
- <EntryDetail v-if="entryId" :entry-id="entryId" allow-edit :edit-on-open="editable" @close="entryId=null" @saved="saved" />
+ <EntryDetail v-if="entryId" :entry-id="entryId" allow-edit :edit-on-open="editable" @close="entryId=null" @saved="saved" @deleted="deleted" />
 </template>
 <style scoped>
 .home-entries{margin:20px 0;min-width:0;overflow:hidden}.home-entries-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px}.home-entries-heading h2{font-size:18px}.home-entries-heading .muted{margin-top:5px;font-size:12px}.home-entries-scroll{max-height:clamp(260px,calc(100dvh - 380px),650px);overflow:auto;overscroll-behavior:contain;border-top:1px solid #e2e7ed}.home-entries-table{min-width:900px}.home-entries-table th{position:sticky;top:0;z-index:1}.home-entries-table td{padding:9px 12px}.home-entries-table td:nth-child(5),.home-entries-table td:nth-child(6){min-width:180px;overflow-wrap:anywhere}.home-entry-row{cursor:pointer}.home-entry-row:hover,.home-entry-row:focus-within{background:var(--primary-soft)}.home-entries-loading,.home-entries>.success-note{padding:12px 20px}.home-entries>.notice{margin:0 20px 14px}

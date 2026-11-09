@@ -8,6 +8,7 @@ import {isDocumentFolder} from '../../../shared/document-folders.js';
 import {readDocumentInvoice} from './document-invoice-data.js';
 import {createInvoiceDocumentService} from './invoice-documents.js';
 import {createDocumentCompanyChecker} from './document-company.js';
+import {invoiceRecognition} from './invoice-recognition.js';
 
 const fields='id,company_id,title,description,folder,invoice_extraction,source_name,source_mime,source_sha256,source_size,version,created_at,updated_at';
 function folder(value,fallback='general'){const selected=value===undefined?fallback:value;if(!isDocumentFolder(selected))fail('DOCUMENTATION_INVALID_FOLDER');return selected;}
@@ -29,7 +30,7 @@ export function createDocumentationService(pool,companyId,options={}){
   if(options.companyDatabases){const [[row]]=await db.execute('SELECT id FROM '+await table(value,'companies')+' WHERE id=? FOR UPDATE',[value]);if(!row)throw new HttpError(404,'COMPANY_NOT_FOUND');}
   else await lockCompany(db,value);
  }}
- async function described(row,db=pool,visible){if(row.folder!=='pending_invoices')return row;return {...row,company_check:checker.assess(row.invoice_extraction,row.source_sha256,visible||await checker.companies(db))};}
+ async function described(row,db=pool,visible){const extraction=typeof row.invoice_extraction==='string'?JSON.parse(row.invoice_extraction):row.invoice_extraction;const result={...row,invoice_extraction:extraction,recognition:invoiceRecognition(extraction)};if(row.folder!=='pending_invoices')return result;return {...result,company_check:checker.assess(extraction,row.source_sha256,visible||await checker.companies(db))};}
  function routed(row,visible,target,replayed=false){return {...row,destination_company:visible.find(item=>item.id===target),reassigned:target!==companyId,replayed};}
  async function duplicate(db,target,sha,except=0){const [[row]]=await db.execute('SELECT id FROM '+await table(target,'company_documents')+' WHERE company_id=? AND source_sha256=? AND id<>? LIMIT 1',[target,sha,except]);if(row)throw new HttpError(409,'DOCUMENTATION_COMPANY_DUPLICATE');}
  async function movedReplay(db,documentId,body,data,target){
@@ -49,20 +50,35 @@ export function createDocumentationService(pool,companyId,options={}){
   source:documentId=>find(pool,documentId,true),
   previewEncoded:body=>checker.preview(encodedBuffer(body)),
   async checkCompany(documentId,body){const row=await find(pool,documentId,true);if(body?.version!==row.version)throw new HttpError(409,'DOCUMENTATION_CHANGED');return checker.preview(row.content,row.invoice_extraction);},
+  async analyze(documentId,body){
+   const original=await find(pool,documentId,true);
+   if(original.version!==body?.version)throw new HttpError(409,'DOCUMENTATION_CHANGED');
+   // Re-read the original so a format confirmed since its upload can be applied.
+   const {extraction}=await checker.read(original.content),recognition=invoiceRecognition(extraction);
+   return withTransaction(pool,async db=>{
+    await lockCompany(db,companyId);const row=await find(db,documentId);
+    if(row.version!==body.version)throw new HttpError(409,'DOCUMENTATION_CHANGED');
+    const selected=row.folder==='general'&&['invoice','possible_invoice'].includes(recognition.kind)?'pending_invoices':row.folder;
+    await db.execute('UPDATE company_documents SET invoice_extraction=?,folder=?,version=version+1 WHERE company_id=? AND id=?',[extraction?JSON.stringify(extraction):null,selected,companyId,row.id]);
+    return described(await find(db,row.id),db);
+   });
+  },
   async uploadEncoded(body){
    return this.upload(encodedBuffer(body),body);
   },
   async upload(buffer,body){
-   const data=metadata(body),selected=folder(body.folder),request=requestId(body.request_id);
+   const data=metadata(body),requestedFolder=folder(body.folder),request=requestId(body.request_id);
+   let selected=requestedFolder;
    if(!Buffer.isBuffer(buffer)||!buffer.length||buffer.length>10*1024*1024)fail('DOCUMENTATION_INVALID_FILE');
    if(typeof body.source_name!=='string')fail('DOCUMENTATION_INVALID_FILE');
    const name=body.source_name.split(/[\\/]/).at(-1).replace(/[\u0000-\u001f\u007f]/g,'').trim();if(!name||name.length>255)fail('DOCUMENTATION_INVALID_FILE');
    // Originals remain unchanged; pending PDFs are read only to suggest invoice data.
    const mime=typeof body.source_mime==='string'&&/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i.test(body.source_mime)&&body.source_mime.length<=100?body.source_mime:'application/octet-stream';
-   const sha=createHash('sha256').update(buffer).digest('hex'),digest=hash({...data,name,mime,sha,...(selected==='general'?{}:{folder:selected})});
+   const sha=createHash('sha256').update(buffer).digest('hex'),digest=hash({...data,name,mime,sha,...(selected==='general'?{}:{folder:selected}),...(body.auto_detect===false?{auto_detect:false}:{})});
    const target=targetId(body);
    if(target!==companyId&&selected!=='pending_invoices')fail('DOCUMENTATION_ROUTING_PENDING_ONLY');
-   const extraction=selected==='pending_invoices'?(await checker.read(buffer,body.company_preview_token)).extraction:null;
+   const extraction=(await checker.read(buffer,body.company_preview_token)).extraction;
+   if(selected==='general'&&body.auto_detect!==false&&['invoice','possible_invoice'].includes(invoiceRecognition(extraction).kind))selected='pending_invoices';
    return withTransaction(pool,async db=>{
     await lockBoth(db,target);
     const visible=await checker.companies(db),requestHash=target===companyId?digest:hash({digest,source_company_id:companyId,target_company_id:target});
@@ -71,7 +87,7 @@ export function createDocumentationService(pool,companyId,options={}){
     if(selected==='pending_invoices')checker.destination(body,checker.assess(extraction,sha,visible));
     if(target!==companyId)await duplicate(db,target,sha);
     const [saved]=await db.execute('INSERT INTO '+await table(target,'company_documents')+'(company_id,title,description,folder,invoice_extraction,source_name,source_mime,source_sha256,source_size,content,request_id,request_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[target,data.title,data.description,selected,extraction?JSON.stringify(extraction):null,name,mime,sha,buffer.length,buffer,request,requestHash]);
-    return routed(await find(db,saved.insertId,false,target),visible,target);
+    return routed(await described(await find(db,saved.insertId,false,target),db,visible),visible,target);
    });
   },
   async update(documentId,body){

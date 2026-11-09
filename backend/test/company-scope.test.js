@@ -5,7 +5,7 @@ import { createContextService } from '../src/services/context.js';
 import { companyScope } from '../src/middleware/company-scope.js';
 
 test('API company selection scopes concurrent requests, defaults and invalid IDs', async () => {
-  const companies = [{id:1,name:'One'},{id:2,name:'Two'}];
+  const companies = [{id:1,name:'One',payroll_agreement:'99000275011981'},{id:2,name:'Two',payroll_agreement:'99002415011982'}];
   const db = {async execute(sql, params=[]) {
     if (sql.includes('FROM companies')) return [params.length ? companies.filter(c=>c.id===params[0]) : companies];
     if (sql.includes('FROM accounting_exercises')) return [[{id:params[0]*10,name:'2026',is_default:1}]];
@@ -25,6 +25,7 @@ test('API company selection scopes concurrent requests, defaults and invalid IDs
     for(const id of ['1','2']) {
       const context=await (await request('/context',id)).json();
       assert.equal(context.company.id,Number(id));
+      assert.equal(context.company.payroll_agreement,companies.find(company=>company.id===Number(id)).payroll_agreement);
       assert.equal(context.exercises[0].id,Number(id)*10);
     }
     const responses=await Promise.all(['1','2','1','2'].map(async id=>({id,rows:await (await request('/accounts',id)).json()})));

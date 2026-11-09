@@ -4,8 +4,33 @@ import { accountImportController } from '../controllers/account-import.js';
 import { contextController } from '../controllers/context.js';
 import { accountingController } from '../controllers/accounting.js';
 import { requireMaster } from '../middleware/access.js';
+import {purchaseRouter} from './purchases.js';
+import {documentationSource} from '../controllers/documentation-source.js';
 export function apiRouter(service, accounting) {
  const router=Router(), controller=contextController(service);
+ router.use('/purchases',purchaseRouter());
+ router.use('/payroll',async(req,res,next)=>{await req.payroll.requireEnabled();next();});
+ router.post('/payroll/batch/preview',async(req,res)=>res.json(await req.payroll.batchPreview(req.body)));
+ router.post('/payroll/batch/delete-preview',async(req,res)=>res.json(await req.payroll.batchDeletePreview(req.body)));
+ router.post('/payroll/batch/delete',async(req,res)=>res.json(await req.payroll.batchDelete(req.body)));
+ router.post('/payroll/batch',async(req,res)=>res.status(201).json(await req.payroll.batchCreate(req.body)));
+ router.get('/payroll/settings',async(req,res)=>res.json(await req.payroll.settings()));
+ router.put('/payroll/settings',async(req,res)=>res.json(await req.payroll.saveSettings(req.body)));
+ router.get('/payroll/employees',async(req,res)=>res.json(await req.payroll.employees()));
+ router.post('/payroll/employees',async(req,res)=>res.status(201).json(await req.payroll.saveEmployee(req.body)));
+ router.put('/payroll/employees/:id',async(req,res)=>res.json(await req.payroll.saveEmployee(req.body,req.params.id)));
+ router.get('/payroll/new',async(req,res)=>res.json(await req.payroll.newSlip(req.query.employee_id,req.query.year,req.query.month,req.query.kind)));
+ router.post('/payroll/preview',async(req,res)=>res.json(await req.payroll.preview(req.body)));
+ router.post('/payroll/accounts/prepare',async(req,res)=>res.json(await req.payroll.prepareAccounts()));
+ router.get('/payroll/slips',async(req,res)=>res.json(await req.payroll.list(req.query)));
+ router.post('/payroll/slips',async(req,res)=>res.status(201).json(await req.payroll.save(req.body)));
+ router.get('/payroll/slips/:id',async(req,res)=>res.json(await req.payroll.get(req.params.id)));
+ router.put('/payroll/slips/:id',async(req,res)=>res.json(await req.payroll.save(req.body,req.params.id)));
+ router.delete('/payroll/slips/:id',async(req,res)=>res.json(await req.payroll.remove(req.params.id,req.body)));
+ router.post('/payroll/slips/:id/post-preview',async(req,res)=>res.json(await req.payroll.postPreview(req.params.id,req.body)));
+ router.post('/payroll/slips/:id/post',async(req,res)=>res.json(await req.payroll.post(req.params.id,req.body)));
+ router.post('/payroll/slips/:id/void',async(req,res)=>res.json(await req.payroll.void(req.params.id,req.body)));
+ router.get('/payroll/slips/:id/pdf',async(req,res)=>{const pdf=await req.payroll.pdf(req.params.id);res.set('Content-Type','application/pdf').set('Content-Disposition','inline; filename="'+pdf.filename+'"').set('X-Content-Type-Options','nosniff').send(pdf.file);});
  router.get('/tax/installments',async(req,res)=>res.json(await req.installmentTax.get(req.query)));
  router.post('/tax/installments/preview',async(req,res)=>res.json(await req.installmentTax.preview(req.query,req.body)));
  router.put('/tax/installments/draft',async(req,res)=>res.json(await req.installmentTax.save(req.query,req.body)));
@@ -106,16 +131,14 @@ export function apiRouter(service, accounting) {
  router.get('/documentation',async(req,res)=>res.json(await req.documentation.list(req.query)));
  router.post('/documentation/preview',async(req,res)=>res.json(await req.documentation.previewEncoded(req.body)));
  router.post('/documentation/:id/company-check',async(req,res)=>res.json(await req.documentation.checkCompany(req.params.id,req.body)));
+ router.post('/documentation/:id/analyze',async(req,res)=>res.json(await req.documentation.analyze(req.params.id,req.body)));
  router.post('/documentation',async(req,res)=>res.status(201).json(await req.documentation.uploadEncoded(req.body)));
  router.get('/documentation/:id',async(req,res)=>res.json(await req.documentation.get(req.params.id)));
  router.patch('/documentation/:id',async(req,res)=>res.json(await req.documentation.update(req.params.id,req.body)));
  router.post('/documentation/:id/manage',async(req,res)=>res.json(await req.documentation.manage(req.params.id,req.body)));
  router.post('/documentation/:id/to-invoices',async(req,res)=>res.json(await req.documentation.toInvoices(req.params.id,req.body)));
  router.delete('/documentation/:id',async(req,res)=>res.json(await req.documentation.remove(req.params.id,req.body)));
- router.get('/documentation/:id/source',async(req,res)=>{
-  const source=await req.documentation.source(req.params.id);
-  res.set('Content-Type','application/octet-stream').set('X-Content-Type-Options','nosniff').set('Content-Disposition',"attachment; filename*=UTF-8''"+encodeURIComponent(source.source_name)).send(source.content);
- });
+ router.get('/documentation/:id/source',documentationSource);
  router.post('/invoice-documents/preview',raw({type:'application/pdf',limit:'5mb'}),async(req,res)=>{
   let filename='factura.pdf';try{filename=decodeURIComponent(req.get('X-File-Name')||filename);}catch{}
   res.json(await req.invoiceDocuments.preview(req.body,req.query.exercise_id,filename));
@@ -137,7 +160,9 @@ export function apiRouter(service, accounting) {
  router.get('/invoices/:id/pdf',async(req,res)=>{const file=await req.invoiceDelivery.pdf(req.params.id,req.query);res.set('Content-Type','application/pdf').set('X-Content-Type-Options','nosniff').set('Content-Disposition','attachment; filename="'+file.filename+'"').send(file.file);});
  router.post('/invoices/:id/email-draft',async(req,res)=>{const file=await req.invoiceDelivery.draft(req.params.id,req.body);res.set('Content-Type','message/rfc822').set('X-Content-Type-Options','nosniff').set('Content-Disposition','attachment; filename="'+file.filename+'"').send(file.file);});
  router.get('/invoices/:id',async(req,res)=>res.json(await req.invoices.get(req.params.id)));
- router.post('/invoices/:id/void',async(req,res)=>res.json(await req.invoices.void(req.params.id,req.body)));
+ router.get('/invoices/:id/dates',async(req,res)=>res.json(await req.invoices.dates(req.params.id)));
+ router.patch('/invoices/:id/dates',async(req,res)=>res.json(await req.invoices.updateDates(req.params.id,req.body)));
+ router.post('/invoices/:id/void',async(req,res)=>res.json(await req.invoices.void(req.params.id,req.body,req.user?.key||'local')));
  router.get('/portfolio',async(req,res)=>res.json(await req.portfolio.list(req.query)));
  router.get('/bank-remittances',async(req,res)=>res.json(await req.bankRemittances.list(req.query)));
  router.get('/bank-remittances/options',async(req,res)=>res.json(await req.bankRemittances.options(req.query)));
@@ -168,6 +193,9 @@ export function apiRouter(service, accounting) {
  router.post('/bank-import/commit',async(req,res)=>res.json(await req.bankImport.commit(req.body)));
  router.post('/bank-import/discard',async(req,res)=>res.json(await req.bankImport.discard(req.body)));
  router.get('/bank-reconciliations/:id',async(req,res)=>res.json(await req.bankReconciliations.get(req.params.id)));
+ router.get('/bank-reconciliations/:id/movements/:movementId/matches',async(req,res)=>res.json(await req.bankReconciliations.matches(req.params.id,req.params.movementId)));
+ router.post('/bank-reconciliations/:id/settlements',async(req,res)=>res.json(await req.bankReconciliations.settleMovement(req.params.id,req.body)));
+ router.delete('/bank-reconciliations/:id',async(req,res)=>res.json(await req.bankReconciliations.remove(req.params.id,req.body)));
  router.post('/bank-reconciliations/:id/reanalyze',async(req,res)=>res.json(await req.bankReconciliations.reanalyze(req.params.id)));
  router.post('/bank-reconciliations/:id/proposals',async(req,res)=>res.json(await req.bankReconciliations.saveProposal(req.params.id,req.body)));
  router.post('/bank-reconciliations/:id/entries',async(req,res)=>res.json(await req.bankReconciliations.postMovement(req.params.id,req.body)));
@@ -185,7 +213,7 @@ export function apiRouter(service, accounting) {
  router.get('/accounts',c.accounts);router.post('/accounts',c.createAccount);
  router.get('/accounts/:id/next-code',c.nextCode);
  router.get('/accounts/:id',c.account);router.patch('/accounts/:id',c.updateAccount);
- router.get('/entries',c.entries);router.post('/entries',c.createEntry);router.get('/entries/:id',c.entry);router.patch('/entries/:id',c.updateEntry);
+ router.get('/entries',c.entries);router.post('/entries',c.createEntry);router.get('/entries/:id',c.entry);router.patch('/entries/:id',c.updateEntry);router.delete('/entries/:id',c.removeEntry);
  }
  return router;
 }

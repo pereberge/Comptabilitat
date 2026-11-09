@@ -17,10 +17,11 @@ export async function receiptRows(db,companyId,query={}){
  const search=typeof query.search==='string'?query.search.trim():'';if(search.length>200)fail('INVALID_PORTFOLIO_FILTER');
  if(search){where+=' AND (LOCATE(?,i.reference)>0 OR LOCATE(?,i.party_name)>0 OR LOCATE(?,i.party_tax_id)>0)';params.push(search,search,search);}
  if(query.status&&!['all','open','pending','partial','settled','overdue','void'].includes(query.status))fail('INVALID_PORTFOLIO_FILTER');
- const [rows]=await db.execute(`SELECT r.*,i.exercise_id,i.direction,i.reference,i.invoice_date,i.posting_date,i.party_name,i.party_tax_id,i.party_address,i.party_account_id,i.status AS invoice_status,i.entry_id AS invoice_entry_id,e.name AS exercise_name,
+ const [rows]=await db.execute(`SELECT r.*,i.exercise_id,i.direction,i.reference,i.invoice_date,i.posting_date,j.entry_date AS invoice_entry_date,i.party_name,i.party_tax_id,i.party_address,i.party_account_id,i.status AS invoice_status,i.entry_id AS invoice_entry_id,e.name AS exercise_name,
    (SELECT m.id FROM bank_remittances m WHERE m.company_id=r.company_id AND m.status='prepared' AND JSON_CONTAINS(m.receipt_ids,CAST(r.id AS JSON)) LIMIT 1) AS remittance_id,
    COALESCE(p.paid_amount,0.00) AS paid_amount,r.amount-COALESCE(p.paid_amount,0.00) AS remaining_amount,p.last_payment_date
    FROM portfolio_receipts r JOIN trade_invoices i ON i.id=r.invoice_id AND i.company_id=r.company_id
+   LEFT JOIN journal_entries j ON j.company_id=i.company_id AND j.id=i.entry_id
    JOIN accounting_exercises e ON e.company_id=i.company_id AND e.id=i.exercise_id
    LEFT JOIN (${activePayments}) p ON p.receipt_id=r.id AND p.company_id=r.company_id WHERE ${where} ORDER BY r.due_date,r.id`,params);
  return rows.map(row=>({...row,revision:receiptRevision(row),remaining_amount:row.invoice_status==='void'?'0.00':row.remaining_amount,status:row.invoice_status==='void'?'void':cents(row.remaining_amount)===0n?'settled':cents(row.paid_amount)>0n?'partial':'pending',overdue:row.invoice_status!=='void'&&cents(row.remaining_amount)>0n&&row.due_date<asOf,as_of:asOf}))

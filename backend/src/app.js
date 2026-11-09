@@ -9,6 +9,7 @@ export function createApp(service, accounting, companyScope, access, integration
   app.use('/api/tax/vat', express.json({ limit: '2mb' }));
   app.use('/api/tax/corporate', express.json({ limit: '2mb' }));
   app.use('/api/tax/installments', express.json({ limit: '2mb' }));
+  app.use('/api/payroll', express.json({ limit: '256kb' }));
   if(integrations){
     if(integrations.trustedProxies?.length)app.set('trust proxy',integrations.trustedProxies);
     app.use('/api/v1/integrations',integrations.router);

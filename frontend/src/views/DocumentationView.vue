@@ -8,6 +8,9 @@ import {documentationError,downloadFile,fileSize,canTransferInvoice,transferDocu
 import {documentFolders} from '../../../shared/document-folders.js';
 import DocumentationForm from '../components/DocumentationForm.vue';
 import FormDialog from '../components/FormDialog.vue';
+import DocumentInvoiceRecognition from '../components/DocumentInvoiceRecognition.vue';
+import {analyzeDocument} from '../services/documentation.js';
+import {documentRecognition as recognitionText} from '../locales/document-recognition.js';
 const {can}=useAccess(),{company,selectedId,selectCompany}=useContext(),router=useRouter(),route=useRoute();
 const routeFolder=()=>typeof route.query.folder==='string'&&Object.hasOwn(documentFolders,route.query.folder)?route.query.folder:'general';
 const rows=ref([]),folder=ref(routeFolder()),search=ref(''),loading=ref(false),error=ref(''),notice=ref(''),savedDestination=ref(null);
@@ -30,6 +33,19 @@ async function saved(row){
 }
 async function openDestination(){const target=savedDestination.value;if(!target||busy.value)return;busy.value=true;try{await selectCompany(String(target.id));if(company.value?.id===target.id)await router.push({name:'documentation',query:{folder:'pending_invoices'}});}finally{busy.value=false;}}
 async function download(row){if(downloading.value)return;downloading.value=row.id;error.value='';try{await downloadFile('/documentation/'+row.id+'/source',row.source_name);}catch(cause){error.value=documentationError(cause);}finally{downloading.value=null;}}
+async function analyze(documents){
+ if(busy.value||!can('accounting_write'))return;
+ const sourceCompany=company.value?.id,list=documents.filter(canTransferInvoice);if(!list.length)return;
+ busy.value=true;error.value='';let completed=0,found=0,failed=0;
+ try{for(const row of list){
+  if(company.value?.id!==sourceCompany)return;
+  notice.value=recognitionText.progress(completed+failed+1,list.length);
+  try{const result=await analyzeDocument(row);completed++;if(['invoice','possible_invoice'].includes(result.recognition?.kind))found++;}
+  catch(cause){failed++;if(company.value?.id===sourceCompany)error.value=documentationError(cause);}
+ }
+ if(company.value?.id===sourceCompany){await load();notice.value=recognitionText.finished(completed,found,failed);}}
+ finally{busy.value=false;}
+}
 async function manage(row){
  if(busy.value||!can('accounting_write'))return;busy.value=true;error.value='';
  try{
@@ -53,7 +69,7 @@ onBeforeUnmount(()=>generation++);
  <div class="page-heading"><div><h1>Documentación</h1><p class="muted">Archivo de {{ company?.name }}.</p></div><button :disabled="!can('accounting_write')||busy" class="button primary" @click="adding=true">{{ addLabel }}</button></div>
  <nav class="documentation-tabs" aria-label="Apartados de documentación"><button v-for="(label,key) in documentFolders" :key="key" class="button" :class="{primary:folder===key}" :aria-pressed="folder===key" :disabled="busy" @click="selectFolder(key)">{{ label }}</button></nav>
  <section class="documentation-section" :aria-label="documentFolders[folder]">
-  <h2>{{ documentFolders[folder] }}</h2>
+  <h2>{{ documentFolders[folder] }}</h2><p class="muted">{{ recognitionText.help }}</p><button v-if="folder==='general'" class="button" :disabled="busy||loading||!can('accounting_write')||!rows.some(canTransferInvoice)" @click="analyze(rows)">{{ recognitionText.analyzeAll }}</button>
   <p v-if="folder==='pending_invoices'" class="muted">Guarda aquí las facturas para gestionarlas cuando te vaya bien. Cuando termines, márcalas como gestionadas para conservar el original en su apartado.</p>
   <p v-else-if="folder==='managed_invoices'" class="muted">Facturas que ya has marcado como gestionadas. Puedes volver a dejarlas pendientes si queda algo por revisar.</p>
   <p v-else class="muted">Guarda contratos, justificantes y otros documentos con su descripción.</p>
@@ -62,10 +78,10 @@ onBeforeUnmount(()=>generation++);
   <form class="filters" @submit.prevent="load"><label>{{ invoices?'Buscar facturas':'Buscar documentación' }}<input v-model="search" type="search" name="documentation_search" maxlength="200" placeholder="Título, descripción o nombre del archivo"></label><button class="button" :disabled="loading||busy">Buscar</button><button v-if="search" type="button" class="button" :disabled="loading||busy" @click="search='';load()">Ver todos</button></form>
   <p v-if="loading" role="status">Cargando documentación…</p>
   <div v-else class="table-wrap panel"><table class="documentation-table"><thead><tr><th>{{ invoices?'Factura':'Documento' }}</th><th>Descripción</th><th>Guardado</th><th>Acciones</th></tr></thead><tbody>
-   <tr v-for="row in rows" :key="row.id" :data-documentation-id="row.id"><td><strong>{{ row.title }}</strong><small class="trade-cell-note">{{ row.source_name }} · {{ fileSize(row.source_size) }}</small><p v-if="needsCompanyReview(row.company_check)" class="documentation-owner-warning">{{ documentCompanyMessage(row.company_check) }}</p><small v-else-if="row.company_check?.status==='unknown'" class="trade-cell-note">Empresa sin verificar · revisa el original.</small></td><td class="documentation-description">{{ row.description||'Sin descripción' }}</td><td>{{ new Date(row.created_at).toLocaleDateString('es-ES') }}</td><td><div class="actions">
+   <tr v-for="row in rows" :key="row.id" :data-documentation-id="row.id"><td><strong>{{ row.title }}</strong><small class="trade-cell-note">{{ row.source_name }} · {{ fileSize(row.source_size) }}</small><p v-if="needsCompanyReview(row.company_check)" class="documentation-owner-warning">{{ documentCompanyMessage(row.company_check) }}</p><small v-else-if="row.company_check?.status==='unknown'" class="trade-cell-note">Empresa sin verificar · revisa el original.</small></td><td class="documentation-description">{{ row.description||'Sin descripción' }}<DocumentInvoiceRecognition :recognition="row.recognition" :extraction="row.invoice_extraction" /></td><td>{{ new Date(row.created_at).toLocaleDateString('es-ES') }}</td><td><div class="actions">
     <button class="button" :disabled="!!downloading||busy" @click="download(row)">{{ downloading===row.id?'Descargando…':'Abrir / descargar' }}</button>
-    <button v-if="needsCompanyReview(row.company_check)" class="button primary" :disabled="!can('accounting_write')||busy" @click="editing=row">Revisar empresa</button>
-    <button v-if="row.folder!=='general'&&canTransferInvoice(row)" class="button primary" :disabled="!can('accounting_write')||busy||!selectedId||needsCompanyReview(row.company_check)" @click="toInvoices(row)">{{ busy?'Procesando…':'Pasar a Facturas' }}</button>
+    <button v-if="canTransferInvoice(row)" class="button" :disabled="busy||!can('accounting_write')" @click="analyze([row])">{{ recognitionText.analyze }}</button><button v-if="needsCompanyReview(row.company_check)" class="button primary" :disabled="!can('accounting_write')||busy" @click="editing=row">Revisar empresa</button>
+    <button v-if="row.folder!=='general'&&canTransferInvoice(row)" class="button primary" :disabled="!can('accounting_write')||busy||!selectedId||needsCompanyReview(row.company_check)" @click="toInvoices(row)">{{ busy?'Procesando…':recognitionText.review }}</button>
     <button v-if="row.folder!=='general'" class="button" :class="{primary:row.folder==='pending_invoices'}" :disabled="!can('accounting_write')||busy||needsCompanyReview(row.company_check)" @click="manage(row)">{{ row.folder==='pending_invoices'?'Marcar gestionada':'Volver a pendientes' }}</button>
     <button :disabled="!can('accounting_write')||busy" class="button" @click="editing=row">Editar</button><button :disabled="!can('accounting_write')||busy" class="button clear-danger" @click="removing=row">Borrar</button>
    </div></td></tr>

@@ -1,0 +1,17 @@
+export const documentRecognition={
+ analyzing:'Leyendo documento…',analyze:'Analizar documento',analyzeAll:'Detectar facturas',
+ review:'Revisar para contabilizar',
+ progress:(current,total)=>`Analizando ${current} de ${total} documentos…`,
+ finished:(completed,found,failed)=>`${completed} documentos analizados. ${found} facturas o posibles facturas pendientes de revisión.${failed?' '+failed+' documentos no se han podido analizar.':''}`,
+ detectedData:'Datos detectados del documento',
+ multiple:'El archivo contiene varias facturas. Separa los originales antes de contabilizar.',
+ kinds:{invoice:'Factura detectada',possible_invoice:'Posible factura',document:'Documento',unreadable:'Lectura manual necesaria'},
+ statuses:{pending_review:'Pendiente de revisar',needs_data:'Datos pendientes de completar',not_invoice:'No se ha identificado como factura',not_analyzed:'Sin analizar'},
+ fields:{name:'Nombre',reference:'Número de factura',date:'Fecha',base:'Base',tax:'IVA',total:'Total'},
+ pending:'Pendiente',missing:'Revisa o completa',
+ manual:'No se ha podido leer el contenido. Conserva el original y completa los datos; los PDF escaneados y las imágenes necesitan revisión manual.',
+ help:'Se comprueban los documentos y las posibles facturas quedan en pendientes de revisión. La contabilización se confirma desde Facturas.',
+ remember:'Al confirmar la factura se recordará el formato de su proveedor para las próximas, que también quedarán pendientes de revisión.',
+ remembered:'Formato reconocido de una factura confirmada anteriormente',
+ saved:'Factura detectada y guardada para revisar antes de contabilizar.',
+};

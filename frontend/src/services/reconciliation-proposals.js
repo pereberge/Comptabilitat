@@ -1,5 +1,7 @@
 import {errorText} from '../locales/accounting.js';
 export const reconciliationProposalError=error=>({
+ RECONCILIATION_MOVEMENT_NOT_FOUND:'Aquest moviment ja no està disponible en aquest extracte. Actualitza el llistat.',
+ RECONCILIATION_RECEIPT_CHANGED:'Els rebuts seleccionats ja no coincideixen amb l’import pendent, la factura o el sentit del moviment. Torna a buscar les coincidències.',
  RECONCILIATION_CHANGED:'El llistat ha canviat. Prem «Actualitzar llistat» i torna a guardar l’assentament.',
  RECONCILIATION_ENTRY_CHANGED:'Aquest moviment ja té un assentament, però s’ha modificat. Revisa l’assentament existent des del llistat.',
  RECONCILIATION_INVALID_PROPOSAL:'Revisa las líneas de la propuesta.',

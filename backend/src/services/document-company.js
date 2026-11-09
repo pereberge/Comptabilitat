@@ -3,6 +3,7 @@ import {HttpError} from '../middleware/errors.js';
 import {id} from './validation.js';
 import {invoiceIdentity} from './invoice-pdf.js';
 import {readDocumentInvoice} from './document-invoice-data.js';
+import {recognizeInvoiceFormat,invoiceRecognition} from './invoice-recognition.js';
 const cache=new Map(),lifetime=15*60*1000;let activeReads=0;
 const json=value=>typeof value==='string'?JSON.parse(value):value;
 export function invoiceTaxIdentity(value){const normalized=invoiceIdentity(value);return /^ES[A-Z0-9]{9}$/.test(normalized)?normalized.slice(2):normalized;}
@@ -51,14 +52,14 @@ export function createDocumentCompanyChecker(pool,companyId,{companyIds=[company
   if(cached&&cached.companyId===companyId&&cached.actorKey===actorKey&&cached.sourceHash===sourceHash&&cached.expires>Date.now())return {extraction:cached.extraction,sourceHash};
   const previous=json(stored);if(previous&&!previous.error)return {extraction:previous,sourceHash};
   if(activeReads>=3)throw new HttpError(429,'DOCUMENTATION_COMPANY_BUSY');activeReads++;
-  try{return {extraction:await readDocumentInvoice(buffer),sourceHash};}finally{activeReads--;}
+  try{return {extraction:await recognizeInvoiceFormat(pool,companyId,await readDocumentInvoice(buffer)),sourceHash};}finally{activeReads--;}
  }
  return {allow,companies,assess,read,
   async preview(buffer,stored){
    const {extraction,sourceHash}=await read(buffer,null,stored),result=assess(extraction,sourceHash,await companies());
    for(const [key,value]of cache)if(value.expires<Date.now())cache.delete(key);
    const token=randomUUID();cache.set(token,{companyId,actorKey,sourceHash,extraction,expires:Date.now()+lifetime});while(cache.size>100)cache.delete(cache.keys().next().value);
-   return {...result,token};
+   return {...result,token,extraction,recognition:invoiceRecognition(extraction)};
   },
   destination(body,check){
    const target=body.target_company_id==null?companyId:id(body.target_company_id);allow(target);

@@ -16,6 +16,7 @@ function datasets(exerciseId){
  const farmInvoices='SELECT i.id FROM farm_invoices i WHERE i.company_id=r.company_id AND i.exercise_id=?';
  const operations='SELECT o.id FROM exercise_operations o WHERE o.company_id=r.company_id AND o.exercise_id=?';
  return [
+  ['payroll_slips','payroll_slips','r.exercise_id=?'],
   ['installment_drafts','installment_tax_drafts','r.exercise_id=?'],
   ['corporate_drafts','corporate_tax_drafts','r.exercise_id=?'],
   ['farm_care_costs','farm_care_costs','r.exercise_id=?'],
@@ -77,6 +78,7 @@ export function createExerciseClearService(pool,companyId){
     OR d.invoice_id IN (SELECT id FROM trade_invoices WHERE company_id=? AND exercise_id=?)) GROUP BY e.id,e.name`,[companyId,exercise.id,companyId,exercise.id,companyId,exercise.id]);
   const [[fiscal]]=await db.execute(`SELECT COUNT(DISTINCT v.invoice_id) AS total FROM verifactu_records v JOIN trade_invoices i ON i.company_id=v.company_id AND i.id=v.invoice_id LEFT JOIN journal_entries j ON j.company_id=i.company_id AND j.id=i.void_entry_id WHERE v.company_id=? AND (i.exercise_id=? OR j.exercise_id=?)`,[companyId,exercise.id,exercise.id]);
   if(fiscal.total)result.push({code:'verifactu',message:'Este ejercicio afecta a facturas con registros VERI*FACTU y no se puede vaciar ni sustituir.',exercise_id:exercise.id,exercise_name:exercise.name,count:fiscal.total});
+  try{const [[purchase]]=await db.execute('SELECT COUNT(*) AS total FROM purchase_invoices p JOIN trade_invoices i ON i.company_id=p.company_id AND i.id=p.invoice_id WHERE p.company_id=? AND i.exercise_id=?',[companyId,exercise.id]);if(purchase.total)result.push({code:'purchase_document',message:'El ejercicio contiene facturas vinculadas a compres. Conserva los documentos y gestiona sus anulaciones antes de sustituir datos.',exercise_id:exercise.id,exercise_name:exercise.name,count:purchase.total});}catch(error){if(error.code!=='ER_NO_SUCH_TABLE')throw error;}
   return result;
  }
  async function state(db,exerciseId){

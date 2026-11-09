@@ -19,6 +19,11 @@ test('IBAN validates international check digits and Spanish account length', () 
     'ES912100041845020005133200', 'ES91A1000418450200051332', '1S9121000418450200051332', 'ES91 2100 0418 4502 0005 1332']) assert.equal(isValidIban(iban), false, iban);
 });
 
+test('company payroll agreements are explicit, optional and limited to the supported catalogue',()=>{
+  for(const code of ['','99000275011981','99002415011982'])assert.deepEqual(validateCompanyProfile({payroll_agreement:code}),{payroll_agreement:code});
+  for(const code of [null,12,'unknown','99002415011982 '])assert.throws(()=>validateCompanyProfile({payroll_agreement:code}),{code:'INVALID_PAYROLL_AGREEMENT'});
+});
+
 test('company profile rejects malformed contact and bank details before storage', () => {
   const cases = [
     [{ tax_id: '<script>' }, 'INVALID_TAX_ID'], [{ address: 'a'.repeat(251) }, 'INVALID_COMPANY_DETAILS'],

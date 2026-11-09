@@ -1,5 +1,5 @@
 <script setup>
-import {computed,onBeforeUnmount,ref,watch} from 'vue';
+import {computed,onBeforeUnmount,ref,watch,provide} from 'vue';
 import {useRoute,useRouter} from 'vue-router';
 import {useContext} from '../composables/context.js';
 import {api} from '../services/accounting.js';
@@ -9,6 +9,9 @@ import {p,profitLossTotalLabels} from '../locales/profit-loss.js';
 import {exerciseMonths,latestExercise,reportDefaultCutoff,previousExerciseEnd,previousYearDate,previousYearCutoff} from '../../../shared/report-periods.js';
 import {reportMoney as money,reportDate as date,downloadCsv} from '../services/report-format.js';
 import {profitLossCsv} from '../services/profit-loss-csv.js';
+import ReportAmountButton from '../components/ReportAmountButton.vue';
+import ReportAmountDetail from '../components/ReportAmountDetail.vue';
+import {reportAmountDetailKey} from '../services/report-amount-detail.js';
 import BalanceSheetNode from '../components/BalanceSheetNode.vue';
 import BalanceComparison from '../components/BalanceComparison.vue';
 import ProfitLossComparison from '../components/ProfitLossComparison.vue';
@@ -30,6 +33,10 @@ const fromMonth=computed({get:()=>from.value.slice(0,7),set:value=>{from.value=m
 const toMonth=computed({get:()=>to.value.slice(0,7),set:value=>{to.value=months.value.find(row=>row.value===value).to;}});
 const previousFromMonth=computed({get:()=>priorFrom.value?.slice(0,7),set:value=>{previousFrom.value=priorMonths.value.find(row=>row.value===value).from;}});
 const previousToMonth=computed({get:()=>priorTo.value?.slice(0,7),set:value=>{previousTo.value=priorMonths.value.find(row=>row.value===value).to;}});
+
+const amountDetail=ref(null);
+provide(reportAmountDetailKey,payload=>{const sheets=payload.sheets||[payload.sheet||result.value];if(sheets.every(Boolean))amountDetail.value={...payload,sheets};});
+watch([()=>company.value?.id,selectedId,()=>route.fullPath],()=>amountDetail.value=null);
 let generation=0;
 function query(){return {company_id:String(company.value.id),exercise_id:selectedId.value,from:from.value,to:to.value,compare_previous:String(comparePrevious.value),comparison_count:showThird.value?'3':'2',...(comparePrevious.value?{...(previousFrom.value?{previous_from:previousFrom.value}:{}),...(previousTo.value?{previous_to:previousTo.value}:{}),...(showThird.value?{...(olderFrom.value?{older_from:olderFrom.value}:{}),...(olderTo.value?{older_to:olderTo.value}:{})}:{})}:{})};}
 const current=computed(()=>result.value&&!loading.value&&JSON.stringify(loadedQuery.value)===JSON.stringify(query()));
@@ -98,9 +105,10 @@ onBeforeUnmount(()=>generation++);
   <ProfitLossComparison v-if="result.comparison?.multiple" :key="JSON.stringify(loadedQuery)" :data="result" :ledger-link="ledgerLink" @select-exercise="selectExercise(String($event))" />
   <BalanceComparison v-else-if="result.comparison?.available" :key="JSON.stringify(loadedQuery)" :data="result" :ledger-link="ledgerLink" :total-labels="profitLossTotalLabels" :show-result="false" @select-exercise="selectExercise(String($event))" />
   <section v-else class="panel profit-statement"><BalanceSheetNode v-for="node in result.sections" :key="node.id" :node="node" :ledger-link="ledgerLink" /></section>
-  <div v-if="!result.comparison?.multiple&&!result.comparison?.available" class="panel profit-totals"><p v-for="[key,label] in profitLossTotalLabels" :key="key"><strong>{{ label }}</strong><strong>{{ money(result.totals[key]) }} €</strong></p></div>
-  <details v-for="sheet in diagnosticSheets" :key="sheet.exercise.id" class="panel profit-diagnostic" open><summary>{{ p.unclassified }} · {{ sheet.exercise.name }}</summary><p class="notice error-notice">{{ p.review }}</p><p>{{ p.unclassifiedHelp }}</p><p v-for="row in sheet.diagnostic.unclassified" :key="row.id"><RouterLink :to="ledgerLink(row,sheet)" @click="selectPeriod($event,sheet)">{{ row.code }} · {{ row.description }}</RouterLink> · {{ money(row.amount) }} €</p></details>
+  <div v-if="!result.comparison?.multiple&&!result.comparison?.available" class="panel profit-totals"><p v-for="[key,label] in profitLossTotalLabels" :key="key"><strong>{{ label }}</strong><strong><ReportAmountButton :amount="result.totals[key]" :selection="{kind:'total',key}" :label="label" euro /></strong></p></div>
+  <details v-for="sheet in diagnosticSheets" :key="sheet.exercise.id" class="panel profit-diagnostic" open><summary>{{ p.unclassified }} · {{ sheet.exercise.name }}</summary><p class="notice error-notice">{{ p.review }}</p><p>{{ p.unclassifiedHelp }}</p><p v-for="row in sheet.diagnostic.unclassified" :key="row.id"><RouterLink :to="ledgerLink(row,sheet)" @click="selectPeriod($event,sheet)">{{ row.code }} · {{ row.description }}</RouterLink> · <ReportAmountButton :amount="row.amount" :selection="{kind:'unclassified',code:row.code}" :label="row.code+' · '+row.description" :sheet="sheet" euro /></p></details>
  </template>
+ <ReportAmountDetail v-if="amountDetail" :detail="amountDetail" @close="amountDetail=null" />
 </template>
 <style scoped>
 .profit-filters{gap:14px;margin:16px 0}.profit-period{display:flex;gap:6px}.profit-filter-actions{display:flex;align-items:end;gap:8px;flex-wrap:wrap}.profit-filters+.notice{margin-top:8px}.profit-third-option{flex-direction:row;align-items:center;gap:6px;font-size:12px;min-height:36px;cursor:pointer}.profit-third-option input{min-height:0;width:16px;height:16px;margin:0;accent-color:var(--primary)}

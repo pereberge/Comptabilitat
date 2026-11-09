@@ -28,6 +28,7 @@ const errors={
  BANK_STATEMENT_PERIOD_MISMATCH:'El archivo no contiene movimientos del ejercicio seleccionado. Cambia de ejercicio y vuelve a subirlo.',
  BANK_STATEMENT_INVALID_IBAN:'El IBAN leído no pasa la comprobación. Revisa el documento.',
  BANK_STATEMENT_MULTIPLE_ACCOUNTS:'El archivo contiene varias cuentas. Sube un extracto por cuenta.',
+ BANK_STATEMENT_MULTIPLE_HOLDERS:'El archivo contiene varios titulares. Sube un extracto por titular y cuenta.',
  BANK_STATEMENT_NO_MOVEMENTS:'No se han encontrado movimientos válidos o el archivo supera los 10.000 movimientos.',
  BANK_STATEMENT_TIMEOUT:'El PDF tarda demasiado en leerse. Prueba con un extracto más pequeño o con CSV.',
  BANK_STATEMENT_BUSY:'Hay varios extractos en proceso. Inténtalo de nuevo en unos instantes.',
