@@ -8,6 +8,9 @@ import {purchaseRouter} from './purchases.js';
 import {documentationSource} from '../controllers/documentation-source.js';
 export function apiRouter(service, accounting) {
  const router=Router(), controller=contextController(service);
+ router.get('/general-tables/banks',async(req,res)=>res.json(await req.generalBanks.list()));
+ router.post('/general-tables/banks',async(req,res)=>{requireMaster(req.user);res.status(201).json(await req.generalBanks.save(req.body));});
+ router.put('/general-tables/banks/:id',async(req,res)=>{requireMaster(req.user);res.json(await req.generalBanks.save(req.body,req.params.id));});
  router.use('/purchases',purchaseRouter());
  router.use('/payroll',async(req,res,next)=>{await req.payroll.requireEnabled();next();});
  router.post('/payroll/batch/preview',async(req,res)=>res.json(await req.payroll.batchPreview(req.body)));
@@ -164,6 +167,15 @@ export function apiRouter(service, accounting) {
  router.patch('/invoices/:id/dates',async(req,res)=>res.json(await req.invoices.updateDates(req.params.id,req.body)));
  router.post('/invoices/:id/void',async(req,res)=>res.json(await req.invoices.void(req.params.id,req.body,req.user?.key||'local')));
  router.get('/portfolio',async(req,res)=>res.json(await req.portfolio.list(req.query)));
+ router.get('/portfolio/forecast',async(req,res)=>res.json(await req.portfolio.forecast(req.query)));
+ router.patch('/portfolio/receipts/:id/forecast-account',async(req,res)=>res.json(await req.treasuryPlanning.assign(req.params.id,req.body)));
+ router.post('/portfolio/forecast-plans',async(req,res)=>res.status(201).json(await req.treasuryPlanning.save(null,req.body)));
+ router.patch('/portfolio/forecast-plans/:id',async(req,res)=>res.json(await req.treasuryPlanning.save(req.params.id,req.body)));
+ router.post('/portfolio/forecast-plans/:id/link',async(req,res)=>res.json(await req.treasuryPlanning.link(req.params.id,req.body)));
+ router.post('/portfolio/forecast-plans/:id/cancel',async(req,res)=>res.json(await req.treasuryPlanning.cancel(req.params.id,req.body)));
+ router.get('/company-banks',async(req,res)=>res.json(await req.companyBanks.list()));
+ router.post('/company-banks',async(req,res)=>res.status(201).json(await req.companyBanks.save(req.body)));
+ router.put('/company-banks/:id',async(req,res)=>res.json(await req.companyBanks.save(req.body,req.params.id)));
  router.get('/bank-remittances',async(req,res)=>res.json(await req.bankRemittances.list(req.query)));
  router.get('/bank-remittances/options',async(req,res)=>res.json(await req.bankRemittances.options(req.query)));
  router.post('/bank-remittances/preview',async(req,res)=>res.json(await req.bankRemittances.preview(req.body)));

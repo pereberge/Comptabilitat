@@ -1,0 +1,38 @@
+CREATE TABLE IF NOT EXISTS general_banks (
+ id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(160) NOT NULL,
+ bic VARCHAR(11) NOT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ UNIQUE KEY general_banks_bic (bic)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- statement
+INSERT IGNORE INTO general_banks (name,bic) VALUES
+ ('Banco Santander','BSCHESMMXXX'),
+ ('BBVA','BBVAESMMXXX'),
+ ('CaixaBank','CAIXESBBXXX'),
+ ('Banco Sabadell','BSABESBBXXX'),
+ ('Bankinter','BKBKESMMXXX'),
+ ('Unicaja Banco','UCJAES2MXXX'),
+ ('ABANCA','CAGLESMMXXX'),
+ ('Ibercaja Banco','CAZRES2ZXXX'),
+ ('Kutxabank','BASKES2BXXX'),
+ ('Cajamar Caja Rural','CCRIES2AXXX'),
+ ('ING España','INGDESMMXXX'),
+ ('Openbank','OPENESMMXXX'),
+ ('Deutsche Bank España','DEUTESBBXXX'),
+ ('Banca March','BMARES2MXXX'),
+ ('Banco Mediolanum','BFIVESBBXXX'),
+ ('Banco Cooperativo Español','BCOEESMMXXX'),
+ ('WiZink Bank','POPLESMMXXX'),
+ ('Banco Inversis','INVLESMMXXX'),
+ ('Cajasur Banco','CSURES2CXXX'),
+ ('Banco de Crédito Social Cooperativo','BCCAESMMXXX'),
+ ('Laboral Kutxa','CLPEES2MXXX'),
+ ('Eurocaja Rural','ERSVES22XXX'),
+ ('Cecabank','CECAESMMXXX'),
+ ('Triodos Bank España','TRIOESMMXXX'),
+ ('bunq España','BUNQESM2XXX'),
+ ('Revolut Bank España','REVOESM2XXX'),
+ ('Banco Pichincha España','PICHESMMXXX'),
+ ('Caja de Ingenieros','CDENESBBXXX');

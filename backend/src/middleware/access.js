@@ -8,6 +8,7 @@ function normalizedPath(path){let value;try{value=decodeURIComponent(path);}catc
 export function requiredPermission(method,path){
  const normalized=normalizedPath(path),parts=normalized.split('/'),[area,,action,detail]=parts;
  if(area==='master')return 'users_manage';
+ if(area==='general-tables'&&!['GET','HEAD','OPTIONS'].includes(method))return 'users_manage';
  if(normalized==='companies'&&method==='POST')return 'companies_manage';
  if(area==='purchases')return ['GET','HEAD','OPTIONS'].includes(method)?'purchases_read':parts.at(-1)==='confirm'?'purchases_confirm':'purchases_write';
  if(area==='entries'&&method==='DELETE')return 'entries_delete';

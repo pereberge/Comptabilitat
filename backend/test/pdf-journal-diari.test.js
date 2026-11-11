@@ -33,6 +33,23 @@ test('DIARI rejects truncated, duplicated, unbalanced or ambiguous reports inclu
   assert.throws(()=>parseJournalPages(pages),new RegExp(error));
  }
 });
+test('DIARI retains lowercase journal codes and a single zero line, and recognizes the ARB opening description',()=>{
+ const pages=diariPages();
+ pages[0].items=pages[0].items.filter(item=>!(item.y>=439&&item.y<=440));
+ pages[0].items.find(item=>item.text==='D1'&&item.y<450).text='zz';
+ for(const item of pages[0].items)if(item.text.includes('Obertura comptable.'))item.text=item.text.replace('Obertura comptable.','Assentament obertura');
+ const result=parseJournalPages(pages);assert.equal(result.entries[0].entry_type,'opening');assert.equal(result.entries.at(-1).source_journal_code,'zz');assert.equal(result.entries.at(-1).lines.length,1);assert.equal(result.totals.debit,'110.84');assert.equal(result.totals.zero_lines,1);
+ const broken=diariPages();broken[0].items.find(item=>item.text==='D1').text='bad/code';assert.throws(()=>parseJournalPages(broken),/MISSING_REFERENCE/);
+});
+
+test('provided ARB 2024 DIARI reconciles all source entries including zero entries and lowercase journals',{skip:!process.env.TEST_ARB_2024_PDF},async()=>{
+ const result=await extractJournalPdf(readFileSync(process.env.TEST_ARB_2024_PDF));
+ assert.equal(result.source_company,'P. ARB');assert.equal(result.pages,239);assert.equal(result.start_date,'2024-01-01');assert.equal(result.end_date,'2024-12-31');
+ assert.deepEqual(result.totals,{entries:1903,lines:8733,accounts:291,debit:'54815485.08',credit:'54815485.08',negative_entries:45,zero_entries:10,negative_lines:430,zero_lines:5});
+ const zero=result.entries.find(entry=>entry.source_journal_code==='C1'&&entry.source_entry_reference==='163');assert.equal(zero.lines.length,1);assert.equal(zero.debit,'0.00');
+ assert.ok(result.entries.some(entry=>entry.source_journal_code==='za'));assert.ok(result.entries.some(entry=>entry.source_journal_code==='zz'));assert.equal(result.entries[0].entry_type,'opening');assert.equal(result.has_closing,true);
+});
+
 test('DIARI extraction reads actual PDF bytes through PDF.js',async()=>{
  const result=await extractJournalPdf(diariPdf(undefined,{split:true}));assert.equal(result.pages,2);assert.equal(result.totals.debit,'110.84');assert.equal(result.entries[0].lines.length,2);
 });

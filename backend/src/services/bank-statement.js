@@ -170,7 +170,7 @@ export function parseBankCsv(buffer) {
   let text;
   try{text=new TextDecoder(buffer[0]===255&&buffer[1]===254?'utf-16le':'utf-8',{fatal:true}).decode(buffer);}
   catch{text=new TextDecoder('windows-1252').decode(buffer);}
-  const aliases={date:['FECHA','DATA','FECHAOPERACION','FOPERACION','FECHACONTABLE'],value:['FECHAVALOR','DATAVALOR','FVALOR'],concept:['CONCEPTO','CONCEPTE','DESCRIPCION','DESCRIPCIO','MOVIMIENTO'],amount:['IMPORTE','IMPORT','CANTIDAD'],balance:['SALDO','SALDOCONTABLE'],debit:['DEBE','CARGO','CARGOS'],credit:['HABER','ABONO','ABONOS'],extra:['MASDATOS','MESDADES','DETALLE'],iban:['IBAN','CUENTA','COMPTE'],currency:['MONEDA','DIVISA','CURRENCY']};
+  const aliases={date:['FECHA','DATA','FECHAOPERACION','FOPERACION','FECHACONTABLE'],value:['FECHAVALOR','DATAVALOR','FVALOR'],concept:['CONCEPTO','CONCEPTE','DESCRIPCION','DESCRIPCIO','MOVIMIENTO'],amount:['IMPORTE','IMPORT','CANTIDAD'],balance:['SALDO','SALDOCONTABLE'],debit:['DEBE','CARGO','CARGOS'],credit:['HABER','ABONO','ABONOS'],extra:['MASDATOS','MESDADES','DETALLE'],iban:['IBAN','CUENTA','COMPTE'],currency:['MONEDA','DIVISA','CURRENCY'],reference:['REFERENCIA','REF','REFERENCE','REFERENCIAOPERACION','REFERENCIAFACTURA','NUMEROFACTURA'],bank_code:['CODIGO','CODI','CODIGOBANCARIO','CODIGOMOVIMIENTO','CODIOPERACIO']};
   for(const delimiter of [';','\t',',']){
     let table;try{table=csvRows(text.replace(/^\uFEFF/,''),delimiter);}catch{continue;}
     const headerIndex=table.slice(0,30).findIndex(row=>row.some(cell=>aliases.date.includes(normalizeBankText(cell)))&&row.some(cell=>aliases.balance.includes(normalizeBankText(cell))));
@@ -189,7 +189,8 @@ export function parseBankCsv(buffer) {
       const valueDate=columns.value>=0?bankDate(record[columns.value]):movementDate;if(!valueDate)invalid('INVALID_CSV');
       const concept=[record[columns.concept],columns.extra>=0?record[columns.extra]:''].filter(Boolean).join(' ').slice(0,1000);if(!concept.trim())invalid('INVALID_CSV');
       if(columns.iban>=0)ibans.push(record[columns.iban]);
-      rows.push({page:1,date:movementDate,value_date:valueDate,concept,amount:decimal(movement),balance:decimal(balance)});
+      const identifiers={};for(const name of ['reference','bank_code'])if(columns[name]>=0){const value=record[columns[name]].trim();if(value.length>200||/[\u0000-\u001f\u007f]/.test(value))invalid('INVALID_CSV');identifiers[name]=value;}
+      rows.push({page:1,date:movementDate,value_date:valueDate,concept,amount:decimal(movement),balance:decimal(balance),...identifiers});
     }
     return validateBankRows(rows,{bank:detectBank(table.slice(0,headerIndex).flat().join(' ')+' '+ibans.join(' ')),pages:1,format:'csv',mime:'text/csv',...bankStatementDocumentDate(table.slice(0,headerIndex).flat().join(' '))});
   }

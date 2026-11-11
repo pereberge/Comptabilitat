@@ -4,6 +4,15 @@ import { bankDate, detectBank, parseBankCsv, parseBankPages, validateBankRows } 
 const csv=value=>parseBankCsv(Buffer.from(value));
 const iban='ES9121000418450200051332';
 const error=code=>e=>e.message==='BANK_STATEMENT_'+code;
+test('CSV preserves separate reference and bank code without changing concept, dates, balances or account',()=>{
+ for(const label of ['Referencia','Ref.','Reference','Referencia factura']){
+  const r=csv('CaixaBank;'+iban+'\nFecha;Concepto;'+label+';Código;Importe;Saldo\n02/01/2026;Transferencia;INV-00017;0042;-10,00;90,00\n01/01/2026;Ingreso;000001;0001;100,00;100,00');
+  assert.equal(r.bank.iban,iban);assert.equal(r.rows[0].reference,'000001');assert.equal(r.rows[1].reference,'INV-00017');assert.equal(r.rows[1].bank_code,'0042');
+  assert.equal(r.rows[1].concept,'Transferencia');assert.equal(r.rows[1].date,'2026-01-02');assert.equal(r.rows[1].amount,'-10.00');assert.equal(r.final_balance,'90.00');
+ }
+ assert.throws(()=>csv('Fecha;Concepto;Referencia;Importe;Saldo\n01/01/2026;Pago;'+ 'X'.repeat(201)+';-10,00;90,00'),error('INVALID_CSV'));
+ assert.throws(()=>csv('Fecha;Concepto;Referencia;Importe;Saldo\n01/01/2026;Pago;bad\u0000reference;-10,00;90,00'),error('INVALID_CSV'));
+});
 
 test('bank dates: Catalan, Spanish, ISO, value date and invalid calendar dates',()=>{
  assert.equal(bankDate('4 Oct 2026'),'2026-10-04');assert.equal(bankDate('3 Gen 2026'),'2026-01-03');

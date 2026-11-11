@@ -16,6 +16,8 @@ const dataDirectory=resolve(runDirectory,'data');
 const scope=relative(resolve(root,'.local-backups'),dataDirectory);
 assert.ok(scope&&!scope.startsWith('..')&&!isAbsolute(scope),'Unsafe isolated data directory');
 const database='purchase_validation',password=randomBytes(32).toString('hex');
+const bankValidation=process.argv.includes('--bank-reconciliation');
+const treasuryValidation=process.argv.includes('--treasury'),batchValidation=process.argv.includes('--purchase-batch'),suiteName=treasuryValidation?'treasury':batchValidation?'purchase invoice batches':bankValidation?'bank reconciliation':'purchase/OCR';
 let daemon,admin,port,childEnv;
 const report={synthetic_only:true,production_access:false,data_directory:dataDirectory,tests_passed:false,stopped:false};
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -58,8 +60,8 @@ try{
  await run(process.execPath,['backend/scripts/database.js','migrate'],{env:childEnv,log:'migrations.log'});
  admin=await mysql.createConnection({host:'127.0.0.1',port,user:'root',password,database});
  const [migrations]=await admin.query('SELECT name FROM schema_migrations ORDER BY name');report.migrations=migrations.map(row=>row.name);await admin.end();admin=null;
- console.log('Running purchase/OCR integration tests with synthetic companies');
- await run(process.execPath,['--test','--test-concurrency=1','backend/test/purchases-db.test.js','backend/test/purchase-ocr-db.test.js'],{env:childEnv,log:'tests.log'});
+ console.log('Running '+suiteName+' integration tests with synthetic companies');
+ await run(process.execPath,['--test','--test-concurrency=1',...(treasuryValidation?['backend/test/treasury-planning-db.test.js']:batchValidation?['backend/test/purchase-ocr-db.test.js','backend/test/purchase-batch-db.test.js']:bankValidation?['backend/test/reconciliation-matches-db.test.js','backend/test/reconciliation-invoice-flow-db.test.js']:['backend/test/purchases-db.test.js','backend/test/purchase-ocr-db.test.js'])],{env:childEnv,log:'tests.log'});
  report.tests_passed=true;
 }catch(error){report.error=error.code||error.message;console.error(report.error);process.exitCode=1;}
 finally{
@@ -72,5 +74,5 @@ finally{
  if(daemon){report.port_closed=!(await portListening(port));report.stopped=daemonStopped()&&report.port_closed;if(!report.stopped)process.exitCode=1;}
  try{await writeFile(resolve(runDirectory,'report.json'),JSON.stringify(report,null,2));}catch{}
  console.log('Isolated validation report: '+resolve(runDirectory,'report.json'));
- if(report.tests_passed)console.log('PASS: purchase/OCR integration tests. No existing MySQL instance or real company data accessed.');
+ if(report.tests_passed)console.log('PASS: '+suiteName+' integration tests. No existing MySQL instance or real company data accessed.');
 }

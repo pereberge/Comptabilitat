@@ -1,3 +1,8 @@
+import {HttpError} from '../middleware/errors.js';
+export function remapPurchaseProposals(value,invoiceIds){
+ if(!Array.isArray(value?.proposals))return value;
+ return {...value,proposals:value.proposals.map(proposal=>{const target=invoiceIds.get(Number(proposal.id));if(!target)throw new HttpError(400,'BACKUP_BROKEN_LINKS');return {...proposal,id:target};})};
+}
 export const purchaseBackupTables={
  purchase_units:{key:['code'],refs:{base_unit_id:'purchase_units'}},
  purchase_items:{key:['code'],refs:{unit_id:'purchase_units'}},

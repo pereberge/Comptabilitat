@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { HttpError } from '../middleware/errors.js';
+import {reconciliationReceiptPayment} from './reconciliation-partials.js';
 import { id, date, fail } from './validation.js';
 import { amount } from './report-amount.js';
 import { decimal } from '../../../shared/money.js';
@@ -134,13 +135,15 @@ export function createBankReconciliationService(pool, companyId) {
       const key=requestId(body?.request_id),input=body?.receipt_ids===undefined?[body?.receipt_id]:body.receipt_ids;
       if(!Array.isArray(input)||!input.length||input.length>60)fail('INVALID_REQUEST');
       const receiptIds=input.map(id).sort((a,b)=>a-b);if(new Set(receiptIds).size!==receiptIds.length)fail('INVALID_REQUEST');
+      if(body.partial_payment!==undefined&&typeof body.partial_payment!=='boolean'||body.partial_payment===true&&receiptIds.length!==1)fail('INVALID_REQUEST');
+      if(body.partial_payment===true&&(typeof body.expected_remaining_amount!=='string'||!/^\d{1,13}\.\d{2}$/.test(body.expected_remaining_amount)))fail('INVALID_REQUEST');
       const payment={payment_method:method(body?.payment_method),reference:text(body?.reference,100),notes:text(body?.notes,500)};
       return withTransaction(pool,async db=>{
         await lockCompany(db,companyId);const row=await find(db,reconciliationId,true);
         await db.execute('SELECT id FROM accounting_exercises WHERE company_id=? AND id=? FOR UPDATE',[companyId,row.exercise_id]);
         const movement=(row.snapshot.bank_rows||[]).find(item=>String(item.id)===String(body.movement_id));
         if(!movement)throw new HttpError(404,'RECONCILIATION_MOVEMENT_NOT_FOUND');
-        const digest=requestHash({movement_id:movement.id,...(receiptIds.length===1?{receipt_id:receiptIds[0]}:{receipt_ids:receiptIds}),...payment}),previous=(row.snapshot.posted_movements||[]).filter(item=>item.request_id===key);
+        const digest=requestHash({movement_id:movement.id,...(receiptIds.length===1?{receipt_id:receiptIds[0]}:{receipt_ids:receiptIds}),...payment,...(body.partial_payment===true?{partial_payment:true,expected_remaining_amount:body.expected_remaining_amount}:{})}),previous=(row.snapshot.posted_movements||[]).filter(item=>item.request_id===key);
         if(previous.length){
           if(previous.length!==receiptIds.length||previous.some(item=>item.request_hash!==digest))throw new HttpError(409,'REQUEST_CONFLICT');
           const receipts=[];for(const receiptId of receiptIds)receipts.push(await receiptDetail(db,companyId,receiptId));
@@ -151,11 +154,13 @@ export function createBankReconciliationService(pool, companyId) {
         if(!current.snapshot.scope.bank_pending.some(item=>String(item.id)===String(movement.id)))throw new HttpError(409,'RECONCILIATION_MOVEMENT_MATCHED');
         const receipts=[];for(const receiptId of receiptIds)receipts.push(await receiptDetail(db,companyId,receiptId));
         const value=amount(movement.amount),absolute=value<0n?-value:value;
-        if(receipts.some(receipt=>!['pending','partial'].includes(receipt.status)||receipt.direction!==(value<0n?'received':'issued')||receipt.invoice_id!==receipts[0].invoice_id)||receipts.reduce((sum,receipt)=>sum+amount(receipt.remaining_amount),0n)!==absolute)throw new HttpError(409,'RECONCILIATION_RECEIPT_CHANGED');
+        if(receipts.some(receipt=>!['pending','partial'].includes(receipt.status)||receipt.direction!==(value<0n?'received':'issued')||receipt.invoice_id!==receipts[0].invoice_id)||receiptIds.length>1&&receipts.reduce((sum,receipt)=>sum+amount(receipt.remaining_amount),0n)!==absolute)throw new HttpError(409,'RECONCILIATION_RECEIPT_CHANGED');
+        let singleAmount;if(receipts.length===1)try{singleAmount=reconciliationReceiptPayment(receipts[0].remaining_amount,movement.amount,body.partial_payment===true);}catch{throw new HttpError(409,'RECONCILIATION_RECEIPT_CHANGED');}
+        if(body.partial_payment===true&&receipts[0].remaining_amount!==body.expected_remaining_amount)throw new HttpError(409,'RECONCILIATION_RECEIPT_CHANGED');
         const results=[],records=[];
         for(const receipt of receipts){
           const hex=requestHash({request_id:key,receipt_id:receipt.id}).slice(0,32),childKey=receiptIds.length===1?key:[hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
-          const result=await settlePortfolioReceipt(db,companyId,receipt.id,{...payment,request_id:childKey,exercise_id:row.exercise_id,payment_date:movement.date,amount:receipt.remaining_amount,bank_account_id:row.account_id});
+          const result=await settlePortfolioReceipt(db,companyId,receipt.id,{...payment,request_id:childKey,exercise_id:row.exercise_id,payment_date:movement.date,amount:singleAmount||receipt.remaining_amount,bank_account_id:row.account_id});
           if(result.replayed)throw new HttpError(409,'REQUEST_CONFLICT');
           const settlement=result.settlements.find(item=>item.id===result.settlement_id),[[entry]]=await db.execute('SELECT number FROM journal_entries WHERE company_id=? AND id=?',[companyId,settlement.entry_id]);
           results.push(result);records.push({movement_id:movement.id,entry_id:settlement.entry_id,number:entry.number,request_id:key,request_hash:digest});

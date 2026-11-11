@@ -49,13 +49,14 @@ export function parseDiariPages(pages){
     if(!journalLabel||!referenceLabel)fail('MISSING_REFERENCE');
     const journal=row.filter(item=>item.x>journalLabel.x+journalLabel.width+2&&item.x<referenceLabel.x-3).map(item=>item.text).join('');
     const reference=row.filter(item=>item.x>referenceLabel.x+referenceLabel.width+2&&item.x<event.item.x-8).map(item=>item.text).join('');
-    if(!/^[A-Z0-9][A-Z0-9_-]{0,19}$/.test(journal)||!/^\d{1,20}$/.test(reference))fail('MISSING_REFERENCE');
+    if(!/^[A-Z0-9][A-Z0-9_-]{0,19}$/i.test(journal)||!/^\d{1,20}$/.test(reference))fail('MISSING_REFERENCE');
     if(identities.has(journal+':'+reference))fail('DUPLICATE_NUMBER');identities.add(journal+':'+reference);
     if(current.debit!==current.credit)fail('UNBALANCED_ENTRY');
     if(expected.debit!==current.debit||expected.credit!==current.credit)fail('ENTRY_TOTAL_MISMATCH');
-    if(current.lines.length<2)fail('INVALID_ENTRY');
+    // Preserve source entries consisting of a single genuine zero-amount line.
+    if(!current.lines.length||(current.lines.length===1&&(current.lines[0].debit!=='0.00'||current.lines[0].credit!=='0.00')))fail('INVALID_ENTRY');
     const concept=normalized(current.description);
-    const type=/^(?:OBERTURA COMPTABLE|ASSENTAMENT D'OBERTURA)/.test(concept)?'opening':/^(?:TANCAMENT COMPTABLE|ASSENTAMENT DE TANCAMENT)/.test(concept)?'closing':/^(?:REGULARITZACIO COMPTABLE|ASSENTAMENT DE REGULARITZACIO)/.test(concept)?'regularization':'normal';
+    const type=/^(?:OBERTURA COMPTABLE|ASSENTAMENT (?:D')?OBERTURA)/.test(concept)?'opening':/^(?:TANCAMENT COMPTABLE|ASSENTAMENT DE TANCAMENT)/.test(concept)?'closing':/^(?:REGULARITZACIO COMPTABLE|ASSENTAMENT DE REGULARITZACIO)/.test(concept)?'regularization':'normal';
     entries.push({...current,description:current.description||'Diari '+journal+' · Referència '+reference,number:entries.length+1,source_journal_code:journal,source_entry_reference:reference,entry_type:type,debit:decimal(current.debit),credit:decimal(current.credit)});
     if(entries.length>5000)fail('TOO_MANY_ROWS');current=null;continue;
    }

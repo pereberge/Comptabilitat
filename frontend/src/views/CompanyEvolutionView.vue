@@ -1,6 +1,7 @@
 <script setup>
 import {computed,onBeforeUnmount,ref,watch} from 'vue';
 import {useAccess} from '../composables/access.js';
+import {useContext} from '../composables/context.js';
 import {api} from '../services/accounting.js';
 import {errorText,t} from '../locales/accounting.js';
 import {evolution as e} from '../locales/company-evolution.js';
@@ -8,6 +9,8 @@ import {reportMoney as money,reportDate as date} from '../services/report-format
 import {companyTheme} from '../services/company-theme.js';
 import EvolutionChart from '../components/EvolutionChart.vue';
 const {user}=useAccess(),result=ref(null),loading=ref(false),error=ref(''),metric=ref('net_equity');
+const {company:selectedCompany}=useContext();
+const visibleCompanies=computed(()=>result.value?.companies.filter(company=>String(company.id)===String(selectedCompany.value?.id))||[]);
 const master=computed(()=>user.value?.role==='master'),metricLabel=computed(()=>metric.value==='net_equity'?e.netEquity:e.profit);
 let generation=0;
 async function load(){
@@ -26,8 +29,8 @@ onBeforeUnmount(()=>generation++);
   <template v-if="result">
    <div class="evolution-filters"><label>{{ e.metric }}<select v-model="metric" :aria-label="e.metric"><option value="net_equity">{{ e.netEquity }}</option><option value="profit">{{ e.profit }}</option></select></label><p class="muted">{{ e.cutoff }}: {{ date(result.as_of) }} · EUR</p></div>
    <p class="muted evolution-scope">{{ e.scope }} {{ e.currentScope }}</p>
-   <p v-if="result.companies.length!==3" class="notice" role="status">{{ e.missingCompanies }}</p>
-   <section v-for="company in result.companies" :key="company.id" class="panel evolution-company" :style="companyTheme(company.id)" :aria-labelledby="'evolution-company-'+company.id">
+   <p v-if="!visibleCompanies.length" class="notice" role="status">{{ e.missingCompanies }}</p>
+   <section v-for="company in visibleCompanies" :key="company.id" class="panel evolution-company" :style="companyTheme(company.id)" :aria-labelledby="'evolution-company-'+company.id">
     <header><h2 :id="'evolution-company-'+company.id">{{ company.name }}</h2><span>{{ company.years.length }} {{ e.exercise.toLocaleLowerCase('es') }}s</span></header>
     <EvolutionChart :years="company.years" :metric="metric" :label="metricLabel" :color="companyTheme(company.id)['--primary']" />
     <div class="table-wrap"><table><thead><tr><th scope="col">{{ e.exercise }}</th><th scope="col">{{ e.cutoff }}</th><th scope="col" class="amount">{{ e.netEquity }}</th><th scope="col" class="amount">{{ e.profit }}</th><th scope="col">{{ e.status }}</th></tr></thead><tbody>

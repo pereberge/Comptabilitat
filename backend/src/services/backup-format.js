@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { HttpError } from '../middleware/errors.js';
+import {validateCompanyBank} from './company-banks.js';
 import { companyFormats } from '../../../shared/company-formats.js';
 import {farmLotsOverlap} from '../../../shared/farm-lots.js';
 import {calculateFarmSale} from '../../../shared/farm-sale-money.js';
@@ -15,6 +16,7 @@ import {installmentPeriod,normalizeInstallmentTaxInput} from '../../../shared/in
 import {normalizeReceivedInvoice} from '../integrations/invoice-contract.js';
 import {normalizePayrollEmployee,normalizePayrollSettings,normalizePayrollInput,calculatePayroll,payrollCanonical} from '../../../shared/payroll.js';
 import {purchaseBackupTables} from './purchase-backup.js';
+import {treasuryBackupTables} from './treasury-backup.js';
 import {purchaseLine,purchaseNumber} from '../../../shared/purchases.js';
 
 export const MAX_BACKUP_FILE = 100 * 1024 * 1024;
@@ -31,6 +33,7 @@ export const TABLES = {
  accounts: { key: ['code'], refs: { parent_id:'accounts' } },
  payroll_employees:{key:['code'],refs:{}},
  bank_connections: { key: ['iban'], refs: { account_id:'accounts' } },
+ company_banks:{key:['bank_id'],refs:{}},
  bank_reconciliation_rules: {key:['bank_account_id','concept_key','direction'],refs:{bank_account_id:'accounts'}},
  suppliers: { key: ['code'], refs: { account_id:'accounts' } },
  company_documents: { key: ['request_id'], refs: {} },
@@ -58,11 +61,14 @@ export const TABLES = {
  integration_received_invoices: { key: ['source_system','external_id'], refs: {exercise_id:'accounting_exercises',supplier_account_id:'accounts',invoice_id:'trade_invoices',entry_id:'journal_entries'} },
  supplier_expense_preferences: {key:['supplier_tax_id'],refs:{expense_account_id:'accounts'}},
  ...purchaseBackupTables,
+ ...treasuryBackupTables,
 };
 export const TABLE_ORDER = Object.keys(TABLES);
 export const SHARED = new Set(['companies','company_details','company_logos','vat_drafts','accounts','bank_connections','bank_reconciliation_rules','bank_remittances','suppliers','company_documents','pig_farms','farm_lots','farm_documents','integration_received_invoices','supplier_expense_preferences','payroll_settings','payroll_employees']);
 export const FARM_TABLES = new Set(['pig_farms','farm_lots','farm_sales','farm_deaths','farm_care_costs','farm_feed_transfers','farm_documents','farm_invoices','farm_cost_lines']);
 export const OPTIONAL_TABLES=new Set([...FARM_TABLES,'integration_received_invoices','supplier_expense_preferences','bank_reconciliation_rules','vat_drafts','bank_remittances','corporate_tax_drafts','installment_tax_drafts','payroll_settings','payroll_employees','payroll_slips']);
+SHARED.add('company_banks');OPTIONAL_TABLES.add('company_banks');
+for(const table of Object.keys(treasuryBackupTables)){SHARED.add(table);OPTIONAL_TABLES.add(table);}
 for(const table of Object.keys(purchaseBackupTables)){SHARED.add(table);OPTIONAL_TABLES.add(table);}
 export const fail = (code, status=400) => { throw new HttpError(status, code); };
 export const sha = value => createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
@@ -136,6 +142,7 @@ export function validateBackup(data) {
   if(!Array.isArray(ids)||ids.length<2||ids.length>1000||new Set(ids).size!==ids.length||ids.some(value=>!Number.isSafeInteger(value)||value<1)||ids.length!==data.tables.accounting_exercises.length||data.tables.accounting_exercises.some(row=>!ids.includes(row.id)))fail('BACKUP_INVALID_FILE');
  }
  const periods=new Map(data.tables.accounting_exercises.map(row=>[row.id,row]));
+ for(const row of [...data.tables.company_banks,...data.references.company_banks]){try{validateCompanyBank(row);if(!Number.isSafeInteger(row.version)||row.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const row of data.tables.payroll_settings){try{normalizePayrollSettings(row.payload);if(row.config_key!=='general'||!Number.isSafeInteger(row.version)||row.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const row of data.tables.payroll_employees){try{const profile=normalizePayrollEmployee(row.profile);if(profile.code!==row.code||profile.name!==row.name||!Number.isSafeInteger(row.version)||row.version<1)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const row of data.tables.payroll_slips){try{
@@ -151,6 +158,13 @@ export function validateBackup(data) {
  }
  for(const table of ['purchase_order_lines','purchase_receipt_lines','purchase_invoice_lines'])for(const row of [...data.tables[table],...data.references[table]]){try{purchaseLine(row,{unpriced:true});}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const row of [...data.tables.purchase_order_receipts,...data.tables.purchase_invoice_links]){try{if(purchaseNumber(row.quantity)<=0n)throw new Error();}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
+ for(const table of Object.keys(treasuryBackupTables))for(const row of [...data.tables[table],...data.references[table]]){
+  if(!Number.isSafeInteger(row.version)||row.version<1)fail('BACKUP_INVALID_ACCOUNTING');
+  if(row.bank_account_id!=null){const account=indexes.accounts.get(row.bank_account_id);if(account?.kind!=='subaccount'||!account.code.startsWith('572'))fail('BACKUP_INVALID_ACCOUNTING');}
+  if(table==='treasury_plans'){
+   if(!['issued','received'].includes(row.direction)||!['pending','linked','cancelled'].includes(row.status)||!/^\d{4}-\d{2}-\d{2}$/.test(row.expected_date)||!Number.isFinite(Date.parse(row.expected_date))||new Date(row.expected_date+'T00:00:00Z').toISOString().slice(0,10)!==row.expected_date||typeof row.description!=='string'||!row.description.trim()||row.description.length>200||money(row.amount)<=0n||(row.status==='linked')!==(row.linked_receipt_id!=null))fail('BACKUP_INVALID_ACCOUNTING');
+  }
+ }
  const codes=new Set();
  for(const account of [...data.tables.accounts,...data.references.accounts])if(account.sepa_mandate!=null){try{if(accountPartyType(account)!=='customer')throw new Error();normalizeSepaMandate(account.sepa_mandate);}catch{fail('BACKUP_INVALID_ACCOUNTING');}}
  for(const receipt of [...data.tables.portfolio_receipts,...data.references.portfolio_receipts])if(receipt.split_history!=null){

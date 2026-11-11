@@ -3,7 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { config } from '../src/config.js';
 import {quoteDatabase} from '../src/db/company-databases.js';
-const centralMigrations=new Set(['019_app_users.sql','030_user_login_companies.sql','031_administrator_username.sql','032_user_email.sql','037_company_databases.sql']);
+const centralMigrations=new Set(['019_app_users.sql','030_user_login_companies.sql','031_administrator_username.sql','032_user_email.sql','037_company_databases.sql','050_general_banks.sql']);
 const mode = process.argv[2];
 if (!['migrate', 'seed'].includes(mode)) throw new Error('Uso: database.js migrate|seed');
 let connection;

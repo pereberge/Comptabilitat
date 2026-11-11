@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 import mysql from 'mysql2/promise';
+import {createCompanyBankService} from '../src/services/company-banks.js';
+import {createGeneralBankService} from '../src/services/general-banks.js';
 import {config} from '../src/config.js';
 import {createContextService} from '../src/services/context.js';
 import {createAccountingService} from '../src/services/accounting.js';
@@ -46,6 +48,24 @@ test('MySQL portfolio splits and bank remittances preserve money, history, scope
   const received=await invoices.create(invoiceBody('received'));
   const bankBody=(receiptIds,direction='issued')=>({direction,receipt_ids:receiptIds,requested_date:'2099-12-31',iban:own.iban,bic:own.bic,creditor_id:own.sepa_creditor_id,initiator_id:own.bank_initiator_id});
   const ids=(await invoices.get(initial.id)).receipts.map(row=>row.id),candidate=bankBody(ids);
+  await t.test('saved company/bank presenter and shared BIC are authoritative for both file types',async()=>{
+   const catalog=createGeneralBankService(pool),bankId=(await catalog.list()).find(row=>row.bic==='BBVAESMMXXX').id;
+   const settings=createCompanyBankService(pool,own.id,catalog),other=createCompanyBankService(pool,foreign.id,catalog);
+   let saved=await settings.save({bank_id:bankId,iban:own.iban,initiator_id:'ES63000B22299945'});
+   const another=await other.save({bank_id:bankId,iban:foreign.iban,initiator_id:'FOREIGN-PRESENTER'});
+   await assert.rejects(settings.get(another.id),code('COMPANY_BANK_NOT_FOUND'));
+   const service=createBankRemittanceService(pool,own.id,{companyBanks:settings});
+   const body={...candidate,bank_account_id:saved.id,initiator_id:'FORGED',bic:'FORGED'};
+   const before=await service.preview(body);assert.equal(before.bank.initiator_id,'ES63000B22299945');assert.equal(before.bank.bic,'BBVAESMMXXX');assert.equal(before.ready,true);
+   saved=await settings.save({...saved,initiator_id:'UPDATED-PRESENTER'},saved.id);
+   await assert.rejects(service.create({...body,preview_hash:before.preview_hash,request_id:randomUUID()}),code('REMITTANCE_CHANGED'));
+   for(const direction of ['issued','received']){
+    const data={...bankBody(direction==='issued'?ids:[received.receipts[0].id],direction),bank_account_id:saved.id};
+    const preview=await service.preview(data),created=await service.create({...data,preview_hash:preview.preview_hash,request_id:randomUUID()});
+    const xml=(await service.file(created.id)).file.toString();assert.ok(xml.includes('<Id>'+(direction==='issued'?own.sepa_creditor_id:'UPDATED-PRESENTER')+'</Id>'));if(direction==='issued')assert.doesNotMatch(xml,/UPDATED-PRESENTER/);assert.match(xml,/<BICFI>BBVAESMMXXX<\/BICFI>/);assert.doesNotMatch(xml,/FOREIGN-PRESENTER/);
+    await service.cancel(created.id);
+   }
+  });
   let prepared,firstFile;
   await t.test('collection previews use client IBAN and mandates, and reject missing or stale information',async()=>{
    const preview=await remittances.preview(candidate);assert.equal(preview.ready,true);assert.equal(preview.total,'100.01');assert.equal(preview.items[0].iban,terms.iban);
@@ -85,7 +105,7 @@ test('MySQL portfolio splits and bank remittances preserve money, history, scope
    await accounting.updateAccount(customer.id,{sepa_mandate:{reference:'UNIQUE',signed_on:'2025-01-01',sequence:'OOFF'}});assert.equal((await remittances.preview(candidate)).ready,false);
    const one=bankBody([ids[0]]),review=await remittances.preview(one);assert.equal(review.ready,true);await remittances.create({...one,preview_hash:review.preview_hash,request_id:randomUUID()});
    const customerHistory=await remittances.list({direction:'issued'}),supplierHistory=await remittances.list({direction:'received'});
-   assert.ok(customerHistory.length>0);assert.ok(customerHistory.every(row=>row.direction==='issued'));assert.equal(supplierHistory.length,1);assert.equal(supplierHistory[0].id,saved.id);
+   assert.ok(customerHistory.length>0);assert.ok(customerHistory.every(row=>row.direction==='issued'));assert.equal(supplierHistory.filter(row=>row.status==='prepared').length,1);assert.equal(supplierHistory[0].id,saved.id);
    assert.deepEqual(await createBankRemittanceService(pool,foreign.id).list({direction:'received'}),[]);
    await assert.rejects(remittances.list({direction:'other'}),code('INVALID_REMITTANCE'));
    const other=await remittances.preview(bankBody([ids[1]]));assert.ok(other.items[0].issues.includes('REMITTANCE_MANDATE_REUSED'));
@@ -96,9 +116,10 @@ test('MySQL portfolio splits and bank remittances preserve money, history, scope
    const copied=(await createInvoiceService(pool,target.id).list()).find(row=>row.reference===initial.reference),copy=await createInvoiceService(pool,target.id).get(copied.id),history=copy.receipts.find(row=>row.split_history)?.split_history;
    assert.deepEqual(history[0].parts.map(row=>row.receipt_id).sort((a,b)=>a-b),copy.receipts.map(row=>row.id).sort((a,b)=>a-b));
    assert.equal((await createAccountingService(pool,target.id).getAccount(copy.party_account_id)).sepa_mandate.reference,'MAND-001');
+   assert.equal((await createCompanyBankService(pool,target.id,createGeneralBankService(pool)).list())[0].initiator_id,'UPDATED-PRESENTER');
    const list=await createBankRemittanceService(pool,target.id).list(),archived=list.find(row=>row.message_id===prepared.message_id);assert.deepEqual((await createBankRemittanceService(pool,target.id).file(archived.id)).file,firstFile.file);
    const rebackup=await createDataBackupService(pool,target.id).export('all');readBackup(rebackup.file);
-   const old=structuredClone(backup.data);delete old.checksum;for(const section of ['tables','references','schema'])delete old[section].bank_remittances;
+   const old=structuredClone(backup.data);delete old.checksum;for(const section of ['tables','references','schema']){delete old[section].bank_remittances;delete old[section].company_banks;}
    for(const [table,fields]of [['accounts',['sepa_mandate']],['portfolio_receipts',['split_history']],['company_details',['sepa_creditor_id','bank_initiator_id']]]){old.schema[table]=old.schema[table].filter(key=>!fields.includes(key));for(const row of [...old.tables[table],...old.references[table]])for(const field of fields)delete row[field];}
    const legacy=await create(),legacyService=createDataBackupService(pool,legacy.id),legacyPreview=await legacyService.preview(packBackup(sealBackup(old)),'all');assert.equal(legacyPreview.ready,true);await legacyService.restore({token:legacyPreview.token,request_id:randomUUID(),confirm:true});assert.deepEqual(await createBankRemittanceService(pool,legacy.id).list(),[]);
   });
@@ -122,6 +143,6 @@ test('MySQL portfolio splits and bank remittances preserve money, history, scope
    const prepared=await remittances.create({...body,preview_hash:preview.preview_hash,request_id:randomUUID()}),file=await remittances.file(prepared.id);assert.match(file.file.toString(),/<ReqdColltnDt>2099-12-31<\/ReqdColltnDt>/);
   });
  }finally{
-  try{for(const companyId of companyIds){for(const table of ['bank_remittances','data_restores','portfolio_settlements','portfolio_receipts','trade_invoice_lines','trade_invoices','journal_lines','journal_entries','company_details','accounting_exercises'])await pool.execute('DELETE FROM '+table+' WHERE company_id=?',[companyId]);const [accounts]=await pool.execute('SELECT id FROM accounts WHERE company_id=? ORDER BY LENGTH(code) DESC',[companyId]);for(const row of accounts)await pool.execute('DELETE FROM accounts WHERE company_id=? AND id=?',[companyId,row.id]);await pool.execute('DELETE FROM companies WHERE id=?',[companyId]);}}finally{await pool.end();}
+  try{for(const companyId of companyIds){for(const table of ['company_banks','bank_remittances','data_restores','portfolio_settlements','portfolio_receipts','trade_invoice_lines','trade_invoices','journal_lines','journal_entries','company_details','accounting_exercises'])await pool.execute('DELETE FROM '+table+' WHERE company_id=?',[companyId]);const [accounts]=await pool.execute('SELECT id FROM accounts WHERE company_id=? ORDER BY LENGTH(code) DESC',[companyId]);for(const row of accounts)await pool.execute('DELETE FROM accounts WHERE company_id=? AND id=?',[companyId,row.id]);await pool.execute('DELETE FROM companies WHERE id=?',[companyId]);}}finally{await pool.end();}
  }
 });

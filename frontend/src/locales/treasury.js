@@ -8,6 +8,7 @@ export const t={
  all:'Todos',direction:'Tipo',search:'Buscar factura o tercero',filter:'Consultar',status:'Estado',exercise:'Ejercicio de la factura',reference:'Número de factura',invoiceDate:'Fecha de factura',postingDate:'Fecha contable',
  autoReference:'Usar siguiente número',autoReferenceHelp:'Consecutivo automático; puedes editarlo.',manualReferenceHelp:'Número manual. Puedes recuperar el siguiente consecutivo.',lastReference:'Último número identificado',firstReference:'Primera numeración del ejercicio',invoiceSource:'Facturas',journalSource:'Diario',numberingLoading:'Consultando el siguiente número…',
  partyAccountSearch:'Buscar cliente / proveedor por nombre o código',partyAccountSearchHint:'Nombre, razón social, CIF o código',noPartyAccounts:'No hay cuentas que coincidan con la búsqueda.',selectedAccount:'Seleccionada',matchingAccounts:'cuentas encontradas',
+ refinePartySearch:'Escribe más para reducir los resultados o selecciona en la lista de subcuentas.',previousInvoiceAccount:'Cuenta propuesta de la última factura:',previousInvoiceAccountHelp:'Puedes cambiarla en Cuentas contables.',
  party:'Cliente / proveedor',partyName:'Nombre o razón social',taxId:'CIF / NIF',address:'Domicilio',email:'Correo',partyAccount:'Subcuenta del cliente / proveedor',newParty:'Crear subcuenta automáticamente',partyParent:'Cuenta del nuevo tercero',
  customer:'Cliente',debtor:'Deudor',supplier:'Proveedor',creditor:'Acreedor',partyHelp:'Selecciona un tercero existente o crea uno con los datos de esta factura.',
  items:'Conceptos e impuestos',concept:'Concepto',base:'Base imponible',vatRate:'IVA (%)',vat:'IVA',withholdingRate:'Retención (%)',withholding:'Retención',total:'Total a cobrar / pagar',
@@ -29,6 +30,10 @@ export const t={
  methods:{transfer:'Transferencia',direct_debit:'Domiciliación',cash:'Efectivo',card:'Tarjeta',other:'Otra'},
 };
 const errors={...partyText.errors,
+ TREASURY_CHANGED:'La previsió o l’assignació ha canviat. Actualitza les dades abans de guardar.',
+ TREASURY_PLAN_NOT_FOUND:'No s’ha trobat aquesta previsió en l’empresa seleccionada.',TREASURY_PLAN_CLOSED:'La previsió ja està substituïda o retirada. Actualitza les dades.',
+ TREASURY_LINK_MISMATCH:'El rebut ha de tenir el mateix sentit i import original que la previsió i no pot pertànyer a una factura anul·lada.',
+ TREASURY_LINK_EXISTS:'Aquest rebut ja substitueix una altra previsió. Revisa els vincles.',TREASURY_INVALID_PLAN:'Revisa el tipus, la descripció, la data i l’import de la previsió.',
  RECEIPT_CHANGED:'El recibo ha cambiado. Actualiza la cartera antes de continuar.',RECEIPT_IN_REMITTANCE:'El recibo está incluido en una remesa preparada. Cancela primero esa remesa si necesitas modificarlo.',SPLIT_TOTAL_MISMATCH:t.splitMismatch,RECEIPT_LIMIT:'La factura no puede superar los 60 recibos.',
  INVALID_INVOICE_NUMBERING:'La numeración automática solo está disponible para nuevas facturas emitidas.',INVOICE_NUMBER_UNAVAILABLE:'No se ha podido determinar el consecutivo. Revisa e introduce el número de factura.',
  INVALID_INVOICE:'Revisa los datos y el número de la factura.',INVALID_INVOICE_LINES:'Añade entre 1 y 40 conceptos con sus importes.',INVALID_INVOICE_AMOUNT:'La factura debe tener un importe positivo y dentro del límite permitido.',

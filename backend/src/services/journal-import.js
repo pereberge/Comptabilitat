@@ -9,10 +9,10 @@ import { companyHasCapability } from '../../../shared/company-formats.js';
 import { config } from '../config.js';
 import { createAutomaticBackupManager } from './automatic-backups.js';
 import { buildJournalImportPlan, describeJournalImportPlan } from './journal-import-plan.js';
+import { journalCompanyIdentity as identity } from './journal-company-identity.js';
 
 const previews = new Map(), lifetime = 15 * 60 * 1000;
 const sha = value => createHash('sha256').update(value).digest('hex');
-const identity = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 function extract(buffer) {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./pdf-journal-worker.js', import.meta.url), {workerData:buffer,execArgv:[],resourceLimits:{maxOldGenerationSizeMb:256}});
@@ -86,7 +86,7 @@ export function createJournalImportService(pool, companyId, options={}) {
       return {token,company:meta.company,exercise:{id:meta.exercise.id,name:meta.exercise.name},source_company:source.source_company,
         start_date:source.start_date,end_date:source.end_date,pages:source.pages,totals:source.totals,has_closing:source.has_closing,already_imported:replay,updating:!!current.existing&&!replay,changes,
         change_details:current.existing&&proposed?describeJournalImportPlan(proposed):[],
-        source_format:source.format||'libro_diario',source_layout:source.layout||null,numbering:source.numbering||'source',period_inferred:!!source.period_inferred,covered_from:source.covered_from||source.entries[0].entry_date,covered_to:source.covered_to||source.entries.at(-1).entry_date,
+        source_format:source.format||'libro_diario',source_layout:source.layout||null,numbering:source.numbering||'source',period_inferred:!!source.period_inferred,clipped_totals:!!source.clipped_totals,covered_from:source.covered_from||source.entries[0].entry_date,covered_to:source.covered_to||source.entries.at(-1).entry_date,
         sample:[source.entries[0],source.entries.at(-1)].map(({number,entry_date,description,debit,credit,entry_type,source_journal_code,source_entry_reference})=>({number,entry_date,description,debit,credit,entry_type,source_journal_code,source_entry_reference}))};
     },
     async commit(token) {

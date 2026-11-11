@@ -1,4 +1,6 @@
 import UsersView from '../views/UsersView.vue';
+import GeneralTablesView from '../views/GeneralTablesView.vue';
+import GeneralBanksView from '../views/GeneralBanksView.vue';
 import CompanyEvolutionView from '../views/CompanyEvolutionView.vue';
 import ReportsView from '../views/ReportsView.vue';
 import ProfitLossView from '../views/ProfitLossView.vue';
@@ -24,6 +26,9 @@ export const router = createRouter({
   routes: [{path:'/evolucion-empresas',name:'companyEvolution',component:CompanyEvolutionView},{path:'/usuarios',name:'users',component:UsersView},{path:'/verifactu',name:'verifactu',component:VerifactuView},{path:'/copias-seguridad',name:'dataBackup',component:DataBackupView},{path:'/documentacion',name:'documentation',component:DocumentationView},{path:'/conciliacion-bancaria',name:'bankReconciliation',component:BankReconciliationView},{path:'/facturas',name:'invoices',component:InvoicesView},{path:'/cartera',name:'portfolio',component:PortfolioView},{path:'/ejercicios',name:'exercises',component:ExercisesView},{path:'/empresas',name:'companies',component:CompaniesView},{path:'/perdidas-ganancias',name:'profitLoss',component:ProfitLossView},{path:'/balance-situacion',name:'balanceSheet',component:BalanceSheetView},{path:'/mayor',name:'ledger',component:ReportsView},{path:'/sumas-saldos',name:'trialBalance',component:ReportsView},{ path: '/proveedores', redirect: '/cuentas' },{ path: '/cuentas', name: 'accounts', component: AccountsView },{ path: '/asientos', name: 'entries', component: EntriesView },{ path: '/', name: 'home', component: HomeView }, { path: '/:pathMatch(.*)*', component: NotFoundView }],
 });
 router.addRoute({path:'/granjas',name:'farms',component:()=>import('../views/FarmManagementView.vue')});
+router.addRoute({path:'/tablas-generales',name:'generalTables',component:GeneralTablesView});
+router.addRoute({path:'/tablas-generales/bancos',name:'generalBanks',component:GeneralBanksView});
+router.addRoute({path:'/empresas/bancos',name:'companyBanks',component:()=>import('../views/CompanyBanksView.vue')});
 router.addRoute({path:'/compras',name:'purchases',component:()=>import('../views/PurchasesView.vue')});
 router.addRoute({path:'/hacienda',name:'tax',component:()=>import('../views/TaxView.vue')});
 router.addRoute({path:'/hacienda/sociedades',name:'corporateTax',component:()=>import('../views/CorporateTaxView.vue')});

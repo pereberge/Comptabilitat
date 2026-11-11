@@ -1,6 +1,7 @@
 import {accessError} from '../services/access-errors.js';
 import {treasuryError} from './treasury.js';
 export const remittanceErrors={
+ COMPANY_BANK_NOT_FOUND:'El banco no está configurado para esta empresa.',COMPANY_BANK_CHANGED:'La configuración bancaria ha cambiado. Actualiza y vuelve a editarla.',COMPANY_BANK_EXISTS:'Esta empresa ya tiene una configuración para ese banco. Edita la existente.',BANK_NOT_FOUND:'El banco no está disponible en el maestro general.',INVALID_COMPANY_BANK:'Revisa la configuración del banco de esta empresa.',
  INVALID_REMITTANCE:'Selecciona cobros o pagos y revisa los datos de la remesa.',INVALID_REMITTANCE_RECEIPTS:'Selecciona entre 1 y 1.000 recibos, sin repetirlos.',REMITTANCE_DATE_PAST:'La fecha de presentación no puede ser anterior a hoy.',
  REMITTANCE_COMPANY_IBAN:'Completa el IBAN de la empresa.',REMITTANCE_PARTY_IBAN:'Falta un IBAN válido en la ficha del cliente o proveedor.',REMITTANCE_PARTY_NAME:'Falta el nombre del titular del recibo.',REMITTANCE_COMPANY_NAME:'Falta el titular de la cuenta de la empresa.',
  REMITTANCE_PARTY_CHANGED:'El NIF de la ficha difiere del de la factura. Revisa el tercero antes de remesar.',REMITTANCE_MANDATE:'Completa la referencia y la fecha de firma del mandato en la ficha del cliente.',REMITTANCE_MANDATE_REUSED:'El mandato de cobro único o final ya está incluido en otra orden. Revisa su secuencia.',

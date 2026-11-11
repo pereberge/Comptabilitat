@@ -83,6 +83,26 @@ test('MySQL reconciliation lookup and receipt shortcuts preserve company scope, 
    const repeated=await imports.preview(source,company.year,'identical.csv','text/csv');await imports.analyze({token:repeated.token,account_id:bank.id,replace_current:true});assert.equal((await imports.commit({token:repeated.token})).id,current.id);await imports.discard({token:repeated.token});current=await service.get(current.id);
    assert.deepEqual(current.snapshot.scope.matched_movements.filter(row=>row.entry_id===result.entry_id).map(row=>row.id),[3]);assert.ok(current.snapshot.scope.bank_pending.some(row=>row.id===2));
   });
+  await t.test('validated partial payments and collections keep the remainder pending and later settle the same receipt',async()=>{
+   for(const direction of ['received','issued']){
+    const bill=await invoice(company,direction,'100.00'),receiptId=bill.receipts[0].id,negative=direction==='received';
+    const source=Buffer.from('Fecha;Concepto;Referencia;Importe;Saldo\n01/06/2026;Opening;;9000,00;9000,00\n02/06/2026;Partial;'+bill.reference+';'+(negative?'-40,00;8960,00':'40,00;9040,00')+'\n03/06/2026;Final;'+bill.reference+';'+(negative?'-60,00;8900,00':'60,00;9100,00'));
+    const preview=await imports.preview(source,company.year,'partial-'+direction+'.csv','text/csv');await imports.analyze({token:preview.token,account_id:bank.id,replace_current:true});const saved=await imports.commit({token:preview.token});await imports.discard({token:preview.token});
+    let current=await service.get(saved.id);const candidate=(await service.matches(current.id,2)).receipts.find(row=>row.id===receiptId);assert.equal(candidate.partial_payment,true);assert.equal(candidate.remaining_after_payment,'60.00');
+    const body={version:current.version,movement_id:2,receipt_id:receiptId,request_id:randomUUID(),payment_method:'transfer',reference:'Partial validated',notes:''};
+    await assert.rejects(service.settleMovement(current.id,body),error('RECONCILIATION_RECEIPT_CHANGED'));
+    await assert.rejects(service.settleMovement(current.id,{...body,partial_payment:true,expected_remaining_amount:'100.01'}),error('RECONCILIATION_RECEIPT_CHANGED'));
+    const partial={...body,partial_payment:true,expected_remaining_amount:'100.00'},before=await count('portfolio_settlements',company.id);
+    const failing={async getConnection(){const db=await pool.getConnection();return {execute(sql,args){if(sql.startsWith('UPDATE bank_reconciliations SET snapshot='))throw Error('Partial rollback');return db.execute(sql,args);},query:(...args)=>db.query(...args),beginTransaction:()=>db.beginTransaction(),commit:()=>db.commit(),rollback:()=>db.rollback(),release:()=>db.release()};}};
+    await assert.rejects(createBankReconciliationService(failing,company.id).settleMovement(current.id,partial),/Partial rollback/);assert.equal((await portfolio.get(receiptId)).remaining_amount,'100.00');assert.equal(await count('portfolio_settlements',company.id),before);
+    const [first,repeated]=await Promise.all([service.settleMovement(current.id,partial),service.settleMovement(current.id,partial)]);assert.equal(first.entry_id,repeated.entry_id);assert.equal(repeated.replayed,true);assert.equal(await count('portfolio_settlements',company.id),before+1);
+    const outstanding=await portfolio.get(receiptId);assert.equal(outstanding.status,'partial');assert.equal(outstanding.remaining_amount,'60.00');assert.equal(outstanding.paid_amount,'40.00');
+    await assert.rejects(service.settleMovement(current.id,{...partial,partial_payment:false}),error('REQUEST_CONFLICT'));
+    current=await service.get(current.id);const finalCandidate=(await service.matches(current.id,3)).receipts.find(row=>row.id===receiptId);assert.equal(finalCandidate.partial_payment,undefined);
+    const last=await service.settleMovement(current.id,{...body,request_id:randomUUID(),version:current.version,movement_id:3});assert.equal(last.remaining_amount,'0.00');assert.equal((await portfolio.get(receiptId)).status,'settled');assert.equal(await count('portfolio_settlements',company.id),before+2);
+    current=await service.get(current.id);assert.equal(current.snapshot.posted_movements.filter(row=>[2,3].includes(row.movement_id)).length,2);
+   }
+  });
  }finally{
   if(server)await new Promise(resolve=>server.close(resolve));
   for(const companyId of ids){for(const table of ['bank_reconciliations','bank_connections','bank_reconciliation_rules','invoice_documents','company_documents','portfolio_settlements','portfolio_receipts','trade_invoice_lines','trade_invoices','journal_lines','journal_entries','company_details','accounting_exercises'])await pool.execute('DELETE FROM '+table+' WHERE company_id=?',[companyId]);const [accounts]=await pool.execute('SELECT id FROM accounts WHERE company_id=? ORDER BY LENGTH(code) DESC',[companyId]);for(const row of accounts)await pool.execute('DELETE FROM accounts WHERE company_id=? AND id=?',[companyId,row.id]);await pool.execute('DELETE FROM companies WHERE id=?',[companyId]);}

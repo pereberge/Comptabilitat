@@ -19,10 +19,10 @@ function input(body){
  const receipt_ids=body.receipt_ids.map(id).sort((a,b)=>a-b);if(new Set(receipt_ids).size!==receipt_ids.length)fail('INVALID_REMITTANCE_RECEIPTS');
  const requested_date=date(body.requested_date);
  const bank={iban:normalizedIban(body.iban),bic:String(body.bic||'').replace(/\s/g,'').toUpperCase(),creditor_id:String(body.creditor_id||'').replace(/\s/g,'').toUpperCase(),initiator_id:String(body.initiator_id||'').trim()};
- return {direction:body.direction,receipt_ids,requested_date,bank};
+ return {direction:body.direction,receipt_ids,requested_date,bank,...(body.bank_account_id?{bank_account_id:id(body.bank_account_id)}:{})};
 }
 function summary(row){const snapshot=json(row.snapshot);return {id:row.id,direction:row.direction,message_id:row.message_id,requested_date:row.requested_date,status:row.status,filename:row.filename,created_at:row.created_at,cancelled_at:row.cancelled_at,total:snapshot.total,count:snapshot.items.length,iban:snapshot.bank.iban};}
-export function createBankRemittanceService(pool,companyId){
+export function createBankRemittanceService(pool,companyId,{companyBanks}={}){
  async function company(db){const [[row]]=await db.execute('SELECT c.id,c.name,d.account_holder,d.iban,d.bic,d.sepa_creditor_id,d.bank_initiator_id,d.address,d.city,d.country FROM companies c LEFT JOIN company_details d ON d.company_id=c.id WHERE c.id=?',[companyId]);return row;}
  async function rows(db,direction){
   const receipts=await receiptRows(db,companyId,{direction,status:'open'});if(!receipts.length)return [];
@@ -44,19 +44,25 @@ export function createBankRemittanceService(pool,companyId){
  async function preview(db,data){
   if(data.requested_date<today())fail('REMITTANCE_DATE_PAST');
   const own=await company(db),available=await rows(db,data.direction),byId=new Map(available.map(row=>[row.receipt_id,row]));
+  let bank=data.bank;
+  if(data.bank_account_id){
+   if(!companyBanks)fail('COMPANY_BANK_NOT_FOUND');
+   const saved=await companyBanks.get(data.bank_account_id,db);
+   bank={iban:saved.iban,bic:saved.bic,initiator_id:saved.initiator_id,creditor_id:saved.creditor_id||own.sepa_creditor_id||'',bank_account_id:saved.id,bank_id:saved.bank_id,version:saved.version,bank_version:saved.bank_version};
+  }
   const items=data.receipt_ids.map(receiptId=>{const row=byId.get(receiptId);if(!row)conflict('REMITTANCE_RECEIPT_UNAVAILABLE');return {...row,execution_date:row.due_date<data.requested_date?data.requested_date:row.due_date};});
   const issues=[];
-  if(!validSepaIban(data.bank.iban))issues.push('REMITTANCE_COMPANY_IBAN');
-  if(data.bank.bic&&!/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(data.bank.bic))issues.push('INVALID_BIC');
-  if(data.bank.initiator_id&&!sepaIdentifier(data.bank.initiator_id))issues.push('INVALID_INITIATOR_ID');
-  if(data.direction==='issued'&&!isValidCreditorId(data.bank.creditor_id))issues.push('INVALID_CREDITOR_ID');
+  if(!validSepaIban(bank.iban))issues.push('REMITTANCE_COMPANY_IBAN');
+  if(bank.bic&&!/^[A-Z0-9]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(bank.bic))issues.push('INVALID_BIC');
+  if(data.direction==='received'&&bank.initiator_id&&!sepaIdentifier(bank.initiator_id))issues.push('INVALID_INITIATOR_ID');
+  if(data.direction==='issued'&&!isValidCreditorId(bank.creditor_id))issues.push('INVALID_CREDITOR_ID');
   const owner={name:own.account_holder||own.name,address:own.address||'',city:own.city||'',country:country(own.country)};
   if(!sepaText(owner.name))issues.push('REMITTANCE_COMPANY_NAME');
   if(data.direction==='received'&&items.some(row=>!eea.has(row.iban.slice(0,2)))&&(!owner.address||!owner.country))issues.push('REMITTANCE_COMPANY_ADDRESS');
   // A one-off/final mandate must never be reused in another active file or twice in this file.
   if(data.direction==='issued'){
    const [used]=await db.execute("SELECT snapshot FROM bank_remittances WHERE company_id=? AND direction='issued' AND status='prepared'",[companyId]);
-   const creditorKey=value=>value.slice(0,4)+value.slice(7),prior=used.flatMap(row=>{const previous=json(row.snapshot);return creditorKey(previous.bank.creditor_id)===creditorKey(data.bank.creditor_id)?previous.items:[];}),seen=new Map();
+   const creditorKey=value=>value.slice(0,4)+value.slice(7),prior=used.flatMap(row=>{const previous=json(row.snapshot);return creditorKey(previous.bank.creditor_id)===creditorKey(bank.creditor_id)?previous.items:[];}),seen=new Map();
    for(const item of items){
     const key=item.mandate?.reference;
     const related=[...prior,...(seen.get(key)||[])].filter(row=>row.mandate?.reference===item.mandate?.reference);
@@ -64,7 +70,7 @@ export function createBankRemittanceService(pool,companyId){
     seen.set(key,[...(seen.get(key)||[]),item]);
    }
   }
-  const total=decimal(items.reduce((sum,row)=>sum+cents(row.amount),0n)),snapshot={direction:data.direction,requested_date:data.requested_date,bank:data.bank,company:owner,items,total};
+  const total=decimal(items.reduce((sum,row)=>sum+cents(row.amount),0n)),snapshot={direction:data.direction,requested_date:data.requested_date,bank,company:owner,items,total};
   return {...snapshot,issues,ready:!issues.length&&items.every(row=>!row.issues.length),preview_hash:hash({snapshot,company_defaults:own})};
  }
  return {
@@ -85,7 +91,7 @@ export function createBankRemittanceService(pool,companyId){
     const snapshot=await preview(db,data);if(snapshot.preview_hash!==body.preview_hash)conflict('REMITTANCE_CHANGED');if(!snapshot.ready)fail('REMITTANCE_INCOMPLETE');
     const messageId='M'+randomUUID().replaceAll('-',''),xml=Buffer.from(buildSepaXml(snapshot,messageId)),filename=(data.direction==='issued'?'cobros-19-':'pagos-34-')+data.requested_date+'-'+messageId+'.xml';
     const [created]=await db.execute('INSERT INTO bank_remittances(company_id,direction,message_id,requested_date,receipt_ids,snapshot,filename,xml_content,xml_sha256,request_id,request_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?)',[companyId,data.direction,messageId,data.requested_date,JSON.stringify(data.receipt_ids),JSON.stringify(snapshot),filename,xml,createHash('sha256').update(xml).digest('hex'),request,digest]);
-    return {id:created.insertId,direction:data.direction,message_id:messageId,requested_date:data.requested_date,status:'prepared',filename,total:snapshot.total,count:snapshot.items.length,iban:data.bank.iban,replayed:false};
+    return {id:created.insertId,direction:data.direction,message_id:messageId,requested_date:data.requested_date,status:'prepared',filename,total:snapshot.total,count:snapshot.items.length,iban:snapshot.bank.iban,replayed:false};
    });
   },
   async file(remittanceId){const [[row]]=await pool.execute('SELECT filename,xml_content FROM bank_remittances WHERE company_id=? AND id=?',[companyId,id(remittanceId)]);if(!row)throw new HttpError(404,'REMITTANCE_NOT_FOUND');return {filename:row.filename,file:row.xml_content};},

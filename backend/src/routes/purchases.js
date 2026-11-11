@@ -5,6 +5,7 @@ import {createPurchaseMailIntake} from '../services/purchase-mail-intake.js';
 export function purchaseRouter(){
  const router=Router();router.use((req,res,next)=>{requirePermission(req.user,'purchases_read');next();});
  router.get('/catalog',async(req,res)=>res.json(await req.purchases.catalog()));
+ router.post('/suppliers',async(req,res)=>{requirePermission(req.user,'accounting_write');res.status(201).json(await req.purchases.createSupplier(req.body));});
  router.post('/units',async(req,res)=>res.status(201).json(await req.purchases.createUnit(req.body)));
  router.post('/items',async(req,res)=>res.status(201).json(await req.purchases.createItem(req.body)));
  router.get('/items/:id/prices',async(req,res)=>res.json(await req.purchases.prices(req.params.id)));

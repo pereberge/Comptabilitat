@@ -1,6 +1,7 @@
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { calculateInvoice } from '../../../shared/invoice-money.js';
 import {layoutLines,invoiceDocumentHint,printedMoney} from './invoice-recognition.js';
+import {recognizeArdiacaInvoice} from './invoice-ardiaca.js';
 export const invoiceIdentity=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const monetary='(-?(?:\\d{1,3}(?:[.,]\\d{3})+|\\d+)[.,]\\d{2})(?!\\d)';
 const money=printedMoney;
@@ -30,6 +31,7 @@ export function invoiceSupplyExtraction(extraction){
  return address?{...extraction,supply_address:address}:extraction;
 }
 export function parseInvoicePages(pages){
+ const ardiaca=recognizeArdiacaInvoice(pages);if(ardiaca)return ardiaca;
  const sourceLines=layoutLines(pages),text=sourceLines.join('\n');
  const normalized=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  const empty={parser:'manual',supplier:{name:'',tax_id:'',address:''},customer:{name:'',tax_id:'',address:''},reference:'',invoice_date:null,due_date:null,payment_method:'transfer',lines:[],total_amount:null,tax_total:null,base_total:null,withholding_rate:'0',pages:pages.length,currency:'EUR',warnings:[]};

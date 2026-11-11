@@ -4,6 +4,8 @@ import {accessError} from './access-errors.js';
 import {treasuryError} from '../locales/treasury.js';
 export const purchaseApi=(path,options={})=>api('/purchases'+path,{timeoutMs:60000,...options});
 const errors={
+ PURCHASE_SUPPLIER_DATA_REQUIRED:'Completa i revisa el nom i el NIF del proveïdor abans de donar-lo d’alta.',
+ PURCHASE_MULTIPLE_INVOICES:'El PDF conté diverses factures que no s’han pogut separar amb seguretat. Puja cada factura per separat.',
  DATABASE_NOT_INITIALIZED:'La base de dades d’aquesta empresa no està preparada per a Compres. Cal aplicar les migracions pendents del mòdul abans de pujar factures.',
  SERVICE_UNAVAILABLE:'El servidor no ha pogut completar l’operació de Compres. Comprova que MySQL estigui disponible i que les migracions del mòdul estiguin aplicades.',
  PURCHASE_TOO_MANY_LINES:'El document supera el límit de línies: 40 per factura i 100 per comanda o albarà.',

@@ -7,6 +7,7 @@ import { withTransaction } from '../db/transaction.js';
 import { readReconciliationLedger, reconciliationLedgerHash } from './bank-reconciliations.js';
 import { bankReconciliationDates } from '../../../shared/bank-reconciliation.js';
 import {farmLotsOverlap} from '../../../shared/farm-lots.js';
+import {remapPurchaseProposals} from './purchase-backup.js';
 import { TABLES,TABLE_ORDER,SHARED,OPTIONAL_TABLES,fail,sha,encodeRow,sealBackup,packBackup,readBackup,binaryValue } from './backup-format.js';
 
 const previews=new Map(),lifetime=15*60*1000;
@@ -275,7 +276,7 @@ export function createDataBackupService(pool,companyId){
      }
     }
     for(const {table,row,newId}of pending){
-     if(table==='management_audit_events'&&row.entity_id!=null){const entityTable={orders:'purchase_orders',receipts:'purchase_receipts',invoices:'purchase_invoices',unit:'purchase_units',item:'purchase_items'}[row.entity_type];if(entityTable&&maps[entityTable].has(row.entity_id))await db.execute('UPDATE management_audit_events SET entity_id=? WHERE company_id=? AND id=?',[maps[entityTable].get(row.entity_id),companyId,newId]);}
+     if(table==='management_audit_events'&&row.entity_id!=null){const entityTable={orders:'purchase_orders',receipts:'purchase_receipts',invoices:'purchase_invoices',unit:'purchase_units',item:'purchase_items',supplier_account:'accounts',treasury_plan:'treasury_plans',treasury_receipt:'portfolio_receipts'}[row.entity_type];if(entityTable&&maps[entityTable].has(row.entity_id))await db.execute('UPDATE management_audit_events SET entity_id=? WHERE company_id=? AND id=?',[maps[entityTable].get(row.entity_id),companyId,newId]);}
      if(table==='bank_remittances'){
       const receiptIds=row.receipt_ids.map(value=>maps.portfolio_receipts.get(value)).filter(Boolean),complete=receiptIds.length===row.receipt_ids.length;
       await db.execute('UPDATE bank_remittances SET receipt_ids=?,snapshot=?,status=? WHERE company_id=? AND id=?',[JSON.stringify(receiptIds),JSON.stringify(remapJson(row.snapshot,maps)),complete?row.status:'archived',companyId,newId]);
@@ -283,7 +284,7 @@ export function createDataBackupService(pool,companyId){
      }
      const columns=meta[table].filter(column=>column.Type==='json'&&row[column.Field]!=null);
      if(!columns.length)continue;
-     const values=columns.map(column=>JSON.stringify(remapJson(row[column.Field],maps,table==='trade_invoices'?'company':column.Field==='result'&&table==='exercise_operations'&&row.kind==='create_exercise'?'exercise':'')));
+     const values=columns.map(column=>{const value=remapJson(row[column.Field],maps,table==='management_audit_events'?({supplier_account:'accounts',treasury_plan:'treasury_plans',treasury_receipt:'treasury_receipt_accounts'}[row.entity_type]||''):table==='trade_invoices'?'company':column.Field==='result'&&table==='exercise_operations'&&row.kind==='create_exercise'?'exercise':'');return JSON.stringify(table==='document_extraction_jobs'&&column.Field==='result'?remapPurchaseProposals(value,maps.purchase_invoices):value);});
      const timestamps=meta[table].filter(column=>column.Field==='updated_at');
      await db.execute('UPDATE '+table+' SET '+[...columns.map(column=>column.Field+'=?'),...timestamps.map(column=>column.Field+'=?')].join(',')+' WHERE company_id=? AND id=?',[...values,...timestamps.map(column=>row[column.Field]),companyId,newId]);
     }
@@ -313,7 +314,7 @@ export function createDataBackupService(pool,companyId){
   },
  };
 }
-const jsonIds={company_id:'companies',exercise_id:'accounting_exercises',source_exercise_id:'accounting_exercises',entry_id:'journal_entries',void_entry_id:'journal_entries',reversal_entry_id:'journal_entries',last_matching_entry_id:'journal_entries',operation_id:'exercise_operations',exercise_operation_id:'exercise_operations',cancelled_by_operation_id:'exercise_operations',import_id:'journal_imports',invoice_id:'trade_invoices',receipt_id:'portfolio_receipts',settlement_id:'portfolio_settlements',account_id:'accounts',parent_id:'accounts',party_account_id:'accounts',offset_account_id:'accounts',vat_account_id:'accounts',withholding_account_id:'accounts',bank_account_id:'accounts',result_account_id:'accounts'};
+const jsonIds={company_id:'companies',exercise_id:'accounting_exercises',source_exercise_id:'accounting_exercises',entry_id:'journal_entries',void_entry_id:'journal_entries',reversal_entry_id:'journal_entries',last_matching_entry_id:'journal_entries',operation_id:'exercise_operations',exercise_operation_id:'exercise_operations',cancelled_by_operation_id:'exercise_operations',import_id:'journal_imports',invoice_id:'trade_invoices',receipt_id:'portfolio_receipts',linked_receipt_id:'portfolio_receipts',settlement_id:'portfolio_settlements',account_id:'accounts',parent_id:'accounts',party_account_id:'accounts',offset_account_id:'accounts',vat_account_id:'accounts',withholding_account_id:'accounts',bank_account_id:'accounts',result_account_id:'accounts'};
 const contexts={company:'companies',issuer:'companies',exercise:'accounting_exercises',source:'accounting_exercises',affected_exercises:'accounting_exercises',account:'accounts',result_account:'accounts',entries:'journal_entries',cancel_entries:'journal_entries',cancelled_entries:'journal_entries',lines:'journal_lines',journal:'journal_lines',existing_invoice:'trade_invoices',receipts:'portfolio_receipts'};
 function remapJson(value,maps,context=''){
  if(Array.isArray(value))return value.map(item=>remapJson(item,maps,context));

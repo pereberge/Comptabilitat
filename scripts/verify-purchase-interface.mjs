@@ -16,6 +16,7 @@ const scenario=new URLSearchParams(location.search).get('scenario');
 if(['orders-list','group-list'].includes(scenario)){await useAccess().refresh();await useContext().refresh('85');}
 const document={id:scenario==='new'?null:7,kind:'invoices',status:'draft',version:1,reference:'UI-TEST',supplier_account_id:20,document_date:scenario==='new'?'':'2026-11-01',due_date:'',notes:'',original_document_id:scenario==='original'?9:null,source_name:'original.png',source_mime:'image/png',lines:[{id:101,item_id:1,description:'Material',quantity:'1',unit_price:'10',discount_rate:'0',tax_rate:'21',links:[]}],differences:[],price_comparisons:[]};
 const catalog={items:[{id:1,code:'MAT-1',description:'Material',unit_code:'kg',active:true}],suppliers:[{id:20,description:'Supplier',code:'40000001'}],sources:[]};
+if(scenario==='supplier-create'){document.supplier_account_id=null;document.extraction={supplier:{name:'Recognized supplier',tax_id:'F25003518',address:'Recognized address'}};}
 if(scenario==='original-pdf'){document.original_document_id=10;document.source_name='factura.pdf';document.source_mime='application/octet-stream';const {setCompanyId}=await import('/src/services/company.js');setCompanyId(85);}
 if(scenario==='cancellation')document.kind='receipts';
 if(scenario==='purchase-chain'){
@@ -94,6 +95,7 @@ try{
   const request=route.request(),url=new URL(request.url()),path=url.pathname;
   if(url.origin!==origin){unexpected.push(request.url());return route.abort();}
   if(uploadHandler&&path.startsWith('/api/purchases/'))return uploadHandler(route,path,request);
+  if(path==='/api/purchases/suppliers'){requests.push({path,body:request.postDataJSON()});return route.fulfill({status:201,json:{id:21,code:'40000002',description:'Recognized supplier'}});}
   if(request.method()==='GET'&&/^\/api\/purchases\/(orders|receipts|invoices)$/.test(path))listLoads.push(path);
   if(new URL(page.url()).searchParams.get('scenario')==='cancellation'&&path.startsWith('/api/purchases/')){
    cancellationCalls.push({path,method:request.method(),body:request.method()==='POST'?request.postDataJSON():null});
@@ -208,6 +210,14 @@ try{
  const confirm=()=>page.getByRole('button',{name:'Confirmar factura i comptabilitzar',exact:true});
  const review=()=>page.getByRole('checkbox');
 
+ await open('supplier-create');
+ const supplierCalls=()=>requests.filter(request=>request.path==='/api/purchases/suppliers');
+ assert.equal(supplierCalls().length,0,'Reading a proposal must not create a supplier');
+ await page.getByRole('button',{name:'Revisar / crear proveïdor',exact:true}).click();
+ const supplierDialog=page.getByRole('dialog',{name:'Revisar les dades del proveïdor',exact:true});
+ assert.equal(await supplierDialog.locator('[name=party_name]').inputValue(),'Recognized supplier');assert.equal(await supplierDialog.locator('[name=party_tax_id]').inputValue(),'F25003518');assert.equal(await supplierDialog.locator('[name=party_address]').inputValue(),'Recognized address');
+ await supplierDialog.getByRole('button',{name:'Validar i utilitzar proveïdor',exact:true}).click();await supplierDialog.waitFor({state:'detached'});
+ assert.equal(supplierCalls().length,1);assert.equal(supplierCalls()[0].body.party.tax_id,'F25003518');assert.equal(await page.locator('select').first().inputValue(),'21');
  await open('cancellation');
  await page.getByText('Historial del document',{exact:true}).click();await page.getByText(/tester · create/).waitFor();await page.getByText('Historial del document',{exact:true}).click();
  const cancelDocument=()=>page.getByRole('button',{name:'Cancel·lar document',exact:true});
@@ -552,7 +562,7 @@ try{
  assert.equal(await page.getByRole('dialog').count(),1);assert.equal(await invoice.getByLabel('Concepte 1',{exact:true}).inputValue(),'Unsaved invoice change');originFailure=false;
  const selectedFile={name:'invoice.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\n%%EOF')};
  const select=()=>page.locator('input[type=file]').setInputFiles(selectedFile);
- const uploaded=[],uploadedModes=[],calls=[];let mode='upload-failure',fail=true;
+ const uploaded=[],uploadedModes=[],calls=[];let mode='upload-failure',fail=true,failuresLeft=0;
  uploadHandler=async(route,path,request)=>{
   calls.push(request.method()+' '+path);
   if(path==='/api/purchases/ocr'){
@@ -560,16 +570,16 @@ try{
    uploaded.push(request.headers()['x-request-id']);
    uploadedModes.push(request.headers()['x-ocr-mode']);
    if(mode==='upload-failure'&&fail){fail=false;return route.fulfill({status:503,json:{error:{code:'NETWORK_ERROR'}}});}
-   return route.fulfill({json:{id:41,status:mode==='ocr-error'?'error':mode==='poll-failure'?'queued':'done',purchase_invoice_id:7,possible_duplicate:mode==='duplicate'}});
+   return route.fulfill({json:{id:41,status:mode==='ocr-error'?'error':['poll-failure','poll-restart'].includes(mode)?'queued':'done',purchase_invoice_id:7,possible_duplicate:mode==='duplicate',...(mode==='batch'?{result:{proposals:[{id:7,reference:'BATCH-A',source_pages:[1,2,3]},{id:8,reference:'BATCH-B',source_pages:[4,5]}]}}:{})}});
   }
   if(path==='/api/purchases/ocr/41/retry')return route.fulfill({json:{id:41,status:'done',purchase_invoice_id:7}});
   if(path==='/api/purchases/ocr/41'){
-   if(fail){fail=false;return route.fulfill({status:503,json:{error:{code:'NETWORK_ERROR'}}});}
+   if(failuresLeft>0){failuresLeft--;return route.fulfill({status:503,json:{error:{code:'NETWORK_ERROR'}}});}
    return route.fulfill({json:{id:41,status:'done',purchase_invoice_id:7}});
   }
-  if(path==='/api/purchases/invoices/7'){
+  if(['/api/purchases/invoices/7','/api/purchases/invoices/8'].includes(path)){
    if(mode==='open-failure'&&fail){fail=false;return route.fulfill({status:503,json:{error:{code:'NETWORK_ERROR'}}});}
-   return route.fulfill({json:{id:7,kind:'invoices',status:'draft'}});
+   return route.fulfill({json:{id:path.endsWith('/8')?8:7,kind:'invoices',status:'draft'}});
   }
   unexpected.push(path);return route.abort();
  };
@@ -581,13 +591,17 @@ try{
  await page.getByRole('checkbox',{name:'Llegir també amb Tesseract OCR'}).uncheck();
  await select();await draft();assert.notEqual(uploaded[1],uploaded[2],'New file selection needs a new request ID');
  assert.equal(uploadedModes[2],'auto','User can choose automatic text extraction instead');
+ mode='poll-restart';failuresLeft=2;calls.length=0;await open('upload');await select();await page.getByRole('status').filter({hasText:'Reprenent la connexió'}).waitFor();await draft();
+ assert.equal(calls.filter(call=>call==='POST /api/purchases/ocr').length,1,'A short server restart must not reupload the original');assert.equal(calls.filter(call=>call==='GET /api/purchases/ocr/41').length,3);assert.equal(await page.getByRole('alert').count(),0);
  for(const [scenario,label] of [['ocr-error','Reintentar reconeixement'],['poll-failure','Tornar a comprovar'],['open-failure','Obrir proposta']]){
-  mode=scenario;fail=true;calls.length=0;await open('upload');await select();
+  mode=scenario;fail=true;failuresLeft=scenario==='poll-failure'?3:0;calls.length=0;await open('upload');await select();
   await page.getByRole('button',{name:label,exact:true}).click();await draft();
   assert.equal(calls.filter(call=>call==='POST /api/purchases/ocr').length,1,'Recovery must not upload another original');
   assert.equal(calls.includes('POST /api/purchases/ocr/41/retry'),scenario==='ocr-error');
  }
  mode='duplicate';await open('upload');await select();await draft();assert.equal(await page.getByText(/Es reutilitza el treball existent/).count(),1);
+ mode='batch';calls.length=0;await open('upload');await select();await page.getByRole('region',{name:'Factures reconegudes'}).waitFor();assert.equal(await page.evaluate(()=>window.uploadDraft),undefined,'Do not choose an invoice silently from a multi-invoice PDF');
+ await page.getByRole('button',{name:'Obrir proposta BATCH-B',exact:true}).click();await page.waitForFunction(()=>window.uploadDraft?.id===8);await page.getByRole('button',{name:'Obrir proposta BATCH-A',exact:true}).click();await draft();assert.equal(calls.filter(call=>call==='POST /api/purchases/ocr').length,1,'Opening either invoice must reuse the same uploaded original');
  await open('upload');calls.length=0;await page.locator('input[type=file]').setInputFiles({...selectedFile,name:'invalid.txt'});await page.getByRole('alert').waitFor();assert.equal(calls.length,0);
  mode='poll-failure';await open('upload');calls.length=0;await select();await page.getByRole('button',{name:'Switch company',exact:true}).click();await page.waitForTimeout(1700);
  assert.equal(await page.evaluate(()=>window.uploadDraft),undefined);assert.equal(calls.length,1,'Unmounted upload must stop polling');

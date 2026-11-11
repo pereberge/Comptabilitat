@@ -41,7 +41,7 @@ try{
  let result=recognizePurchasePages(pages);const scores=pages.filter(page=>page.confidence!==undefined).map(page=>page.confidence);
  if(workerData.forceOcr&&digitalPages.some(page=>page.items.length)){
   const digital=recognizePurchasePages(digitalPages);
-  const score=value=>(value.totals_verified?100:0)+['reference','invoice_date','base_total','tax_total','total_amount'].filter(key=>value[key]).length+(value.supplier?.tax_id?2:0);
+  const score=value=>value.invoices?.length?value.invoices.reduce((sum,invoice)=>sum+score(invoice),0):(value.totals_verified?100:0)+(value.header_totals_verified?20:0)+(value.commercial_lines?.length?10:0)+['reference','invoice_date','base_total','tax_total','total_amount'].filter(key=>value[key]).length+(value.supplier?.tax_id?2:0);
   if(score(digital)>=score(result)){
    const disagreement=result.reference&&digital.reference&&result.reference!==digital.reference;
    result={...digital,field_source:'pdf-text',warnings:[...digital.warnings,'També s’ha llegit el document amb Tesseract. S’han conservat els camps més complets del text del PDF.',...(disagreement?['Tesseract i el text del PDF difereixen en el número de factura. Revisa’l amb l’original.']:[])]};

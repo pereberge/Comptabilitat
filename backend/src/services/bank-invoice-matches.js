@@ -12,12 +12,13 @@ export function matchPendingInvoices(rows,invoices,{amountOnly=false}={}){
    if(invoice.direction==='issued'&&value<0n||invoice.direction==='received'&&value>0n)continue;
    const dates=[data.due_date,data.invoice_date].filter(validDate).map(date=>({date,distance:Math.abs(bankDayNumber(date)-bankDayNumber(row.date))})).sort((a,b)=>a.distance-b.distance);
    const closest=dates[0],reference=normalize(data.reference),party=normalize(invoice.direction==='issued'?data.customer?.name:data.supplier?.name);
-   const referenceMatches=reference.length>=4&&concept.replaceAll(' ','').includes(reference.replaceAll(' ',''));
+   const explicitReferenceMatches=reference.replaceAll(' ','').length>=4&&normalize(row.reference).replaceAll(' ','')===reference.replaceAll(' ','');
+   const referenceMatches=explicitReferenceMatches||reference.length>=4&&concept.replaceAll(' ','').includes(reference.replaceAll(' ',''));
    const words=party.split(' ').filter(word=>word.length>=4),partyMatches=words.length>0&&words.some(word=>concept.split(' ').includes(word));
    const dated=closest&&closest.distance<=BANK_BALANCE_MAX_DAYS;
    if(!amountOnly&&!dated&&!referenceMatches&&!partyMatches)continue;
    candidates.push({documentation_id:invoice.id,version:invoice.version,title:invoice.title,source_name:invoice.source_name,reference:data.reference||'',party:invoice.direction==='issued'?data.customer?.name||'':data.supplier?.name||'',invoice_date:data.invoice_date||null,due_date:data.due_date||null,total_amount:data.total_amount,
-    difference_days:closest?.distance??null,basis:'Importe exacto'+(dated?' y fecha a '+closest.distance+' días':'')+(referenceMatches?'; referencia en el concepto':'')+(partyMatches?'; nombre en el concepto':''),confidence:referenceMatches||partyMatches?'Importe y referencia / nombre':dated?'Importe y fecha; validar':'Solo importe; revisar la factura',rank:(referenceMatches?4:0)+(partyMatches?2:0)+(dated?1:0)});
+    difference_days:closest?.distance??null,basis:'Importe exacto'+(dated?' y fecha a '+closest.distance+' días':'')+(explicitReferenceMatches?'; referencia bancaria coincidente':referenceMatches?'; referencia en el concepto':'')+(partyMatches?'; nombre en el concepto':''),confidence:referenceMatches||partyMatches?'Importe y referencia / nombre':dated?'Importe y fecha; validar':'Solo importe; revisar la factura',rank:(referenceMatches?4:0)+(partyMatches?2:0)+(dated?1:0)});
   }
   candidates.sort((a,b)=>b.rank-a.rank||(a.difference_days??Infinity)-(b.difference_days??Infinity)||a.documentation_id-b.documentation_id);
   if(candidates.length)matches.push({movement_id:row.id,date:row.date,concept:row.concept,amount:row.amount,ambiguous:candidates.length>1,candidates:candidates.map(({rank,...candidate})=>candidate)});

@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {databaseName,quoteDatabase} from '../db/company-databases.js';
 import {id} from './validation.js';
 
-export const centralTables=new Set(['app_users','app_sessions','app_user_companies','company_databases','integration_company_links']);
+export const centralTables=new Set(['app_users','app_sessions','app_user_companies','company_databases','integration_company_links','general_banks']);
 const quote=value=>'`'+String(value).replace(/`/g,'``')+'`';
 export const companyDatabaseName=(source,companyId)=>databaseName(source+'_company_'+id(companyId));
 export function companyCopyFilter(table,columns,companyId){

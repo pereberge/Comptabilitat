@@ -11,6 +11,12 @@ function fixture(){
  return {format:'contabilitat-backup',version:1,created_at:'2026-10-21T10:00:00Z',scope:{kind:'exercise',exercise_id:2},tables,references:Object.fromEntries(TABLE_ORDER.map(table=>[table,[]])),schema:Object.fromEntries(TABLE_ORDER.map(table=>[table,Object.keys(tables[table][0]||{})]))};
 }
 const code=expected=>error=>error.code===expected;
+test('treasury plans survive backups while old archives and invalid amounts or banks remain controlled',()=>{
+ const value=fixture();value.tables.treasury_plans=[{id:50,company_id:1,direction:'received',description:'Expected supplier payment',expected_date:'2026-11-20',amount:'100.00',bank_account_id:6,status:'pending',linked_receipt_id:null,version:1,request_id:'00000000-0000-0000-0000-000000000050'}];value.schema.treasury_plans=Object.keys(value.tables.treasury_plans[0]);
+ assert.equal(readBackup(packBackup(sealBackup(value))).tables.treasury_plans[0].amount,'100.00');
+ for(const patch of [{amount:'-1.00'},{bank_account_id:4},{expected_date:'2026-02-31'},{status:'linked'}]){const invalid=structuredClone(value);Object.assign(invalid.tables.treasury_plans[0],patch);assert.throws(()=>readBackup(packBackup(sealBackup(invalid))),code('BACKUP_INVALID_ACCOUNTING'));}
+ const old=fixture();for(const table of ['treasury_plans','treasury_receipt_accounts'])for(const section of ['tables','references','schema'])delete old[section][table];assert.deepEqual(readBackup(packBackup(sealBackup(old))).tables.treasury_plans,[]);
+});
 test('pre-care backups adapt numeric lot names only after verifying their original checksum',()=>{
  const data=fixture();data.tables.pig_farms=[{id:30,company_id:1,code:'12',name:'Farm'}];data.tables.farm_lots=[{id:31,company_id:1,farm_id:30,code:'1',entry_date:'2026-01-01',exit_date:null}];data.schema.pig_farms=Object.keys(data.tables.pig_farms[0]);data.schema.farm_lots=Object.keys(data.tables.farm_lots[0]);
  for(const section of ['schema','tables','references'])delete data[section].farm_care_costs;

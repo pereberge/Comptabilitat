@@ -6,6 +6,18 @@ import {matchPendingInvoices} from '../src/services/bank-invoice-matches.js';
 const account={id:1,code:'57200001',kind:'subaccount',description:'Bank'},fee={id:2,code:'62600001',kind:'subaccount',description:'Bank fees'};
 const line=(id,date,debit,credit,description='Test',type='normal')=>({entry_id:id,number:id,position:1,exercise_id:1,entry_date:date,status:'posted',entry_type:type,code:account.code,debit,credit,description});
 const row=(id,date,concept,amount,balance)=>({id,date,value_date:date,page:1,concept,amount,balance});
+test('separate bank references suggest invoices with exact amount and direction but never settle them',()=>{
+ const movement={...row(2,'2026-07-01','Transferencia','-10.00','90.00'),reference:'INV-00017'};
+ const invoice=(id,reference,extra={})=>({id,version:1,title:'Invoice',direction:'received',extraction:{reference,total_amount:'10.00',invoice_date:'2026-01-01',supplier:{name:'Supplier'},currency:'EUR',...extra}});
+ const invoices=[invoice(1,'INV-00017'),invoice(2,'INV-00018'),invoice(3,'INV-00017',{total_amount:'10.01'}),{...invoice(4,'INV-00017'),direction:'issued'},invoice(5,'INV-00017',{currency:'USD'})];
+ const before=JSON.stringify({movement,invoices}),matches=matchPendingInvoices([movement],invoices);
+ assert.deepEqual(matches[0].candidates.map(candidate=>candidate.documentation_id),[1]);assert.match(matches[0].candidates[0].basis,/referencia bancaria/);
+ assert.equal(JSON.stringify({movement,invoices}),before);
+ assert.deepEqual(matchPendingInvoices([{...movement,reference:'INV-000170'}],invoices),[]);
+ const ambiguous=matchPendingInvoices([movement],[invoice(1,'INV-00017'),invoice(6,'INV-00017')]);assert.equal(ambiguous[0].ambiguous,true);assert.equal(ambiguous[0].candidates.length,2);
+ const analysis=build([row(1,'2026-06-01','Opening','100.00','100.00'),movement],[line(1,'2026-06-01','100.00','0.00')],[],[account,fee],invoices);
+ assert.equal(analysis.bank_rows[1].reference,'INV-00017');assert.equal(analysis.pending_invoice_matches[0].candidates[0].documentation_id,1);assert.equal(analysis.proposals.length,0);
+});
 test('daily anchors accept up to three cents in both directions and preserve the real difference',()=>{
  for(const [book,accepted]of [['100.00',true],['100.03',true],['99.97',true],['100.04',false],['99.96',false]]){
   const data=build([row(1,'2026-02-10','Transfer','100.00','100.00'),row(2,'2026-02-25','MANTENIMENT','-10.00','90.00')],[line(1,'2026-02-10',book,'0.00')]);

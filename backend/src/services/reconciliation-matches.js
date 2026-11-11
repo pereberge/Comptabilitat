@@ -4,14 +4,17 @@ import {readPendingDocumentInvoices} from './document-invoice-data.js';
 import {matchPendingInvoices} from './bank-invoice-matches.js';
 import {bankDayNumber} from '../../../shared/bank-reconciliation.js';
 import {decimal} from '../../../shared/money.js';
+import {partialReceiptMatch} from './reconciliation-partials.js';
 
 export async function readReconciliationMatches(db,companyId,movement){
  const value=amount(movement.amount),absolute=value<0n?-value:value;
  const pending=await receiptRows(db,companyId,{status:'open',direction:value<0n?'received':'issued'});
+ const partials=new Map(pending.map(row=>[row.id,partialReceiptMatch(row,movement)]));
  const receipts=pending
-  .filter(row=>amount(row.remaining_amount)===absolute)
+  .filter(row=>amount(row.remaining_amount)===absolute||partials.get(row.id))
   .map(row=>({id:row.id,invoice_id:row.invoice_id,exercise_id:row.exercise_id,exercise_name:row.exercise_name,direction:row.direction,reference:row.reference,party_name:row.party_name,invoice_date:row.invoice_date,posting_date:row.invoice_entry_date||row.posting_date,due_date:row.due_date,amount:row.amount,paid_amount:row.paid_amount,remaining_amount:row.remaining_amount,payment_method:row.payment_method,status:row.status,remittance_id:row.remittance_id}))
-  .sort((a,b)=>Math.abs(bankDayNumber(a.due_date)-bankDayNumber(movement.date))-Math.abs(bankDayNumber(b.due_date)-bankDayNumber(movement.date))||a.id-b.id);
+  .map(row=>({...row,...(partials.get(row.id)||{})}))
+  .sort((a,b)=>Number(!!a.partial_payment)-Number(!!b.partial_payment)||Math.abs(bankDayNumber(a.due_date)-bankDayNumber(movement.date))-Math.abs(bankDayNumber(b.due_date)-bankDayNumber(movement.date))||a.id-b.id);
  const documents=await readPendingDocumentInvoices(db,companyId);
  const invoices=matchPendingInvoices([movement],documents,{amountOnly:true})[0]?.candidates||[];
  const [drafts]=await db.execute("SELECT id,version,exercise_id,source_name,reference,party_name,invoice_date,total_amount,extraction FROM invoice_documents WHERE company_id=? AND status='draft' AND direction=? AND total_amount=? ORDER BY invoice_date,id",[companyId,value<0n?'received':'issued',decimal(absolute)]);

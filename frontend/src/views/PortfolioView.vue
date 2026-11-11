@@ -9,12 +9,14 @@ import { reportMoney as money,reportDate as date,downloadCsv } from '../services
 import { t,treasuryError } from '../locales/treasury.js';
 import TradeTabs from '../components/TradeTabs.vue';
 import PortfolioTabs from '../components/PortfolioTabs.vue';
+import TreasuryForecast from '../components/TreasuryForecast.vue';
 import ReceiptDetail from '../components/ReceiptDetail.vue';
 import InvoiceDetail from '../components/InvoiceDetail.vue';
 import PortfolioActionDialog from '../components/PortfolioActionDialog.vue';
 import ReconciliationReturn from '../components/ReconciliationReturn.vue';
 import {t as matchText} from '../locales/reconciliation-matches.js';
-const {company,exercises}=useContext(),route=useRoute(),router=useRouter();
+const {company,exercises,selectedId}=useContext(),route=useRoute(),router=useRouter();
+const forecast=ref(false);
 const data=ref(null),loading=ref(false),error=ref(''),notice=ref(''),detail=ref(null),invoice=ref(null),action=ref(null),voiding=ref(null),applied=ref('');let generation=0;
 const filters=ref({direction:'all',status:'open',exercise_id:'',from:'',to:'',search:'',as_of:new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date())});
 function query(){const scoped=route.query.company_id===String(company.value.id);return {...filters.value,...(scoped&&route.query.invoice_id?{invoice_id:route.query.invoice_id}:{}),...(scoped&&route.query.receipt_id?{receipt_id:route.query.receipt_id}:{})};}
@@ -35,6 +37,8 @@ function exportCsv(){if(!data.value||loading.value||applied.value!==JSON.stringi
 onBeforeUnmount(()=>generation++);
 </script>
 <template>
+ <button type="button" class="button" :disabled="!selectedId" @click="forecast=true">Previsió de tresoreria · 30 / 60 / 90 dies</button>
+ <TreasuryForecast v-if="forecast" :key="company.id+':'+selectedId" :exercise-id="selectedId" @close="forecast=false" />
  <ReconciliationReturn /><TradeTabs /><div class="page-heading"><div><h1>{{ t.portfolio }}</h1><p class="muted">{{ t.portfolioIntro }}</p></div><button class="button" :disabled="!data||loading||applied!==JSON.stringify(query())" @click="exportCsv">{{ t.export }}</button></div><PortfolioTabs />
  <p v-if="error" role="alert" class="notice error-notice">{{ error }}</p><p v-if="notice" role="status" class="success-note">{{ notice }}</p>
  <div v-if="data" class="portfolio-summary"><section v-for="[key,label] in [['receivable',t.pendingCollections],['payable',t.pendingPayments],['overdue_receivable',t.overdueCollections],['overdue_payable',t.overduePayments]]" :key="key" class="panel"><p class="muted">{{ label }}</p><strong>{{ money(data.totals[key]) }} €</strong></section></div>

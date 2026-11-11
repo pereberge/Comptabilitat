@@ -1,12 +1,15 @@
 import {parseInvoicePages} from './invoice-pdf.js';
 import {recognizeO2Purchase} from './purchase-o2.js';
+import {recognizeSantIsidrePurchases} from './purchase-sant-isidre.js';
 const normalize=value=>String(value).normalize('NFD').replace(/\p{M}/gu,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const number=value=>{
  let text=String(value).replace(/EUR|€|%/gi,'').trim().replace(/\s/g,'');if(text.includes(','))text=text.replaceAll('.','').replace(',','.');
  return /^\d{1,14}(?:\.\d{1,6})?$/.test(text)?text:null;
 };
 export function recognizePurchasePages(pages){
+ const cooperative=recognizeSantIsidrePurchases(pages);if(cooperative)return cooperative;
  const extraction=recognizeO2Purchase(parseInvoicePages(pages),pages),commercial=[];
+ if(extraction.parser==='ardiaca')return extraction;
  for(const page of pages){
   const aliases={description:['DESCRIPCION','DESCRIPCIO','ARTICULO','ARTICLE','CONCEPTO','CONCEPTE'],quantity:['CANTIDAD','QUANTITAT','QTY','CANT','QUANT'],price:['PRECIO','PREU','PRECIOUNITARIO','PREUUNITARI'],discount:['DESCUENTO','DESCOMPTE','DTO'],tax:['IVA'],code:['CODIGO','CODI','REF','REFERENCIA']};
   const headers=Object.fromEntries(Object.entries(aliases).map(([key,names])=>[key,page.items.find(item=>names.includes(normalize(item.text)))]));

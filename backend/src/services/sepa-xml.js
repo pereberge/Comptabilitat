@@ -11,7 +11,8 @@ export function buildSepaXml(snapshot,messageId,createdAt=new Date().toISOString
  const {direction,bank,company,items,requested_date}=snapshot,collection=direction==='issued';
  const namespace='urn:iso:std:iso:20022:tech:xsd:'+(collection?'pain.008.001.08':'pain.001.001.09');
  const total=decimal(items.reduce((sum,row)=>sum+cents(row.amount),0n));
- const initiating=name(company.name)+(bank.initiator_id?identification(bank.initiator_id):'');
+ const initiatingId=collection?bank.creditor_id:bank.initiator_id;
+ const initiating=name(company.name)+(initiatingId?identification(initiatingId):'');
  const header='<GrpHdr>'+tag('MsgId',messageId)+tag('CreDtTm',createdAt)+tag('NbOfTxs',items.length)+tag('CtrlSum',total)+'<InitgPty>'+initiating+'</InitgPty></GrpHdr>';
  const grouped=new Map();
  for(const row of items){const key=(row.execution_date||requested_date)+'|'+(collection?row.mandate.sequence:'');if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(row);}

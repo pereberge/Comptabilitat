@@ -8,6 +8,9 @@ import {createInvoiceService} from './invoices.js';
 import {calculateInvoice} from '../../../shared/invoice-money.js';
 import {purchaseLine,purchaseTotals,purchaseNumber,purchaseDecimal,purchasePriceChange,purchaseAmountDifferences,purchaseLineLimits} from '../../../shared/purchases.js';
 import {purchaseDocumentMime} from './purchase-document-reader.js';
+import {partyAccount} from './trade-posting.js';
+import {normalizePartyProfile} from '../../../shared/account-party.js';
+import {partyTaxId} from '../../../shared/party-identity.js';
 const types={orders:['purchase_orders','purchase_order_lines'],receipts:['purchase_receipts','purchase_receipt_lines'],invoices:['purchase_invoices','purchase_invoice_lines']};
 const type=value=>{if(!types[value])fail('PURCHASE_INVALID_TYPE');return types[value];};
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
@@ -148,6 +151,13 @@ export function createPurchaseService(pool,companyId,actor='local'){
  }
  async function clearLinks(db,kind,doc){for(const line of doc.lines){if(kind==='receipts')await db.execute('DELETE FROM purchase_order_receipts WHERE company_id=? AND receipt_line_id=?',[companyId,line.id]);if(kind==='invoices')await db.execute('DELETE FROM purchase_invoice_links WHERE company_id=? AND invoice_line_id=?',[companyId,line.id]);}}
  const service={
+  createSupplier:body=>{
+   let party;try{party=normalizePartyProfile(body?.party);}catch(error){fail(error.message);}party.tax_id=partyTaxId(party.tax_id);if(!party.name||!party.tax_id)fail('PURCHASE_SUPPLIER_DATA_REQUIRED');
+   return operation('supplier.prepare',body.request_id,{party},async db=>{
+    const settings=await lockCompany(db,companyId),account=await partyAccount(db,companyId,settings,{direction:'received',party,party_parent:'4000'});
+    const [[saved]]=await db.execute('SELECT id,code,description,party_profile FROM accounts WHERE company_id=? AND id=?',[companyId,account.id]);const result={...saved,party_profile:parse(saved.party_profile)};await audit(db,'prepare','supplier_account',saved.id,null,result);return result;
+   });
+  },
   async catalog(){
    const [units]=await pool.execute('SELECT * FROM purchase_units WHERE company_id=? ORDER BY code',[companyId]);
    const [items]=await pool.execute('SELECT i.*,u.code AS unit_code FROM purchase_items i JOIN purchase_units u ON u.company_id=i.company_id AND u.id=i.unit_id WHERE i.company_id=? ORDER BY i.code',[companyId]);

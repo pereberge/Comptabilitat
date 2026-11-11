@@ -8,6 +8,7 @@ import { receiptDetail,receiptRows,today } from './portfolio-data.js';
 import { requireAccount,reverseJournal } from './trade-posting.js';
 import { postJournalEntry } from './accounting.js';
 import {requireUnremittedReceipt} from './remittance-lock.js';
+import {readTreasuryForecast} from './treasury-forecast.js';
 // The caller owns the transaction, so reconciliation and settlement can commit together.
 export async function settlePortfolioReceipt(db,companyId,receiptId,body){
  const target=id(receiptId),data={request_id:requestId(body?.request_id),exercise_id:id(body?.exercise_id),payment_date:date(body?.payment_date),amount:positiveAmount(body?.amount),bank_account_id:id(body?.bank_account_id),payment_method:method(body?.payment_method),reference:text(body?.reference,100),notes:text(body?.notes,500)},digest=hash({receipt_id:target,...data});
@@ -29,6 +30,7 @@ export async function settlePortfolioReceipt(db,companyId,receiptId,body){
 }
 export function createPortfolioService(pool,companyId){
  return {
+  forecast:query=>readTreasuryForecast(pool,companyId,query?.exercise_id),
   async list(query={}){
    const rows=await receiptRows(pool,companyId,query),totals={receivable:0n,payable:0n,overdue_receivable:0n,overdue_payable:0n};
    for(const row of rows){if(row.status==='void')continue;const key=row.direction==='issued'?'receivable':'payable',remaining=cents(row.remaining_amount);totals[key]+=remaining;if(row.overdue)totals['overdue_'+key]+=remaining;}

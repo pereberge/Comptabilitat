@@ -7,6 +7,7 @@ import AppIcon from '../components/AppIcon.vue';
 import StatusBadge from '../components/StatusBadge.vue';
 import AccountingReviewButton from '../components/AccountingReviewButton.vue';
 import HomeEntries from '../components/HomeEntries.vue';
+import {generalTables} from '../locales/general-tables.js';
 const { company, companies, selectedExercise, loading, error, refresh, selectCompany } = useContext();
 onMounted(()=>window.scrollTo({top:0,behavior:'instant'}));
 const shortcutCompanies = computed(() => {
@@ -32,7 +33,7 @@ function date(value) { return value ? value.split('-').reverse().join('/') : 'â€
       </div>
       <button class="button" :disabled="loading" @click="refresh"><span aria-hidden="true">â†»</span>{{ es.reload }}</button>
       <AccountingReviewButton :disabled="loading" />
-      <RouterLink class="button" to="/copias-seguridad">{{ es.dataBackup }}</RouterLink>
+      <div class="home-general-links"><RouterLink class="button" to="/copias-seguridad">{{ es.dataBackup }}</RouterLink><RouterLink class="button" to="/tablas-generales"><AppIcon name="folder" />{{ generalTables.title }}</RouterLink><RouterLink class="button" to="/empresas/bancos">Bancos de esta empresa</RouterLink></div>
     </div>
   </div>
   <section v-if="error" class="notice error-notice" role="alert"><div><h2>{{ es.unavailable }}</h2><p>{{ es.errors[error] || es.errors.SERVICE_UNAVAILABLE }}</p></div><button class="button" @click="refresh">{{ es.retry }}</button></section>
@@ -46,5 +47,6 @@ function date(value) { return value ? value.split('-').reverse().join('/') : 'â€
 </template>
 
 <style scoped>
+.home-general-links{display:flex;flex-direction:column;gap:8px;align-items:stretch}
 .home-company-card{gap:18px;flex-wrap:wrap;padding:18px 22px}.home-company-name{flex:1;min-width:180px}.home-company-exercise{border-left:1px solid #e0e6ed;padding-left:20px}.home-company-exercise>div{display:flex;align-items:center;gap:10px}.home-company-exercise strong{font-size:23px}.home-company-exercise small{display:block;margin-top:5px;color:#65748a;font-size:11px}.home-company-card .connection-pill{margin-left:0}@media(max-width:600px){.home-company-exercise{border-left:0;padding-left:0;flex-basis:100%}.home-company-name{min-width:0}.home-company-card h2{font-size:18px;overflow-wrap:anywhere}}
 </style>

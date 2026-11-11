@@ -19,7 +19,7 @@ import { createDocumentationService } from '../services/documentation.js';
 import { createVerifactuService } from '../services/verifactu.js';
 import {createAutomaticBackupManager} from '../services/automatic-backups.js';
 import { createDataBackupService } from '../services/data-backup.js';
-import { createCompanyEvolutionService,evolutionCompanyIds } from '../services/company-evolution.js';
+import { createCompanyEvolutionService } from '../services/company-evolution.js';
 import {createFarmService} from '../services/farms.js';
 import { createVatService } from '../services/vat.js';
 import {createCorporateTaxService} from '../services/corporate-tax.js';
@@ -29,16 +29,20 @@ import {createImportedInvoiceService} from '../integrations/received-invoices.js
 import {date} from '../services/validation.js';
 import {createPurchaseService} from '../services/purchases.js';
 import {createPurchaseOcrService} from '../services/purchase-ocr.js';
+import {createTreasuryPlanningService} from '../services/treasury-planning.js';
+import {createGeneralBankService} from '../services/general-banks.js';
+import {createCompanyBankService} from '../services/company-banks.js';
 
 // Scope belongs to the request, never to global server state.
 export function companyScope(central, defaultCompanyId, {automaticBackups=createAutomaticBackupManager(central),companyDatabases}={}) {
   const evolution=companyDatabases?{async get(query){
     const asOf=date(query?.as_of||new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid'}).format(new Date()));
     const registered=await companyDatabases.list(),reports=[];
-    for(const row of registered.filter(row=>evolutionCompanyIds.includes(row.company_id)))reports.push(await createCompanyEvolutionService(await companyDatabases.forCompany(row.company_id),{companyIds:[row.company_id]}).get({...query,as_of:asOf}));
+    for(const row of registered)reports.push(await createCompanyEvolutionService(await companyDatabases.forCompany(row.company_id),{companyIds:[row.company_id]}).get({...query,as_of:asOf}));
     return {as_of:asOf,companies:reports.flatMap(report=>report.companies).sort((a,b)=>a.name.localeCompare(b.name))};
   }}:createCompanyEvolutionService(central);
   return async (req, res, next) => {
+    if(/^\/general-tables(?:\/|$)/i.test(req.path)){req.generalBanks=createGeneralBankService(central);return next();}
     if(req.path.toLowerCase().replace(/\/+$/,'')==='/master/company-evolution'){req.companyEvolution=evolution;return next();}
     if (req.path === '/health' || /^\/companies(?:\/|$)/.test(req.path)) return next();
     const value = req.get('X-Company-Id') ?? String(req.user?.role==='user'?(req.user.company_ids[0]||''):defaultCompanyId);
@@ -50,6 +54,8 @@ export function companyScope(central, defaultCompanyId, {automaticBackups=create
     const [[company]] = await db.execute('SELECT id FROM companies WHERE id=?', [companyId]);
     if (!company) throw new HttpError(404, 'COMPANY_NOT_FOUND');
     req.companyId = companyId;
+    req.companyBanks=createCompanyBankService(db,companyId,createGeneralBankService(central));
+    req.treasuryPlanning=createTreasuryPlanningService(db,companyId,req.user?.key||'local');
     req.purchases=createPurchaseService(db,companyId,req.user?.key||'local');
     req.purchaseOcr=createPurchaseOcrService(db,companyId,req.user?.key||'local');
     req.vat = createVatService(db,companyId);
@@ -65,7 +71,7 @@ export function companyScope(central, defaultCompanyId, {automaticBackups=create
     req.invoiceDelivery = createInvoiceDeliveryService(db,companyId);
     req.invoices = createInvoiceService(db, companyId);
     req.portfolio = createPortfolioService(db, companyId);
-    req.bankRemittances=createBankRemittanceService(db,companyId);
+    req.bankRemittances=createBankRemittanceService(db,companyId,{companyBanks:req.companyBanks});
     req.bankReconciliations = createBankReconciliationService(db, companyId);
     req.bankImport = createBankImportService(db, companyId);
     req.accountImport = createAccountImportService(db, companyId);

@@ -3,8 +3,11 @@ import {amount} from './report-amount.js';
 import {decimal} from '../../../shared/money.js';
 import {date} from './validation.js';
 
-// These are the three companies included in the master's portfolio.
-export const evolutionCompanyIds=Object.freeze([85,224,225]);
+export function isAnnualProfitTransferDescription(description){
+ const text=description.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim().replace(/[.\s]+$/,'');
+ return /^(?:REGULARIZACION DEL EJERCICIO|LIQUIDAR PERDUES I GUANYS)$/.test(text);
+}
+
 function madridToday(){
  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
  const value=type=>parts.find(part=>part.type===type).value;
@@ -34,25 +37,43 @@ export function buildCompanyEvolution(companies,exercises,balances,asOf){
   })}))};
 }
 
-export function createCompanyEvolutionService(pool,{companyIds=evolutionCompanyIds,today=madridToday}={}){
+export function createCompanyEvolutionService(pool,{companyIds=null,today=madridToday}={}){
  return {async get(query={}){
   const asOf=date(query.as_of===undefined?today():query.as_of),db=await pool.getConnection();
-  const placeholders=companyIds.map(()=>'?').join(',');
   try{
    await db.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
    await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
-   const [companies]=await db.execute('SELECT id,name FROM companies WHERE id IN ('+placeholders+') ORDER BY name',companyIds);
-   const [exercises]=await db.execute('SELECT id,company_id,name,start_date,end_date,status FROM accounting_exercises WHERE company_id IN ('+placeholders+') AND start_date<=? ORDER BY start_date,id',[...companyIds,asOf]);
+   if(companyIds?.length===0){await db.commit();return {as_of:asOf,companies:[]};}
+   const [companies]=await db.execute('SELECT id,name FROM companies'+(companyIds?' WHERE id IN ('+companyIds.map(()=>'?').join(',')+')':'')+' ORDER BY name',companyIds||[]);
+   const ids=companies.map(company=>company.id),placeholders=ids.map(()=>'?').join(',');
+   if(!ids.length){await db.commit();return {as_of:asOf,companies:[]};}
+   const [exercises]=await db.execute('SELECT id,company_id,name,start_date,end_date,status FROM accounting_exercises WHERE company_id IN ('+placeholders+') AND start_date<=? ORDER BY start_date,id',[...ids,asOf]);
+   // Older imports may label the annual transfer to 129 as a normal entry.
+   // Only infer it with an explicit annual concept, year-end date, balanced
+   // amounts and exclusively accounts 6/7 and 129. Stock and VAT adjustments stay.
+   const [transfers]=await db.execute(`SELECT e.id,e.description FROM journal_entries e
+    JOIN accounting_exercises x ON x.id=e.exercise_id AND x.company_id=e.company_id
+    JOIN journal_lines l ON l.entry_id=e.id AND l.company_id=e.company_id
+    JOIN accounts a ON a.id=l.account_id AND a.company_id=e.company_id
+    WHERE e.company_id IN (${placeholders}) AND e.status='posted' AND e.entry_type='normal'
+     AND e.entry_date=x.end_date AND e.entry_date<=?
+    GROUP BY e.company_id,e.id,e.description
+    HAVING SUM(CASE WHEN LEFT(a.code,3)='129' THEN 1 ELSE 0 END)>0
+     AND SUM(CASE WHEN LEFT(a.code,1) IN ('6','7') THEN 1 ELSE 0 END)>0
+     AND SUM(CASE WHEN LEFT(a.code,1) NOT IN ('6','7') AND LEFT(a.code,3)<>'129' THEN 1 ELSE 0 END)=0
+     AND SUM(l.debit-l.credit)=0`,[...ids,asOf]);
+   const transferIds=transfers.filter(row=>isAnnualProfitTransferDescription(row.description)).map(row=>row.id);
+   const excludeTransfers=transferIds.length?' AND e.id NOT IN ('+transferIds.map(()=>'?').join(',')+')':'';
    const [balances]=await db.execute(`SELECT e.company_id,e.exercise_id,a.id,a.code,a.description,p.code AS parent_code,p.description AS parent_description,
     SUM(l.debit) AS debit,SUM(l.credit) AS credit,SUM(l.debit-l.credit) AS closing,
-    SUM(CASE WHEN e.entry_type NOT IN ('opening','regularization','closing') AND LEFT(p.code,1) IN ('6','7') THEN l.credit-l.debit ELSE 0.00 END) AS generated_result
+    SUM(CASE WHEN e.entry_type NOT IN ('opening','regularization','closing')${excludeTransfers} AND LEFT(p.code,1) IN ('6','7') THEN l.credit-l.debit ELSE 0.00 END) AS generated_result
     FROM journal_entries e JOIN accounting_exercises x ON x.id=e.exercise_id AND x.company_id=e.company_id
     JOIN journal_lines l ON l.entry_id=e.id AND l.company_id=e.company_id
     JOIN accounts a ON a.id=l.account_id AND a.company_id=e.company_id
     JOIN accounts p ON p.id=a.parent_id AND p.company_id=e.company_id
     WHERE e.company_id IN (${placeholders}) AND e.status='posted' AND e.entry_type<>'closing'
      AND e.entry_date BETWEEN x.start_date AND LEAST(x.end_date,?)
-    GROUP BY e.company_id,e.exercise_id,a.id,a.code,a.description,p.code,p.description`,[...companyIds,asOf]);
+    GROUP BY e.company_id,e.exercise_id,a.id,a.code,a.description,p.code,p.description`,[...transferIds,...ids,asOf]);
    const report=buildCompanyEvolution(companies,exercises,balances,asOf);
    await db.commit();return report;
   }catch(error){await db.rollback();throw error;}finally{db.release();}
